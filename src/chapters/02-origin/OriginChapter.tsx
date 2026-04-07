@@ -335,21 +335,45 @@ export default function OriginChapter({
   return (
     <div className="tl-root">
       
+      {/* BACKGROUND EFFECTS */}
+      <div className="attention-grid-bg" />
+      <div className="ambient-glow" id="glow-nlp"></div>
+      <div className="ambient-glow" id="glow-cv"></div>
       
+      {/* YEAR WATERMARKS */}
+      {timelineData.map((evt, i) => {
+        const isActive = i === step;
+        const years = evt.year.split('–').map(y => y.trim());
+        let topYear = evt.year;
+        let bottomYear = evt.year;
+        
+        if (years.length >= 2) {
+           topYear = years[0];
+           bottomYear = years[1] || years[0];
+        }
+
+        return (
+          <div key={`watermark-${evt.id}`} className={`tl-watermark-layer ${isActive ? 'is-active' : ''}`}>
+             <div className="tl-watermark-top-left">{topYear}</div>
+             <div className="tl-watermark-bottom-right">{bottomYear}</div>
+          </div>
+        );
+      })}
+
       <canvas ref={canvasRef} className="tl-canvas" />
 
       {/* TOP VIEWPORT: FULLSCREEN SPLIT STAGES */}
       <div className="tls-viewport">
         {/* Intro */}
         <div className={`tls-stage tls-intro-stage ${isIntro ? 'is-active' : ''}`}>
-          <div className="tls-intro-kicker">1950s — 2016</div>
+          <div className="tls-intro-kicker">1950s — 2017</div>
           <h1 className="tls-intro-title">
             Attention<br/>的必然诞生
           </h1>
           <p className="tls-intro-sub">
             横跨半个世纪，解密大模型前传：机器是如何学会“抓重点”的？
           </p>
-          <button className="tls-intro-btn" onClick={advance}>开启演进之旅 ›</button>
+          <button className="tls-intro-btn" onClick={advance}>开启推演探索 ›</button>
         </div>
 
         {/* 3 Stages */}

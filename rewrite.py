@@ -1,4 +1,7 @@
-import { AnimatePresence, motion } from 'framer-motion';
+import os
+
+with open(r"D:\桌面\test\Attention-Tutorial\src\chapters\03-attention\AttentionChapter.tsx", "w", encoding="utf-8") as f:
+    f.write("""import { AnimatePresence, motion } from 'framer-motion';
 import Latex from 'react-latex-next';
 import 'katex/dist/katex.min.css';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -238,7 +241,7 @@ export default function AttentionChapter({
                       )}
 
                       <div className="attention-note" style={{ marginTop: 50, textAlign: 'center', width:'100%' }}>
-                         <Latex>{'$$Score = Q \cdot K^T$$'}</Latex>
+                         <Latex>{'$$Score = Q \\cdot K^T$$'}</Latex>
                       </div>
                   </div>
                 </div>
@@ -286,7 +289,7 @@ export default function AttentionChapter({
                       </div>
 
                       <div className="attention-note" style={{ marginTop: 40, textAlign: 'center', width:'100%' }}>
-                         <Latex>{'$$Weight = \text{Softmax}\left(\frac{Q \cdot K^T}{\sqrt{d_k}}\right)$$'}</Latex>
+                         <Latex>{'$$Weight = \\text{Softmax}\\left(\\frac{Q \\cdot K^T}{\\sqrt{d_k}}\\right)$$'}</Latex>
                       </div>
                   </div>
                 </div>
@@ -331,7 +334,7 @@ export default function AttentionChapter({
                     </div>
 
                     <div className="attention-note" style={{ marginTop: 30, textAlign: 'center', width:'100%', fontSize:'1.2rem' }}>
-                         <Latex>{'$$\text{Attention}(Q,K,V) = \text{Softmax}\left(\frac{Q \cdot K^T}{\sqrt{d_k}}\right) \cdot V$$'}</Latex>
+                         <Latex>{'$$\\text{Attention}(Q,K,V) = \\text{Softmax}\\left(\\frac{Q \\cdot K^T}{\\sqrt{d_k}}\\right) \\cdot V$$'}</Latex>
                     </div>
                   </div>
               </div>
@@ -405,3 +408,4 @@ export default function AttentionChapter({
     </div>
   );
 }
+""")

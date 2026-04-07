@@ -268,3 +268,87 @@
 
 
 
+/* 统一第一二三部分的网格与氛围光 (亮色系) */
+.attention-grid-bg {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(15, 23, 42, 0.05) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
+  background-size: 30px 30px;
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ambient-glow {
+  position: absolute;
+  width: 60vw;
+  height: 60vh;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
+}
+
+#glow-nlp {
+  top: -10%;
+  left: -10%;
+  background: radial-gradient(circle, #3b82f6 0%, transparent 70%);
+}
+
+#glow-cv {
+  bottom: -10%;
+  right: -10%;
+  background: radial-gradient(circle, #a855f7 0%, transparent 70%);
+}
+
+/* 自适应年份水印 (左上角与右下角，亮色系) */
+.tl-watermark-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.tl-watermark-top-left {
+  position: absolute;
+  top: 5vh;
+  left: 5vw;
+  font-size: clamp(8rem, 18vw, 25rem);
+  font-weight: 900;
+  color: #0f172a; /* 亮色系背景下的深色字体 */
+  opacity: 0; /* 默认隐藏, 避免重叠 */
+  line-height: 1;
+  letter-spacing: -0.05em;
+  user-select: none;
+  transform: translateY(-2vh) scale(0.95);
+  transition: opacity 0.8s ease-in, transform 0.8s ease-in;
+}
+
+.tl-watermark-bottom-right {
+  position: absolute;
+  bottom: 8vh;
+  right: 5vw;
+  font-size: clamp(6rem, 15vw, 20rem);
+  font-weight: 900;
+  color: #0f172a; /* 亮色系背景下的深色字体 */
+  opacity: 0; /* 默认隐藏, 避免重叠 */
+  line-height: 1;
+  letter-spacing: -0.03em;
+  user-select: none;
+  transform: translateY(2vh) scale(0.95);
+  transition: opacity 0.8s ease-in, transform 0.8s ease-in;
+}
+
+.tl-watermark-layer.is-active .tl-watermark-top-left {
+  opacity: 0.04;
+  transform: translate(0, 0) scale(1);
+  transition: opacity 1.2s ease-out, transform 3s ease-out;
+}
+.tl-watermark-layer.is-active .tl-watermark-bottom-right {
+  opacity: 0.03;
+  transform: translate(0, 0) scale(1);
+  transition: opacity 1.5s ease-out, transform 4s ease-out;
+}
