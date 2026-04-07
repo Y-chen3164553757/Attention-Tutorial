@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attention机制解析演示</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap');
+        
+        body { font-family: 'Noto Sans SC', sans-serif; background-color: #000; color: #fff; overflow: hidden; margin: 0; }
+        
+        /* 场景容器与切换 */
+        .scene { position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity 0.6s ease-in-out; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
+        .scene.active { opacity: 1; pointer-events: auto; z-index: 20; }
+        
+        /* 通用动画类 */
+        .fade-in { animation: fadeIn 0.8s forwards; opacity: 0; }
+        .fade-in-delay-1 { animation: fadeIn 0.8s 0.5s forwards; opacity: 0; }
+        .fade-in-delay-2 { animation: fadeIn 0.8s 1s forwards; opacity: 0; }
+        .fade-in-delay-3 { animation: fadeIn 0.8s 1.5s forwards; opacity: 0; }
+        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+        
+        /* S1 聚光灯效果 */
+        #s1-image { width: 400px; height: 300px; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="400" height="300" fill="%232d3748"/><rect x="0" y="150" width="400" height="150" fill="%23276749"/><circle cx="150" cy="180" r="50" fill="%23b7791f"/><rect x="130" y="150" width="40" height="40" fill="%23b7791f"/></svg>') no-repeat center/cover; position: relative; border-radius: 8px; overflow: hidden; }
+        #s1-mask { position: absolute; inset: 0; background: rgba(0,0,0,0); transition: background 2s ease-in-out; }
+        .s1-focused #s1-mask { background: radial-gradient(circle at 35% 55%, transparent 10%, rgba(0,0,0,0.85) 35%); }
+
+        /* S2 节点连线动画 */
+        .s2-line { stroke-dasharray: 200; stroke-dashoffset: 200; transition: stroke-dashoffset 1s ease-out; }
+        .s2-drawn .s2-line { stroke-dashoffset: 0; }
+        .s2-dimmed { opacity: 0.2; transition: opacity 0.5s; }
+
+        /* S3 & 公式高亮 */
+        .highlight-q { color: #fbbf24; font-weight: bold; } /* Yellow */
+        .highlight-k { color: #60a5fa; font-weight: bold; } /* Blue */
+        .highlight-v { color: #34d399; font-weight: bold; } /* Green */
+        .node-circle { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; border: 2px solid; background: #111; z-index: 2; position: relative;}
+        
+        /* S5 弧线动画 */
+        .arc-path { stroke-dasharray: 300; stroke-dashoffset: 300; transition: stroke-dashoffset 1s ease-in-out; }
+        .arc-drawn { stroke-dashoffset: 0; }
+
+        /* S6 矩阵格子 */
+        .matrix-cell { transition: background-color 0.3s, color 0.3s; display: flex; align-items: center; justify-content: center; font-family: monospace; }
+        
+        /* S8 卷积动画 */
+        #s8-cnn-window { transition: transform 0.3s linear; }
+
+        /* UI */
+        .btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: all 0.2s; backdrop-filter: blur(4px); }
+        .btn:hover { background: rgba(255,255,255,0.2); }
+        .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        
+        /* Subtitle area */
+        #subtitle-container { position: absolute; bottom: 0; width: 100%; height: 25vh; background: linear-gradient(to top, rgba(0,0,0,1) 30%, transparent); display: flex; align-items: center; justify-content: center; padding: 0 15%; z-index: 50; pointer-events: none;}
+        #subtitle { font-size: 1.25rem; line-height: 1.8; text-align: center; color: #e2e8f0; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+    </style>
+</head>
+<body>
+
+    <!-- 场景容器 -->
+    <div id="scenes-wrapper" class="w-full h-[75vh] relative mt-10">
+
+        <!-- 分镜 1：引言与直观认知 -->
+        <div class="scene" id="scene-0">
+            <div id="s1-image" class="shadow-2xl shadow-gray-900 border border-gray-700">
+                <div id="s1-mask"></div>
+            </div>
+            <div id="s1-label" class="mt-8 text-4xl font-serif tracking-widest text-gray-300 opacity-0 transition-opacity duration-1000">Attention</div>
+        </div>
+
+        <!-- 分镜 2：算法家族树 -->
+        <div class="scene" id="scene-1">
+            <div class="relative w-[800px] h-[500px] flex items-center justify-center">
+                <svg class="absolute inset-0 w-full h-full" id="s2-svg" style="z-index: 1;">
+                    <g stroke="#4a5568" stroke-width="2" fill="none">
+                        <path class="s2-line" d="M 300 250 L 500 100" />
+                        <path class="s2-line" d="M 300 250 L 500 175" />
+                        <path class="s2-line" d="M 300 250 L 500 250" />
+                        <path class="s2-line" d="M 300 250 L 500 325" />
+                        <path class="s2-line" d="M 300 250 L 500 400" />
+                    </g>
+                </svg>
+                
+                <div id="s2-core" class="absolute left-[200px] px-6 py-3 border-2 border-yellow-500 text-yellow-500 rounded-lg text-2xl font-bold bg-black z-10 shadow-[0_0_15px_rgba(234,179,8,0.5)] transition-all duration-500">Attention</div>
+                
+                <div id="s2-branches" class="absolute left-[520px] flex flex-col gap-6 z-10">
+                    <div class="branch px-4 py-2 border border-blue-400 text-blue-300 rounded opacity-0">Deformable Attention</div>
+                    <div class="branch px-4 py-2 border border-blue-400 text-blue-300 rounded opacity-0">Multi-Head Attention</div>
+                    <div class="branch px-4 py-2 border border-blue-400 text-blue-300 rounded opacity-0">Multi-Query Attention</div>
+                    <div class="branch px-4 py-2 border border-blue-400 text-blue-300 rounded opacity-0">Group Attention</div>
+                    <div class="branch px-4 py-2 border border-blue-400 text-blue-300 rounded opacity-0">Flash / Causal Attention</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分镜 3：核心公式与计算流 -->
+        <div class="scene" id="scene-2">
+            <div id="s3-formula" class="text-3xl mb-16 opacity-0 transition-opacity duration-1000">
+                \[ \text{Attention}(Q, K, V) = \text{Softmax}\left(\frac{Q K^T}{\sqrt{d_k}}\right) V \]
+            </div>
+            
+            <div class="relative w-[800px] h-[300px] flex items-center" id="s3-flow">
+                <!-- Nodes -->
+                <div class="node-circle text-yellow-400 border-yellow-400 absolute top-0 left-[100px] s3-node opacity-0 transform -translate-y-4 transition-all duration-500">Q</div>
+                <div class="node-circle text-blue-400 border-blue-400 absolute bottom-0 left-[100px] s3-node opacity-0 transform translate-y-4 transition-all duration-500">K</div>
+                
+                <div class="absolute left-[300px] top-[100px] w-24 h-24 rounded-full bg-red-900/40 border border-red-500 text-red-200 flex items-center justify-center font-bold z-10 s3-node opacity-0 scale-90 transition-all duration-500">Score</div>
+                
+                <div class="absolute left-[500px] top-[110px] px-4 py-2 border border-gray-500 bg-gray-800 rounded s3-node opacity-0 transition-opacity duration-500 z-10">V (Value)</div>
+                
+                <div class="node-circle text-green-400 border-green-400 absolute bottom-[-50px] left-[520px] s3-node opacity-0 transform translate-y-4 transition-all duration-500">V</div>
+
+                <div class="absolute right-[50px] top-[100px] w-24 h-24 rounded-full border border-white text-white flex items-center justify-center font-bold z-10 s3-node opacity-0 transition-all duration-500">Output</div>
+
+                <!-- SVG Lines -->
+                <svg class="absolute inset-0 w-full h-full z-0" style="pointer-events:none;">
+                    <defs>
+                        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7280" />
+                        </marker>
+                    </defs>
+                    <g stroke="#6b7280" stroke-width="2" fill="none" marker-end="url(#arrow)" class="s3-lines opacity-0 transition-opacity duration-1000">
+                        <path d="M 160 30 L 300 120" /> <!-- Q to Score -->
+                        <path d="M 160 270 L 300 180" /> <!-- K to Score -->
+                        <path d="M 396 150 L 500 150" /> <!-- Score to V-box -->
+                        <path d="M 540 250 L 540 190" /> <!-- V node to V-box -->
+                        <path d="M 600 150 L 650 150" /> <!-- V-box to Output -->
+                    </g>
+                </svg>
+            </div>
+        </div>
+
+        <!-- 分镜 4：通俗类比 - 搜索引擎 -->
+        <div class="scene" id="scene-3">
+            <div class="w-[700px] bg-gray-100 rounded-lg overflow-hidden text-gray-800 shadow-xl border border-gray-600 flex flex-col h-[500px]">
+                <div class="bg-white p-6 border-b border-gray-300 flex items-center gap-4 relative">
+                    <span class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-red-500">Google</span>
+                    <div class="flex-1 bg-white border border-gray-300 rounded-full px-4 py-2 flex items-center shadow-inner relative">
+                        <span id="s4-typewriter" class="text-lg"></span>
+                        <span class="animate-pulse">|</span>
+                    </div>
+                    <div id="s4-q-label" class="absolute -right-12 top-6 text-3xl font-bold text-yellow-500 opacity-0 transition-opacity duration-500">Q</div>
+                </div>
+                
+                <div class="p-8 flex-1 flex flex-col gap-6 relative" id="s4-results">
+                    <!-- Results injected by JS -->
+                    <div id="s4-k-label" class="absolute -left-12 top-10 text-3xl font-bold text-blue-500 opacity-0 transition-opacity duration-500">K</div>
+                    <div id="s4-v-label" class="absolute -right-12 top-32 text-3xl font-bold text-green-500 opacity-0 transition-opacity duration-500">V</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分镜 5：通俗类比 - NLP 语境分析 -->
+        <div class="scene" id="scene-4">
+            <div class="flex flex-col gap-16 text-3xl tracking-widest relative">
+                <!-- Sentence 1 -->
+                <div class="relative" id="s5-sent1">
+                    <span class="s5-w px-2" data-role="k-subj">程序</span>
+                    <span class="px-2">在</span>
+                    <span class="s5-w px-2" data-role="k-adv">后台</span>
+                    <span class="s5-w px-2 font-bold text-yellow-400 relative" data-role="q">跑
+                        <span class="absolute -bottom-2 left-0 w-full h-[2px] bg-yellow-400"></span>
+                    </span>
+                </div>
+                <!-- Sentence 2 -->
+                <div class="relative" id="s5-sent2">
+                    <span class="s5-w px-2" data-role="k-subj">他</span>
+                    <span class="px-2">在</span>
+                    <span class="s5-w px-2" data-role="k-adv">操场上</span>
+                    <span class="s5-w px-2 font-bold text-yellow-400 relative" data-role="q">跑
+                        <span class="absolute -bottom-2 left-0 w-full h-[2px] bg-yellow-400"></span>
+                    </span>
+                </div>
+
+                <svg class="absolute inset-0 w-full h-full pointer-events-none overflow-visible z-10" id="s5-svg">
+                    <g stroke="#60a5fa" stroke-width="2" fill="none" class="opacity-80">
+                        <path id="s5-arc1" class="arc-path" d="" />
+                        <path id="s5-arc2" class="arc-path" d="" />
+                        <path id="s5-arc3" class="arc-path" d="" />
+                        <path id="s5-arc4" class="arc-path" d="" />
+                    </g>
+                </svg>
+            </div>
+        </div>
+
+        <!-- 分镜 6：深入矩阵运算细节 -->
+        <div class="scene" id="scene-5">
+            <div class="flex items-start gap-12 relative">
+                <!-- Q Vector -->
+                <div class="flex flex-col gap-2 mt-[60px] mr-4 text-yellow-400 font-bold text-xl items-end">
+                    <div class="h-[50px] flex items-center">Q1 (今)</div>
+                    <div class="h-[50px] flex items-center">Q2 (晚)</div>
+                    <div class="h-[50px] flex items-center">Q3 (有)</div>
+                    <div class="h-[50px] flex items-center">Q4 (雨)</div>
+                </div>
+
+                <div>
+                    <!-- K Vector -->
+                    <div class="flex gap-2 mb-4 ml-2 text-blue-400 font-bold text-xl justify-between w-[224px]">
+                        <div class="w-[50px] text-center">K1</div>
+                        <div class="w-[50px] text-center">K2</div>
+                        <div class="w-[50px] text-center">K3</div>
+                        <div class="w-[50px] text-center">K4</div>
+                    </div>
+
+                    <!-- Matrix -->
+                    <div id="s6-grid" class="grid grid-cols-4 gap-2 border-2 border-gray-600 p-2 bg-gray-900 rounded relative">
+                        <!-- Cells injected by JS -->
+                        <div class="absolute inset-0 bg-black z-10 transition-opacity duration-1000 flex items-center justify-center text-gray-500" id="s6-overlay">
+                            Q × K^T = Score Matrix
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- V Output -->
+                <div class="ml-8 mt-[60px] flex items-center opacity-0 transition-opacity duration-1000" id="s6-v-part">
+                    <span class="text-2xl mr-4 text-gray-400">×</span>
+                    <div class="flex flex-col gap-2 border-l-2 border-green-500 pl-4">
+                        <div class="h-[50px] flex items-center bg-gray-800 px-4 rounded text-green-400">V1</div>
+                        <div class="h-[50px] flex items-center bg-gray-800 px-4 rounded text-green-400">V2</div>
+                        <div class="h-[50px] flex items-center bg-gray-800 px-4 rounded text-green-400">V3</div>
+                        <div class="h-[50px] flex items-center bg-gray-800 px-4 rounded text-green-400">V4</div>
+                    </div>
+                    <span class="text-2xl mx-6 text-gray-400">➡</span>
+                    <div class="h-[224px] w-[60px] border border-white flex items-center justify-center font-bold rotate-180 text-vertical" style="writing-mode: vertical-rl;">Output</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分镜 7：Self vs Cross Attention -->
+        <div class="scene" id="scene-6">
+            <h2 id="s7-title" class="text-4xl font-bold mb-16 text-yellow-500 transition-colors duration-500">Self-Attention</h2>
+            
+            <div class="relative w-[800px] h-[300px] flex items-center justify-between">
+                
+                <div id="s7-input-self" class="text-3xl font-bold bg-gray-800 p-4 border border-white rounded absolute left-0 top-[120px] transition-opacity duration-500">X (输入序列)</div>
+                
+                <div id="s7-input-cross" class="absolute left-0 top-0 h-full flex flex-col justify-between opacity-0 transition-opacity duration-500 pointer-events-none">
+                    <div class="text-2xl font-bold bg-gray-800 p-4 border border-yellow-400 rounded mt-4">X_q (查询序列)</div>
+                    <div class="text-2xl font-bold bg-gray-800 p-4 border border-blue-400 rounded mb-4">X_kv (键值序列)</div>
+                </div>
+
+                <div class="flex flex-col gap-8 absolute left-[350px]">
+                    <div class="px-6 py-2 bg-gray-800 border border-yellow-600 rounded">Linear (W_q)</div>
+                    <div class="px-6 py-2 bg-gray-800 border border-blue-600 rounded">Linear (W_k)</div>
+                    <div class="px-6 py-2 bg-gray-800 border border-green-600 rounded">Linear (W_v)</div>
+                </div>
+
+                <div class="flex flex-col gap-10 absolute right-[100px]">
+                    <div class="node-circle text-yellow-400 border-yellow-400 w-[50px] h-[50px]">Q</div>
+                    <div class="node-circle text-blue-400 border-blue-400 w-[50px] h-[50px]">K</div>
+                    <div class="node-circle text-green-400 border-green-400 w-[50px] h-[50px]">V</div>
+                </div>
+
+                <!-- Lines self -->
+                <svg class="absolute inset-0 w-full h-full" id="s7-lines-self" style="z-index: -1;">
+                    <g stroke="#888" stroke-width="2" fill="none">
+                        <path d="M 180 150 L 350 50" />
+                        <path d="M 180 150 L 350 150" />
+                        <path d="M 180 150 L 350 250" />
+                        <path d="M 480 50 L 650 50" />
+                        <path d="M 480 150 L 650 150" />
+                        <path d="M 480 250 L 650 250" />
+                    </g>
+                </svg>
+
+                <!-- Lines cross -->
+                <svg class="absolute inset-0 w-full h-full opacity-0" id="s7-lines-cross" style="z-index: -1;">
+                    <g stroke="#888" stroke-width="2" fill="none">
+                        <path d="M 220 50 L 350 50" stroke="#facc15" />
+                        <path d="M 220 250 L 350 150" stroke="#60a5fa" />
+                        <path d="M 220 250 L 350 250" stroke="#60a5fa" />
+                        <path d="M 480 50 L 650 50" />
+                        <path d="M 480 150 L 650 150" />
+                        <path d="M 480 250 L 650 250" />
+                    </g>
+                </svg>
+            </div>
+        </div>
+
+        <!-- 分镜 8：优势 1 - 全局视野 -->
+        <div class="scene" id="scene-7">
+            <h2 class="text-3xl font-bold mb-10 text-white">优势 1：全局视角</h2>
+            <div class="flex justify-around w-full max-w-5xl">
+                <!-- CNN Side -->
+                <div class="flex flex-col items-center gap-4">
+                    <h3 class="text-xl text-gray-400">卷积神经网络 (CNN)</h3>
+                    <div class="relative w-[200px] h-[200px] border border-gray-700 bg-gray-900 flex flex-wrap" id="s8-cnn-grid">
+                        <!-- 5x5 grid injected by JS -->
+                        <div id="s8-cnn-window" class="absolute top-0 left-0 w-[120px] h-[120px] bg-blue-500/30 border-2 border-blue-400 pointer-events-none z-10 hidden"></div>
+                    </div>
+                    <p class="text-sm text-gray-500">局部感知野</p>
+                </div>
+
+                <!-- Attention Side -->
+                <div class="flex flex-col items-center gap-4">
+                    <h3 class="text-xl text-yellow-400">注意力机制 (Attention)</h3>
+                    <div class="relative w-[300px] h-[200px] flex items-center justify-center gap-2" id="s8-att-container">
+                        <!-- Image Patches (divs) -->
+                        <div class="w-16 h-16 bg-gray-700 border border-gray-500 s8-patch relative z-10 cursor-pointer transition-transform hover:scale-110"></div>
+                        <div class="w-16 h-16 bg-gray-700 border border-gray-500 s8-patch relative z-10 cursor-pointer transition-transform hover:scale-110" id="s8-center-patch"></div>
+                        <div class="w-16 h-16 bg-gray-700 border border-gray-500 s8-patch relative z-10 cursor-pointer transition-transform hover:scale-110"></div>
+                        <div class="w-16 h-16 bg-gray-700 border border-gray-500 s8-patch relative z-10 cursor-pointer transition-transform hover:scale-110"></div>
+                        
+                        <!-- Connecting lines generated by JS -->
+                        <svg class="absolute inset-0 w-full h-full pointer-events-none" id="s8-att-lines">
+                            <!-- Lines here -->
+                        </svg>
+                    </div>
+                    <p class="text-sm text-yellow-500">全局直接交互</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分镜 9：优势 2 - 多模态融合 -->
+        <div class="scene" id="scene-8">
+             <h2 class="text-3xl font-bold mb-12 text-white">优势 2：多模态融合</h2>
+             <div class="flex items-center justify-center w-full max-w-4xl relative">
+                
+                <div class="flex flex-col items-center gap-6 w-1/2" id="s9-left">
+                    <div class="text-6xl text-blue-400">🖼️</div>
+                    <div class="text-2xl font-bold border-b border-gray-600 pb-2">CNN</div>
+                    <div class="text-gray-400">专注于图像</div>
+                </div>
+
+                <div class="absolute left-1/2 top-0 bottom-0 w-[2px] bg-red-600 shadow-[0_0_10px_red] transition-all duration-1000 z-10" id="s9-wall"></div>
+
+                <div class="flex flex-col items-center gap-6 w-1/2" id="s9-right">
+                    <div class="text-6xl text-green-400">📝</div>
+                    <div class="text-2xl font-bold border-b border-gray-600 pb-2">LSTM</div>
+                    <div class="text-gray-400">擅长处理语言</div>
+                </div>
+
+                <!-- Matrix overlay (hidden initially) -->
+                <div class="absolute inset-0 bg-black flex flex-col items-center justify-center opacity-0 transition-opacity duration-1000 z-20" id="s9-matrix">
+                    <div class="text-xl mb-4 text-yellow-400 font-bold">跨模态注意力打通边界</div>
+                    <div class="flex">
+                        <div class="flex flex-col justify-around text-gray-400 mr-4 text-lg">
+                            <span>It</span><span>is</span><span>a</span><span>cat</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-1 border border-gray-600 p-1">
+                            <!-- 4x4 matrix -->
+                            <script>
+                                for(let i=0;i<16;i++){
+                                    let cl = Math.random() > 0.7 ? 'bg-yellow-500/80 shadow-[0_0_10px_yellow]' : 'bg-gray-800';
+                                    document.write(`<div class="w-12 h-12 ${cl} rounded-sm transition-all duration-1000 s9-cell"></div>`);
+                                }
+                            </script>
+                        </div>
+                    </div>
+                    <div class="flex w-[200px] justify-around mt-4 text-xl">
+                         <span>🧩</span><span>🧩</span><span>🧩</span><span>🧩</span>
+                    </div>
+                </div>
+             </div>
+        </div>
+
+        <!-- 分镜 10：优势 3 - 可解释性与结尾 -->
+        <div class="scene" id="scene-9">
+            <h2 class="text-3xl font-bold mb-10 text-white">优势 3：可解释性</h2>
+            <div class="flex justify-around w-full max-w-5xl items-center">
+                <!-- Blackbox -->
+                <div class="flex flex-col items-center gap-4">
+                    <div class="w-[250px] h-[200px] border border-gray-700 bg-gray-900 relative overflow-hidden flex items-center justify-center" id="s10-net">
+                        <!-- Network visual -->
+                        <div class="absolute inset-0 opacity-30 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-700 via-gray-900 to-black"></div>
+                        <div class="text-6xl text-red-500 font-bold animate-bounce drop-shadow-[0_0_10px_red] z-10">?</div>
+                        <svg class="absolute inset-0 w-full h-full" stroke="rgba(255,255,255,0.1)" stroke-width="1">
+                            <script>
+                                for(let i=0;i<50;i++){
+                                    let x1=Math.random()*250, y1=Math.random()*200, x2=Math.random()*250, y2=Math.random()*200;
+                                    document.write(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" />`);
+                                }
+                            </script>
+                        </svg>
+                    </div>
+                    <p class="text-gray-400">传统黑盒模型</p>
+                </div>
+
+                <div class="text-4xl text-gray-600">VS</div>
+
+                <!-- Heatmap -->
+                <div class="flex flex-col items-center gap-4">
+                    <div class="flex items-center gap-4">
+                        <!-- Src Img -->
+                        <div class="w-[150px] h-[120px] bg-gray-800 rounded flex flex-col justify-end p-2 relative overflow-hidden border border-gray-600">
+                             <!-- Simple CSS drawing of a dog in grass -->
+                             <div class="absolute bottom-0 left-0 w-full h-1/2 bg-green-900/50"></div>
+                             <div class="absolute bottom-4 left-4 w-[60px] h-[40px] bg-yellow-700 rounded-md"></div>
+                             <div class="absolute bottom-[28px] left-[54px] w-[20px] h-[20px] bg-yellow-800 rounded-full"></div>
+                        </div>
+                        <div class="text-2xl text-yellow-500">➡</div>
+                        <!-- Heatmap Img -->
+                        <div class="w-[150px] h-[120px] bg-gray-900 rounded relative overflow-hidden border border-yellow-600/50 group">
+                            <!-- Dog shape dim -->
+                             <div class="absolute bottom-0 left-0 w-full h-1/2 bg-green-900/10"></div>
+                             <div class="absolute bottom-4 left-4 w-[60px] h-[40px] bg-yellow-700/20 rounded-md"></div>
+                             <div class="absolute bottom-[28px] left-[54px] w-[20px] h-[20px] bg-yellow-800/20 rounded-full"></div>
+                             <!-- Heat overlay -->
+                             <div class="absolute bottom-2 left-2 w-[70px] h-[60px] bg-red-500 mix-blend-screen blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000 rounded-full s10-heat"></div>
+                        </div>
+                    </div>
+                    <p class="text-yellow-400">注意力热力图可视化</p>
+                </div>
+            </div>
+            
+            <div id="s10-ending" class="absolute inset-0 bg-black flex flex-col items-center justify-center opacity-0 transition-opacity duration-1000 z-50 pointer-events-none">
+                <h1 class="text-5xl font-bold mb-6 text-white tracking-widest">一键三连，下期再见！</h1>
+                <div class="flex gap-8 text-4xl text-gray-400">
+                    <span class="hover:text-pink-500 transition-colors">👍</span>
+                    <span class="hover:text-yellow-500 transition-colors">⭐</span>
+                    <span class="hover:text-blue-500 transition-colors">🪙</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 字幕区域 -->
+    <div id="subtitle-container">
+        <div id="subtitle"></div>
+    </div>
+
+    <!-- 控制面板 -->
+    <div class="absolute bottom-6 right-6 flex gap-3 z-[100]">
+        <button id="btn-prev" class="btn">上一幕</button>
+        <button id="btn-play" class="btn bg-white/20 border-white/50 text-white font-bold hover:bg-white/30">开始播放</button>
+        <button id="btn-next" class="btn">下一幕</button>
+        <div class="absolute -top-6 right-0 text-xs text-gray-500 font-mono"><span id="progress">1</span> / 10</div>
+    </div>
+
+    <script>
+        const texts = [
+            "当我们看一幅图画，我们并不会平均地处理所有信息。我们会下意识地聚焦在最重要的部分，比如事物的主体。这就是 Attention 机制。",
+            "Attention 机制是 Transformer 的核心算法。其经过这么多年的发展，产生了非常多的变种，这里不会去一一介绍。仅介绍最原始的版本，力图讲清楚算法的核心思想。话不多说，直接开始。",
+            "Attention 公式中涉及到三个核心变量：query、key 和 value。直观来看，Q 先和 K 的转置相乘，经过 softmax 得到注意力分数，再和 value 相乘，就得到了输出。看起来很简单，但三个变量分别代表什么含义？这么做的优势是什么？让我们来一个一个看。",
+            "Query 就好像是你在谷歌中输入的搜索词，谷歌会根据每个网页的关键词为您提供内容最相似的链接，这个关键词就是 Key。你点进某个网页，得到了你想要的内容，这个网页内容就是 Value。",
+            "再举个例子，我们有两句话：“程序在后台跑”、“他在操场上跑”。想理解好两句话中“跑”这个字的不同含义，需要看前面的主语和状语。在这里，“跑”就是 query。找主语和状语的过程，就是计算注意力得分。和主状语交互，就是和 value 相乘。",
+            "具体来说，query 和 key 都是一维序列。key 经过转置和 query 相乘，得到的是一个二维矩阵。矩阵中每一个位置是一个 0~1 的数，数值的大小代表的是所对应的 query 和 key 的相关程度。数值越大，相关程度越高。序列可以是文字，也可以是图像块。Query 和 Key 解决的是“看哪里”的问题，已经帮你选好了网页，你得点进去看才能获取具体的信息，所以还要和 value 相乘。每一个 query 和不同的 key 注意力得分和 value 相乘，得到交互后的输出。",
+            "Q、K、V 通常是经过三个线性层得到的。如果 Q、K、V 是由同一个变量得到，即为 self-attention。如果 Q、K、V 是不同变量得到，即为 cross-attention。",
+            "算法原理部分介绍完了，再让我们看看 attention 的优越性在哪里。第一个优势：具有全局视角。在卷积神经网络中，卷积核会在图像上滑动，每个像素只能与局部窗口内的像素交互，因此模型只能看到一个个局部区域。而注意力机制则不同，它让所有图像块可以彼此之间直接建立联系，实现全局的信息交互。",
+            "第二个优势：适用于多模态任务。在深度学习的发展历程中，许多算法都被局限在各自的领域。CNN 专注于图像，LSTM 擅长处理语言。而 attention 的出现打破了这种边界。它不依赖输入的具体形式，只关心不同信息之间的相关性。正是这种通用的机制，填平了模态之间的鸿沟，也让多模态学习真正迎来了爆发。",
+            "第三个优势：可解释性。在神经网络里，我们常常不知道模型到底在想什么。但在 attention 中，注意力得分矩阵能够清楚地告诉我们，模型正在关注哪里、忽略哪里。通过这些可视化，我们不仅能看到模型的决策过程，还能更好地理解它关注重点的逻辑。这就是今天的全部内容，还有想看的算法可以打在评论区哦，记得一键三连，我们下期再见。"
+        ];
+
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+        let isPlaying = false;
+        let currentSceneIndex = -1;
+        let playToken = {}; // For cancelling async logic
+
+        const subtitleEl = document.getElementById('subtitle');
+        const scenes = document.querySelectorAll('.scene');
+        const progressEl = document.getElementById('progress');
+
+        // ==== Scene Specific Logic ====
+        
+        // S4 Utils
+        const typeWriter = async (el, text, speed, token) => {
+            el.innerHTML = '';
+            for(let i=0; i<text.length; i++) {
+                if(token.cancelled) return;
+                el.innerHTML += text.charAt(i);
+                await sleep(speed);
+            }
+        };
+
+        // S5 Utils
+        const getCenter = (el) => {
+            const rect = el.getBoundingClientRect();
+            const parentRect = document.getElementById('scene-4').getBoundingClientRect();
+            return { x: rect.left - parentRect.left + rect.width/2, y: rect.top - parentRect.top + rect.height/2 };
+        };
+        const drawArc = (pathEl, p1, p2) => {
+            const midX = (p1.x + p2.x) / 2;
+            const d = `M ${p1.x} ${p1.y - 10} Q ${midX} ${Math.min(p1.y, p2.y) - 60} ${p2.x} ${p2.y - 10}`;
+            pathEl.setAttribute('d', d);
+        };
+
+        // S6 Utils
+        const initS6Grid = () => {
+            const grid = document.getElementById('s6-grid');
+            grid.innerHTML = '<div class="absolute inset-0 bg-black z-10 transition-opacity duration-1000 flex items-center justify-center text-gray-500" id="s6-overlay">Q × K^T = Score Matrix</div>';
+            for(let i=0; i<16; i++) {
+                let cell = document.createElement('div');
+                cell.className = 'matrix-cell w-[50px] h-[50px] bg-gray-800 rounded-sm text-transparent text-sm';
+                grid.appendChild(cell);
+            }
+        };
+
+        // S8 Utils
+        const initS8Grid = () => {
+            const grid = document.getElementById('s8-cnn-grid');
+            grid.innerHTML = '<div id="s8-cnn-window" class="absolute top-0 left-0 w-[80px] h-[80px] bg-blue-500/30 border-2 border-blue-400 pointer-events-none z-10 hidden"></div>';
+            for(let i=0; i<25; i++) {
+                let cell = document.createElement('div');
+                cell.className = 'w-[40px] h-[40px] border border-gray-800';
+                grid.appendChild(cell);
+            }
+        };
+
+        const sceneAnimations = [
+            // S0
+            async (token) => {
+                const s1 = document.getElementById('scene-0');
+                s1.classList.remove('s1-focused');
+                document.getElementById('s1-label').classList.add('opacity-0');
+                await sleep(2000); if(token.cancelled) return;
+                s1.classList.add('s1-focused');
+                await sleep(1000); if(token.cancelled) return;
+                document.getElementById('s1-label').classList.remove('opacity-0');
+            },
+            // S1
+            async (token) => {
+                document.getElementById('scene-1').classList.add('s2-drawn');
+                const branches = document.querySelectorAll('#s2-branches .branch');
+                branches.forEach(b => b.classList.remove('opacity-100'));
+                document.getElementById('s2-core').classList.remove('opacity-20');
+                
+                await sleep(1000); if(token.cancelled) return;
+                
+                for(let i=0; i<branches.length; i++) {
+                    if(token.cancelled) return;
+                    branches[i].classList.add('opacity-100', 'transition-opacity', 'duration-500');
+                    await sleep(300);
+                }
+                await sleep(2000); if(token.cancelled) return;
+                // Dim others
+                branches.forEach(b => {
+                    b.classList.remove('opacity-100');
+                    b.classList.add('opacity-20');
+                });
+                document.getElementById('s2-svg').classList.add('s2-dimmed');
+            },
+            // S2
+            async (token) => {
+                const f = document.getElementById('s3-formula');
+                f.innerHTML = '\\[ \\text{Attention}(\\class{highlight-q}{Q}, \\class{highlight-k}{K}, \\class{highlight-v}{V}) = \\text{Softmax}\\left(\\frac{\\class{highlight-q}{Q} \\class{highlight-k}{K}^T}{\\sqrt{d_k}}\\right) \\class{highlight-v}{V} \\]';
+                if(window.MathJax) MathJax.typesetPromise([f]);
+                
+                f.classList.remove('opacity-0');
+                await sleep(2000); if(token.cancelled) return;
+                
+                const nodes = document.querySelectorAll('.s3-node');
+                nodes.forEach(n => { n.classList.remove('opacity-0', 'scale-90', 'transform', '-translate-y-4', 'translate-y-4'); });
+                await sleep(1000); if(token.cancelled) return;
+                document.querySelector('.s3-lines').classList.remove('opacity-0');
+            },
+            // S3 (Search)
+            async (token) => {
+                const resContainer = document.getElementById('s4-results');
+                resContainer.innerHTML = '<div id="s4-k-label" class="absolute -left-12 top-10 text-3xl font-bold text-blue-500 opacity-0 transition-opacity duration-500">K</div><div id="s4-v-label" class="absolute -right-12 top-32 text-3xl font-bold text-green-500 opacity-0 transition-opacity duration-500">V</div>';
+                document.getElementById('s4-q-label').classList.add('opacity-0');
+                
+                await sleep(1000); if(token.cancelled) return;
+                await typeWriter(document.getElementById('s4-typewriter'), "What is attention mechanism?", 50, token);
+                if(token.cancelled) return;
+                document.getElementById('s4-q-label').classList.remove('opacity-0');
+                
+                await sleep(1000); if(token.cancelled) return;
+                resContainer.innerHTML += `
+                    <div class="border-b border-gray-300 pb-4 fade-in">
+                        <div class="text-blue-600 text-xl font-semibold mb-1 cursor-pointer hover:underline bg-yellow-100/50 inline-block">Attention Mechanism in Deep Learning</div>
+                        <div class="text-sm text-green-800">In cognitive science, attention is the cognitive process...</div>
+                    </div>
+                    <div class="border-b border-gray-300 pb-4 fade-in-delay-1">
+                        <div class="text-blue-600 text-xl font-semibold mb-1 cursor-pointer hover:underline bg-yellow-100/50 inline-block">The Illustrated Transformer</div>
+                        <div class="text-sm text-gray-600">The attention mechanism allows the network to focus...</div>
+                    </div>
+                `;
+                document.getElementById('s4-k-label').classList.remove('opacity-0');
+                
+                await sleep(2000); if(token.cancelled) return;
+                document.getElementById('s4-v-label').classList.remove('opacity-0');
+                // Simulate click expanding V
+                const firstRes = resContainer.querySelector('.fade-in > div:nth-child(2)');
+                firstRes.classList.remove('text-green-800');
+                firstRes.classList.add('bg-green-100', 'p-4', 'rounded', 'text-gray-800', 'mt-2', 'h-[150px]', 'transition-all');
+                firstRes.innerHTML = "<b>Attention Matrix Calculation:</b><br/>The key concept is mapping a query and a set of key-value pairs to an output... <br/><br/><i>[Reading contents...]</i>";
+            },
+            // S4 (NLP)
+            async (token) => {
+                const paths = [document.getElementById('s5-arc1'), document.getElementById('s5-arc2'), document.getElementById('s5-arc3'), document.getElementById('s5-arc4')];
+                paths.forEach(p => { p.classList.remove('arc-drawn'); p.setAttribute('d', ''); });
+                
+                await sleep(1000); if(token.cancelled) return;
+                
+                const q1 = document.querySelector('#s5-sent1 [data-role="q"]');
+                const k1 = document.querySelector('#s5-sent1 [data-role="k-subj"]');
+                const k2 = document.querySelector('#s5-sent1 [data-role="k-adv"]');
+                
+                drawArc(paths[0], getCenter(q1), getCenter(k1));
+                drawArc(paths[1], getCenter(q1), getCenter(k2));
+                
+                requestAnimationFrame(() => {
+                    paths[0].classList.add('arc-drawn');
+                    paths[1].classList.add('arc-drawn');
+                });
+
+                await sleep(2000); if(token.cancelled) return;
+                
+                const q2 = document.querySelector('#s5-sent2 [data-role="q"]');
+                const k3 = document.querySelector('#s5-sent2 [data-role="k-subj"]');
+                const k4 = document.querySelector('#s5-sent2 [data-role="k-adv"]');
+                
+                drawArc(paths[2], getCenter(q2), getCenter(k3));
+                drawArc(paths[3], getCenter(q2), getCenter(k4));
+                
+                requestAnimationFrame(() => {
+                    paths[2].classList.add('arc-drawn');
+                    paths[3].classList.add('arc-drawn');
+                });
+            },
+            // S5 (Matrix)
+            async (token) => {
+                initS6Grid();
+                const overlay = document.getElementById('s6-overlay');
+                document.getElementById('s6-v-part').classList.add('opacity-0');
+                overlay.classList.remove('opacity-0');
+                
+                await sleep(1500); if(token.cancelled) return;
+                overlay.classList.add('opacity-0');
+                
+                const cells = document.querySelectorAll('#s6-grid .matrix-cell');
+                await sleep(500); if(token.cancelled) return;
+                
+                for(let i=0; i<16; i++) {
+                    if(token.cancelled) return;
+                    let val = Math.random();
+                    let colorVal = Math.floor(val * 255);
+                    cells[i].innerText = val.toFixed(2);
+                    cells[i].classList.remove('text-transparent');
+                    cells[i].style.backgroundColor = `rgba(220, 38, 38, ${val})`; // Red heat
+                    cells[i].style.color = val > 0.5 ? '#fff' : '#aaa';
+                    await sleep(50);
+                }
+
+                await sleep(1500); if(token.cancelled) return;
+                document.getElementById('s6-v-part').classList.remove('opacity-0');
+            },
+            // S6 (Self/Cross)
+            async (token) => {
+                const title = document.getElementById('s7-title');
+                const inSelf = document.getElementById('s7-input-self');
+                const inCross = document.getElementById('s7-input-cross');
+                const lineSelf = document.getElementById('s7-lines-self');
+                const lineCross = document.getElementById('s7-lines-cross');
+                
+                // Reset to self
+                title.innerText = "Self-Attention";
+                title.classList.replace('text-blue-400', 'text-yellow-500');
+                inSelf.classList.remove('opacity-0');
+                inCross.classList.add('opacity-0');
+                lineSelf.classList.remove('opacity-0');
+                lineCross.classList.add('opacity-0');
+
+                await sleep(3500); if(token.cancelled) return;
+                
+                // Switch to Cross
+                title.innerText = "Cross-Attention";
+                title.classList.replace('text-yellow-500', 'text-blue-400');
+                inSelf.classList.add('opacity-0');
+                inCross.classList.remove('opacity-0');
+                lineSelf.classList.add('opacity-0');
+                lineCross.classList.remove('opacity-0');
+            },
+            // S7 (Global View)
+            async (token) => {
+                initS8Grid();
+                const windowEl = document.getElementById('s8-cnn-window');
+                windowEl.classList.remove('hidden');
+                
+                // Animate CNN window
+                let moveCNN = async () => {
+                    for(let y=0; y<=2; y++){
+                        for(let x=0; x<=2; x++){
+                            if(token.cancelled) return;
+                            windowEl.style.transform = `translate(${x*40}px, ${y*40}px)`;
+                            await sleep(200);
+                        }
+                    }
+                };
+                moveCNN();
+
+                await sleep(2000); if(token.cancelled) return;
+
+                // Animate Attention lines
+                const container = document.getElementById('s8-att-container');
+                const svg = document.getElementById('s8-att-lines');
+                svg.innerHTML = '';
+                const patches = document.querySelectorAll('.s8-patch');
+                const centerPatch = document.getElementById('s8-center-patch');
+                
+                centerPatch.classList.add('bg-yellow-600', 'border-yellow-400');
+                
+                const getP = (el) => {
+                    const r = el.getBoundingClientRect();
+                    const cr = container.getBoundingClientRect();
+                    return { x: r.left - cr.left + r.width/2, y: r.top - cr.top + r.height/2 };
+                };
+                
+                const cp = getP(centerPatch);
+                
+                patches.forEach((p) => {
+                    if(p === centerPatch) return;
+                    const tp = getP(p);
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute('x1', cp.x); line.setAttribute('y1', cp.y);
+                    line.setAttribute('x2', cp.x); line.setAttribute('y2', cp.y); // start at center
+                    line.setAttribute('stroke', '#facc15');
+                    line.setAttribute('stroke-width', '2');
+                    line.classList.add('transition-all', 'duration-500');
+                    svg.appendChild(line);
+                    
+                    // Animate to target
+                    setTimeout(() => {
+                        if(token.cancelled) return;
+                        line.setAttribute('x2', tp.x); line.setAttribute('y2', tp.y);
+                    }, 50);
+                });
+            },
+            // S8 (Multi-modal)
+            async (token) => {
+                const wall = document.getElementById('s9-wall');
+                const matrix = document.getElementById('s9-matrix');
+                wall.classList.remove('opacity-0', 'scale-y-0');
+                matrix.classList.add('opacity-0');
+                
+                // Flash cells randomly
+                const cells = document.querySelectorAll('.s9-cell');
+                let interval = setInterval(() => {
+                    if(token.cancelled) { clearInterval(interval); return; }
+                    cells.forEach(c => {
+                        if(Math.random() > 0.8) c.classList.toggle('bg-gray-800');
+                    });
+                }, 500);
+
+                await sleep(3000); if(token.cancelled) { clearInterval(interval); return;}
+                
+                // Break wall
+                wall.classList.add('scale-y-0', 'opacity-0');
+                await sleep(500); if(token.cancelled) { clearInterval(interval); return;}
+                matrix.classList.remove('opacity-0');
+            },
+            // S9 (Interpretability)
+            async (token) => {
+                const heat = document.querySelector('.s10-heat');
+                const ending = document.getElementById('s10-ending');
+                heat.classList.remove('opacity-100');
+                ending.classList.add('opacity-0');
+
+                await sleep(2000); if(token.cancelled) return;
+                heat.classList.add('opacity-100');
+                
+                await sleep(6000); if(token.cancelled) return;
+                ending.classList.remove('opacity-0');
+            }
+        ];
+
+        // ==== Engine ====
+
+        async function switchScene(index) {
+            if(index < 0 || index >= scenes.length) return;
+            
+            // Cancel pending animations from previous scene
+            playToken.cancelled = true; 
+            playToken = { cancelled: false };
+
+            // Hide current
+            if (currentSceneIndex >= 0) {
+                scenes[currentSceneIndex].classList.remove('active');
+            }
+
+            // Update state
+            currentSceneIndex = index;
+            progressEl.innerText = currentSceneIndex + 1;
+            
+            // Text transition
+            subtitleEl.style.opacity = 0;
+            setTimeout(() => {
+                subtitleEl.innerText = texts[currentSceneIndex];
+                subtitleEl.style.opacity = 1;
+            }, 300);
+
+            // Show new
+            const newScene = scenes[currentSceneIndex];
+            newScene.classList.add('active');
+
+            // Run specific animations
+            try {
+                await sceneAnimations[currentSceneIndex](playToken);
+            } catch (e) { console.log("Animation interrupted."); }
+
+            // Auto advance logic
+            if (isPlaying && currentSceneIndex < scenes.length - 1 && !playToken.cancelled) {
+                // Wait proportional to text length before next slide
+                const readTime = Math.max(3000, texts[currentSceneIndex].length * 150);
+                await sleep(readTime);
+                if (!playToken.cancelled && isPlaying) {
+                    switchScene(currentSceneIndex + 1);
+                }
+            } else if (isPlaying && currentSceneIndex === scenes.length -1) {
+                isPlaying = false;
+                updatePlayBtn();
+            }
+        }
+
+        // ==== Controls ====
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const btnPlay = document.getElementById('btn-play');
+
+        function updatePlayBtn() {
+            btnPlay.innerText = isPlaying ? "暂停" : "自动播放";
+            btnPlay.classList.toggle('bg-blue-600', isPlaying);
+            btnPlay.classList.toggle('bg-white/20', !isPlaying);
+        }
+
+        btnPrev.addEventListener('click', () => {
+            isPlaying = false; updatePlayBtn();
+            switchScene(Math.max(0, currentSceneIndex - 1));
+        });
+
+        btnNext.addEventListener('click', () => {
+            isPlaying = false; updatePlayBtn();
+            switchScene(Math.min(scenes.length - 1, currentSceneIndex + 1));
+        });
+
+        btnPlay.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            updatePlayBtn();
+            if(isPlaying) {
+                // If at end, restart, else just play current to end
+                if(currentSceneIndex === scenes.length - 1) switchScene(0);
+                else switchScene(currentSceneIndex); 
+            } else {
+                playToken.cancelled = true; // Stop current auto-advance timer
+            }
+        });
+
+        // Initialize first scene
+        setTimeout(() => {
+            switchScene(0);
+        }, 500);
+
+    </script>
+</body>
+</html>

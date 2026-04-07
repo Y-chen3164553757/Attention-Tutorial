@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自注意力机制推导 - 白板风</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        /* 引入圆润可爱的字体（比如无衬线圆体），模拟课堂白板风格 */
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&family=Nunito:wght@400;600;700&display=swap');
+        
+        :root {
+            /* 白板风格配色 */
+            --bg-color: #f8fafc; /* 浅灰白底色 */
+            --bg-canvas: #ffffff; /* 纯白画板 */
+            --q-color: #ef4444; /* 明快的红色 (水性笔红) */
+            --k-color: #10b981; /* 清新的绿色 (水性笔绿) */
+            --v-color: #3b82f6; /* 明亮的蓝色 (水性笔蓝) */
+            --x-color: #f59e0b; /* 活力橙黄 */
+            --text-main: #334155; /* 深灰文字，不纯黑，更柔和 */
+            --text-muted: #94a3b8; /* 浅灰辅助字 */
+            --border-color: #cbd5e1;
+        }
+
+        body { 
+            font-family: 'M PLUS Rounded 1c', 'Nunito', sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            overflow: hidden; 
+            margin: 0; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        /* 画布容器：白板样式 */
+        #canvas-container {
+            position: relative;
+            width: 90vw;
+            max-width: 1400px;
+            aspect-ratio: 16 / 9;
+            background: var(--bg-canvas);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08), 0 0 0 8px #f1f5f9; /* 柔和阴影和边框 */
+            overflow: hidden;
+        }
+
+        /* 给背景加一点淡淡的网格线，更有课堂感觉 */
+        #canvas-container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(to right, rgba(0,0,0,0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0,0,0,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .scene { 
+            position: absolute; inset: 0; 
+            opacity: 0; pointer-events: none; 
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1); 
+            display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; 
+            z-index: 10; 
+        }
+        .scene.active { opacity: 1; pointer-events: auto; z-index: 20; }
+
+        /* 颜色类（去掉发光，改为加粗和清爽颜色） */
+        .cq { color: var(--q-color); font-weight: 700; }
+        .ck { color: var(--k-color); font-weight: 700; }
+        .cv { color: var(--v-color); font-weight: 700; }
+        .cx { color: var(--x-color); font-weight: 700; }
+
+        /* 矩阵样式：模拟手写括号或圆润边框 */
+        .matrix {
+            position: relative;
+            display: grid;
+            gap: 12px 24px;
+            padding: 15px 25px;
+            font-family: 'Nunito', monospace;
+            font-size: 1.6rem;
+            text-align: center;
+            align-items: center;
+            transition: all 0.8s ease;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            /* 使用软边框代替括号 */
+            box-shadow: inset 0 0 0 2px var(--border-color);
+        }
+        
+        .matrix-label { font-family: 'M PLUS Rounded 1c'; font-size: 1.1rem; color: var(--text-muted); position: absolute; top: -35px; width: 100%; text-align: center; }
+        
+        /* 独立高亮方块：圆润高亮笔效果 */
+        .val-box {
+            display: inline-block; padding: 4px 12px; border-radius: 8px;
+            background: rgba(0,0,0,0.03); transition: all 0.5s ease;
+        }
+        .val-box.active-q { background: #fee2e2; color: #dc2626; box-shadow: 0 0 0 2px #fca5a5; }
+
+        /* SVG 连线特效：线条加粗，颜色加深 */
+        .svg-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+        .path-line { 
+            fill: none; stroke-width: 4; stroke-linecap: round;
+            stroke-dasharray: 1000; stroke-dashoffset: 1000;
+            transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        .path-drawn { stroke-dashoffset: 0; }
+        
+        /* 数学公式容器 */
+        .math-box { font-size: 1.8rem; min-height: 80px; display: flex; align-items: center; justify-content: center; transition: all 0.5s ease; color: var(--text-main); }
+
+        /* 底部字幕栏：改为类似便利贴或课本气泡 */
+        #subtitle-bar {
+            position: absolute; bottom: 30px; left: 10%; right: 10%;
+            background: white; border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 20px 30px; z-index: 50; pointer-events: none;
+            border: 2px solid #f1f5f9;
+        }
+        #subtitle { font-size: 1.4rem; letter-spacing: 1px; line-height: 1.6; text-align: center; color: var(--text-main); }
+        .typewriter::after { content: '✎'; animation: blink 1s step-start infinite; color: var(--text-muted); margin-left: 8px; }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* 顶部进度与控制：清新按钮 */
+        .controls { position: absolute; top: 20px; right: 20px; z-index: 100; display: flex; gap: 12px; }
+        .btn { 
+            background: white; border: 2px solid var(--border-color); 
+            color: var(--text-main); padding: 8px 16px; border-radius: 12px; 
+            font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.3s; 
+            display: flex; align-items: center; gap: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .btn:hover { background: #f8fafc; border-color: #94a3b8; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .btn-primary { background: #e0f2fe; border-color: #7dd3fc; color: #0284c7; }
+        .btn-primary:hover { background: #bae6fd; border-color: #38bdf8; }
+
+        /* 工具类 */
+        .fade-in { animation: customFadeIn 1s cubic-bezier(0.4, 0, 0.2, 1) forwards; opacity: 0; }
+        .fade-up { animation: customFadeUp 1s cubic-bezier(0.4, 0, 0.2, 1) forwards; opacity: 0; transform: translateY(20px); }
+        @keyframes customFadeIn { to { opacity: 1; } }
+        @keyframes customFadeUp { to { opacity: 1; transform: translateY(0); } }
+        
+        /* 公式覆盖颜色，适应白底 */
+        .mjx-chtml { color: var(--text-main); }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container">
+        <!-- SVG Canvas for Drawing -->
+        <svg class="svg-layer" id="main-svg">
+            <defs>
+                <!-- 调整箭头颜色透明度，避免在白底上过于刺眼 -->
+                <marker id="arrow-q" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--q-color)" />
+                </marker>
+                <marker id="arrow-v" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--v-color)" />
+                </marker>
+            </defs>
+            <g id="svg-paths"></g>
+        </svg>
+
+        <!-- S0: Intro -->
+        <div class="scene" id="scene-0">
+            <h1 class="text-7xl font-bold cx tracking-widest mb-6 fade-up">Self-Attention</h1>
+            <h2 class="text-3xl text-slate-500 fade-up" style="animation-delay: 0.2s;">自注意力机制：从直觉到公式</h2>
+            <div class="mt-16 flex gap-16 text-3xl font-bold fade-in" style="animation-delay: 0.6s; background: white; padding: 20px 40px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); border: 2px solid var(--border-color);">
+                <span class="cq">Q (Query)</span>
+                <span class="ck">K (Key)</span>
+                <span class="cv">V (Value)</span>
+            </div>
+        </div>
+
+        <!-- S1 & S2 & S3: Dict -> Query -> Calc -->
+        <div class="scene" id="scene-1">
+            <div class="absolute top-12 text-2xl text-slate-500 font-bold tracking-wider" id="s1-title">基于键值对的直觉预测</div>
+            
+            <div class="flex items-center justify-center w-full h-full gap-32 relative">
+                
+                <!-- Query Box -->
+                <div class="absolute left-32 flex items-center opacity-0 transition-all duration-700 transform -translate-x-10" id="s1-q-container">
+                    <span class="cq text-3xl font-bold mr-4">q =</span>
+                    <div class="matrix" style="grid-template-columns: 1fr;">
+                        <span class="matrix-label cq">输入(腰围)</span>
+                        <span class="cq" id="s1-q-val">57</span>
+                    </div>
+                </div>
+
+                <!-- Keys -->
+                <div class="matrix opacity-0 transition-all duration-1000 transform translate-y-10" id="s1-k-matrix" style="grid-template-columns: 1fr;">
+                    <span class="matrix-label ck">K (已知腰围)</span>
+                    <span class="val-box ck" id="s1-k1">51</span>
+                    <span class="val-box ck" id="s1-k2">56</span>
+                    <span class="val-box ck" id="s1-k3">58</span>
+                </div>
+
+                <!-- Values -->
+                <div class="matrix opacity-0 transition-all duration-1000 transform translate-y-10" id="s1-v-matrix" style="grid-template-columns: 1fr;">
+                    <span class="matrix-label cv">V (对应体重)</span>
+                    <span class="val-box cv" id="s1-v1">40</span>
+                    <span class="val-box cv" id="s1-v2">43</span>
+                    <span class="val-box cv" id="s1-v3">48</span>
+                </div>
+
+                <!-- Calculation Result -->
+                <div class="absolute bottom-40 w-full flex justify-center opacity-0 transition-all duration-700" id="s1-calc">
+                    <div class="math-box bg-white px-8 py-4 rounded-xl shadow-lg border-2 border-slate-200" id="s1-math-result">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- S4: Generalizing Formula -->
+        <div class="scene" id="scene-2">
+            <div class="absolute top-12 text-2xl text-slate-500 font-bold tracking-wider">抽象为权重函数 α</div>
+            <div class="flex flex-col items-center justify-center h-full gap-16">
+                <div class="math-box w-[900px] bg-white p-8 rounded-2xl shadow-sm border border-slate-200" id="s2-math-1"></div>
+                <div class="math-box w-[900px] opacity-0 transition-opacity duration-1000 bg-white p-8 rounded-2xl shadow-sm border border-slate-200" id="s2-math-2"></div>
+                <div class="flex gap-12 text-2xl opacity-0 transition-opacity duration-1000 font-bold bg-slate-50 px-8 py-4 rounded-xl" id="s2-labels">
+                    <div class="cq">q : Query (查询)</div>
+                    <div class="ck">k : Key (键)</div>
+                    <div class="cv">v : Value (值)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- S5: Multi-dimensional Expansion -->
+        <div class="scene" id="scene-3">
+            <div class="absolute top-12 text-2xl text-slate-500 font-bold tracking-wider" id="s3-title">多维特征与矩阵化</div>
+            
+            <div class="flex items-center justify-center gap-16 mt-[-100px]">
+                <!-- Q Matrix (Grows) -->
+                <div class="matrix opacity-0 transition-all duration-700" id="s3-q-matrix" style="grid-template-columns: 1fr; border-color: var(--q-color);">
+                    <span class="matrix-label cq" id="s3-q-lbl">q</span>
+                    <span class="cq">57</span>
+                    <span class="cq opacity-0 h-0 overflow-hidden" id="s3-q-new">83</span>
+                </div>
+
+                <!-- K Matrix -->
+                <div class="matrix opacity-0 transition-all duration-700" id="s3-k-matrix" style="grid-template-columns: 1fr; border-color: var(--k-color);">
+                    <span class="matrix-label ck" id="s3-k-lbl">k_i (腰围)</span>
+                    <span class="ck s3-k-col1">51</span>
+                    <span class="ck s3-k-col1">56</span>
+                    <span class="ck s3-k-col1">58</span>
+                </div>
+
+                <!-- V Matrix -->
+                <div class="matrix opacity-0 transition-all duration-700" id="s3-v-matrix" style="grid-template-columns: 1fr; border-color: var(--v-color);">
+                    <span class="matrix-label cv" id="s3-v-lbl">v_i (体重)</span>
+                    <span class="cv s3-v-col1">40</span>
+                    <span class="cv s3-v-col1">43</span>
+                    <span class="cv s3-v-col1">48</span>
+                </div>
+            </div>
+
+            <div class="absolute bottom-40 w-full flex justify-center opacity-0 transition-all duration-700" id="s3-math-container">
+                <div class="math-box bg-white px-12 py-6 rounded-2xl shadow-lg border-2 border-slate-200" id="s3-math-formula"></div>
+            </div>
+        </div>
+
+        <!-- S6: Full Matrix Formula -->
+        <div class="scene" id="scene-4">
+             <div class="absolute top-12 text-2xl text-slate-500 font-bold tracking-wider" id="s4-title">注意力公式大一统</div>
+             
+             <div class="flex flex-col items-center justify-center h-full gap-20">
+                 <!-- Visual Matrix Eq -->
+                 <div class="flex items-center gap-6 text-4xl" id="s4-visual-eq">
+                     <div class="matrix cq" style="grid-template-columns: 1fr 1fr; border-color: var(--q-color);">
+                         <span>57</span><span>83</span>
+                         <span>55</span><span>76</span>
+                         <span class="matrix-label cq font-bold">Q</span>
+                     </div>
+                     <span class="text-slate-400">×</span>
+                     <div class="matrix ck" style="grid-template-columns: 1fr 1fr 1fr; border-color: var(--k-color);">
+                         <span>51</span><span>56</span><span>58</span>
+                         <span>70</span><span>82</span><span>88</span>
+                         <span class="matrix-label ck font-bold">K<sup>T</sup></span>
+                     </div>
+                     <span class="mx-6 text-2xl text-slate-400">...再乘...</span>
+                     <div class="matrix cv" style="grid-template-columns: 1fr 1fr; border-color: var(--v-color);">
+                         <span>40</span><span>155</span>
+                         <span>43</span><span>159</span>
+                         <span>48</span><span>162</span>
+                         <span class="matrix-label cv font-bold">V</span>
+                     </div>
+                 </div>
+
+                 <!-- Final Equations -->
+                 <div class="math-box w-[1000px] text-4xl bg-white p-8 rounded-3xl shadow-md border border-slate-200" id="s4-final-math"></div>
+             </div>
+        </div>
+
+        <!-- S7: Self Attention & Transformers -->
+        <div class="scene" id="scene-5">
+            <div class="absolute top-12 text-2xl text-slate-500 font-bold tracking-wider">从 Attention 到 Self-Attention</div>
+            
+            <div class="flex flex-col items-center justify-center h-full gap-12 w-full">
+                
+                <!-- X to QKV Animation -->
+                <div class="flex items-center gap-16 relative w-full justify-center mt-[-80px]" id="s5-arch">
+                    <div class="matrix cx font-bold text-3xl z-20" style="grid-template-columns: 1fr; background: #fef3c7; border-color: var(--x-color);">
+                        <span>X_1</span><span>X_2</span><span>X_3</span>
+                        <span class="matrix-label cx text-2xl">输入序列 X</span>
+                    </div>
+
+                    <div class="flex flex-col gap-8 opacity-0 transition-opacity duration-1000" id="s5-weights">
+                        <div class="px-6 py-3 border-2 border-red-300 text-red-600 rounded-xl bg-red-50 font-bold text-xl shadow-sm">× W<sub>Q</sub></div>
+                        <div class="px-6 py-3 border-2 border-emerald-300 text-emerald-600 rounded-xl bg-emerald-50 font-bold text-xl shadow-sm">× W<sub>K</sub></div>
+                        <div class="px-6 py-3 border-2 border-blue-300 text-blue-600 rounded-xl bg-blue-50 font-bold text-xl shadow-sm">× W<sub>V</sub></div>
+                    </div>
+
+                    <div class="flex flex-col gap-10 opacity-0 transition-opacity duration-1000 text-4xl font-bold" id="s5-qkv">
+                        <div class="cq">Q</div>
+                        <div class="ck">K</div>
+                        <div class="cv">V</div>
+                    </div>
+                </div>
+
+                <div class="math-box bg-white px-16 py-8 rounded-3xl border-4 border-slate-100 shadow-2xl opacity-0 transition-all duration-1000 transform translate-y-10" id="s5-final-formula"></div>
+            </div>
+        </div>
+
+        <!-- Subtitles -->
+        <div id="subtitle-bar">
+            <div id="subtitle" class="typewriter"></div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button class="btn" id="btn-prev">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg> 上一步
+            </button>
+            <button class="btn btn-primary" id="btn-play">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" id="icon-play"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <span id="text-play">自动播放</span>
+            </button>
+            <button class="btn" id="btn-next">
+                下一步 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ==== 工具函数 ====
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+        
+        // MathJax 渲染封装
+        const renderMath = async (elId, tex) => {
+            const el = document.getElementById(elId);
+            el.style.opacity = 0;
+            await sleep(300);
+            el.innerHTML = `\\[ ${tex} \\]`;
+            if (window.MathJax) {
+                await MathJax.typesetPromise([el]);
+            }
+            el.style.opacity = 1;
+        };
+
+        // 打字机特效
+        let typeToken = 0;
+        const typeWriter = async (text, speed = 40) => {
+            const el = document.getElementById('subtitle');
+            const currentToken = ++typeToken;
+            el.innerHTML = '';
+            for(let i=0; i<text.length; i++) {
+                if(currentToken !== typeToken) return;
+                el.innerHTML += text.charAt(i);
+                await sleep(speed);
+            }
+        };
+
+        // 绘制贝塞尔曲线箭头 (调整为更柔和的线条)
+        const drawCurve = (fromElId, toElId, colorStr, isDashed = false) => {
+            const svg = document.getElementById('main-svg');
+            const g = document.getElementById('svg-paths');
+            const fromEl = document.getElementById(fromElId);
+            const toEl = document.getElementById(toElId);
+            
+            if(!fromEl || !toEl) return;
+
+            const svgRect = svg.getBoundingClientRect();
+            const fRect = fromEl.getBoundingClientRect();
+            const tRect = toEl.getBoundingClientRect();
+
+            const startX = fRect.right - svgRect.left + 5;
+            const startY = fRect.top + fRect.height/2 - svgRect.top;
+            const endX = tRect.left - svgRect.left - 15;
+            const endY = tRect.top + tRect.height/2 - svgRect.top;
+
+            const cp1X = startX + (endX - startX) * 0.4;
+            const cp2X = startX + (endX - startX) * 0.6;
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', `M ${startX} ${startY} C ${cp1X} ${startY}, ${cp2X} ${endY}, ${endX} ${endY}`);
+            path.setAttribute('stroke', colorStr);
+            path.classList.add('path-line');
+            
+            if (isDashed) path.setAttribute('stroke-dasharray', '10,10');
+            
+            // Marker
+            if (colorStr.includes('ef4444')) path.setAttribute('marker-end', 'url(#arrow-q)');
+            else if (colorStr.includes('3b82f6')) path.setAttribute('marker-end', 'url(#arrow-v)');
+
+            g.appendChild(path);
+            
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => path.classList.add('path-drawn'));
+            });
+        };
+
+        const clearCanvas = () => { document.getElementById('svg-paths').innerHTML = ''; };
+
+        // ==== 核心剧本与动画逻辑 ====
+        const scenes = document.querySelectorAll('.scene');
+        const hideAll = () => scenes.forEach(s => s.classList.remove('active'));
+
+        const script = [
+            {
+                text: "Self-Attention 是什么？Q、K、V 这三个字母到底代表了什么物理含义？",
+                delay: 4000,
+                action: async () => {
+                    hideAll(); clearCanvas(); scenes[0].classList.add('active');
+                }
+            },
+            {
+                text: "让我们回到最直觉的起点：假设我们有一个类似 Python 字典的「键值对」数据。",
+                delay: 4000,
+                action: async () => {
+                    hideAll(); scenes[1].classList.add('active');
+                    document.getElementById('s1-k-matrix').classList.remove('opacity-0', 'translate-y-10');
+                    await sleep(400);
+                    document.getElementById('s1-v-matrix').classList.remove('opacity-0', 'translate-y-10');
+                    await sleep(600);
+                    drawCurve('s1-k1', 's1-v1', 'var(--border-color)');
+                    drawCurve('s1-k2', 's1-v2', 'var(--border-color)');
+                    drawCurve('s1-k3', 's1-v3', 'var(--border-color)');
+                }
+            },
+            {
+                text: "现在，来了一个「查询 (Query)」：假如某人腰围是 57，我们要预测他的体重。",
+                delay: 3500,
+                action: async () => {
+                    document.getElementById('s1-q-container').classList.remove('opacity-0', '-translate-x-10');
+                }
+            },
+            {
+                text: "显然，57 刚好介于已知 Key(56) 和 Key(58) 之间。",
+                delay: 3000,
+                action: async () => {
+                    document.getElementById('s1-k2').classList.add('active-q');
+                    document.getElementById('s1-k3').classList.add('active-q');
+                    drawCurve('s1-q-val', 's1-k2', 'var(--q-color)', true);
+                    drawCurve('s1-q-val', 's1-k3', 'var(--q-color)', true);
+                }
+            },
+            {
+                text: "距离相等，我们把「注意力权重」平均分给它们 (各 0.5)，去提取对应的 Value。",
+                delay: 4000,
+                action: async () => {
+                    document.getElementById('s1-v2').classList.add('active-q');
+                    document.getElementById('s1-v3').classList.add('active-q');
+                    drawCurve('s1-k2', 's1-v2', 'var(--q-color)');
+                    drawCurve('s1-k3', 's1-v3', 'var(--q-color)');
+                    
+                    document.getElementById('s1-calc').classList.remove('opacity-0');
+                    renderMath('s1-math-result', '0.5 \\times \\class{cv}{43} + 0.5 \\times \\class{cv}{48} = \\class{cq}{45.5}');
+                }
+            },
+            {
+                text: "把这种分配权重的过程抽象为一个函数 α(q, k)，它用于计算 q 和各个 k 的匹配得分。",
+                delay: 4500,
+                action: async () => {
+                    hideAll(); clearCanvas(); scenes[2].classList.add('active');
+                    renderMath('s2-math-1', 'f(\\class{cq}{q}) = \\alpha(\\class{cq}{q}, \\class{ck}{k_1})\\class{cv}{v_1} + \\alpha(\\class{cq}{q}, \\class{ck}{k_2})\\class{cv}{v_2} + \\alpha(\\class{cq}{q}, \\class{ck}{k_3})\\class{cv}{v_3}');
+                    await sleep(1500);
+                    document.getElementById('s2-labels').classList.remove('opacity-0');
+                }
+            },
+            {
+                text: "简写为求和公式。通常，我们用 Softmax 函数来确保所有注意力权重 α 的和为 1。",
+                delay: 4500,
+                action: async () => {
+                    renderMath('s2-math-1', 'f(\\class{cq}{q}) = \\sum_{i} \\alpha(\\class{cq}{q}, \\class{ck}{k_i})\\class{cv}{v_i}');
+                    document.getElementById('s2-math-2').classList.remove('opacity-0');
+                    renderMath('s2-math-2', '\\alpha(\\class{cq}{q}, \\class{ck}{k_i}) = \\text{softmax}(\\text{Score}(\\class{cq}{q}, \\class{ck}{k_i}))');
+                }
+            },
+            {
+                text: "实际应用中特征往往是多维的（比如加入胸围、身高），q、k、v 就变成了向量。",
+                delay: 4000,
+                action: async () => {
+                    hideAll(); clearCanvas(); scenes[3].classList.add('active');
+                    document.getElementById('s3-q-matrix').classList.remove('opacity-0');
+                    document.getElementById('s3-k-matrix').classList.remove('opacity-0');
+                    document.getElementById('s3-v-matrix').classList.remove('opacity-0');
+                    
+                    await sleep(1000);
+                    document.getElementById('s3-q-new').classList.remove('opacity-0', 'h-0');
+                    document.getElementById('s3-k-lbl').innerText = "k_i [腰围, 胸围]";
+                    document.getElementById('s3-v-lbl').innerText = "v_i [体重, 身高]";
+                    
+                    const kMat = document.getElementById('s3-k-matrix');
+                    kMat.style.gridTemplateColumns = '1fr 1fr';
+                    kMat.innerHTML = `<span class="matrix-label ck" id="s3-k-lbl">K (多维)</span>
+                                      <span class="ck">51</span><span class="ck">70</span>
+                                      <span class="ck">56</span><span class="ck">82</span>
+                                      <span class="ck">58</span><span class="ck">88</span>`;
+                                      
+                    const vMat = document.getElementById('s3-v-matrix');
+                    vMat.style.gridTemplateColumns = '1fr 1fr';
+                    vMat.innerHTML = `<span class="matrix-label cv" id="s3-v-lbl">V (多维)</span>
+                                      <span class="cv">40</span><span class="cv">155</span>
+                                      <span class="cv">43</span><span class="cv">159</span>
+                                      <span class="cv">48</span><span class="cv">162</span>`;
+                }
+            },
+            {
+                text: "对于多维向量，最有效的 Score 计算方式就是点积 (Dot Product)。",
+                delay: 3500,
+                action: async () => {
+                    document.getElementById('s3-math-container').classList.remove('opacity-0');
+                    renderMath('s3-math-formula', '\\text{Score}(\\class{cq}{q}, \\class{ck}{k_i}) = \\class{cq}{q} \\cdot \\class{ck}{k_i}^T');
+                }
+            },
+            {
+                text: "如果我们同时有多个 Query，干脆把它们全部拼成矩阵 Q，运用矩阵乘法一次性算完！",
+                delay: 4500,
+                action: async () => {
+                    hideAll(); clearCanvas(); scenes[4].classList.add('active');
+                    renderMath('s4-final-math', 'f(\\class{cq}{Q}) = \\text{softmax}(\\class{cq}{Q}\\class{ck}{K}^T)\\class{cv}{V}');
+                }
+            },
+            {
+                text: "为了防止内积过大导致 Softmax 梯度消失，除以维度根号 d，这就得到了大名鼎鼎的 Attention 公式。",
+                delay: 5000,
+                action: async () => {
+                    document.getElementById('s4-title').innerText = "Scaled Dot-Product Attention";
+                    renderMath('s4-final-math', '\\text{Attention}(\\class{cq}{Q}, \\class{ck}{K}, \\class{cv}{V}) = \\text{softmax}\\left(\\frac{\\class{cq}{Q}\\class{ck}{K}^T}{\\sqrt{d_k}}\\right)\\class{cv}{V}');
+                }
+            },
+            {
+                text: "那什么是 Self-Attention 呢？很简单，如果 Q、K、V 都是从同一个输入 X 映射来的，就是自己注意自己。",
+                delay: 5500,
+                action: async () => {
+                    hideAll(); clearCanvas(); scenes[5].classList.add('active');
+                    await sleep(1000);
+                    document.getElementById('s5-weights').classList.remove('opacity-0');
+                    document.getElementById('s5-qkv').classList.remove('opacity-0');
+                }
+            },
+            {
+                text: "通过乘以三个可学习的参数矩阵 Wq, Wk, Wv，模型就能在训练中自动学习如何分配注意力。这就构成了 Transformer 的灵魂！",
+                delay: 6000,
+                action: async () => {
+                    const finalMath = document.getElementById('s5-final-formula');
+                    finalMath.classList.remove('opacity-0', 'translate-y-10');
+                    renderMath('s5-final-formula', '\\text{Self-Attention}(\\class{cx}{X}) = \\text{softmax}\\left(\\frac{(\\class{cx}{X}W_Q)(\\class{cx}{X}W_K)^T}{\\sqrt{d_k}}\\right)(\\class{cx}{X}W_V)');
+                }
+            }
+        ];
+
+        // ==== 播放控制器 ====
+        let currentStep = -1;
+        let isPlaying = false;
+        let mainTimer = null;
+
+        const uiUpdatePlayBtn = () => {
+            const btn = document.getElementById('btn-play');
+            const icon = document.getElementById('icon-play');
+            const txt = document.getElementById('text-play');
+            if (isPlaying) {
+                icon.innerHTML = '<rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect>';
+                txt.innerText = "暂停";
+            } else {
+                icon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
+                txt.innerText = "自动播放";
+            }
+        };
+
+        const executeStep = async (index) => {
+            if (index < 0 || index >= script.length) return;
+            currentStep = index;
+            
+            typeWriter(script[currentStep].text);
+            
+            if (script[currentStep].action) {
+                await script[currentStep].action();
+            }
+
+            if (isPlaying) {
+                clearTimeout(mainTimer);
+                mainTimer = setTimeout(() => {
+                    if (isPlaying) {
+                        if (currentStep < script.length - 1) {
+                            executeStep(currentStep + 1);
+                        } else {
+                            isPlaying = false;
+                            uiUpdatePlayBtn();
+                        }
+                    }
+                }, script[currentStep].delay);
+            }
+        };
+
+        document.getElementById('btn-prev').addEventListener('click', () => {
+            isPlaying = false; uiUpdatePlayBtn(); clearTimeout(mainTimer);
+            executeStep(Math.max(0, currentStep - 1));
+        });
+
+        document.getElementById('btn-next').addEventListener('click', () => {
+            isPlaying = false; uiUpdatePlayBtn(); clearTimeout(mainTimer);
+            executeStep(Math.min(script.length - 1, currentStep + 1));
+        });
+
+        document.getElementById('btn-play').addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            uiUpdatePlayBtn();
+            if (isPlaying) {
+                if (currentStep === script.length - 1) executeStep(0);
+                else executeStep(currentStep === -1 ? 0 : currentStep);
+            } else {
+                clearTimeout(mainTimer);
+            }
+        });
+
+        setTimeout(() => {
+            typeWriter("点击「自动播放」或「下一步」观看白板推演动画");
+        }, 500);
+
+    </script>
+</body>
+</html>

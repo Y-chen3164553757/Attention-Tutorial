@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>ViT 视觉变换器 · 通识讲座</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Noto+Serif+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script>
+window.MathJax={
+  tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]},
+  startup:{typeset:false}
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js"></script>
+<style>
+/* ══════════════════════════════════════
+   设计系统 — 通识课增强版
+══════════════════════════════════════ */
+:root{
+  --bg:#f8fafc;
+  --ink:#0f172a;
+  --muted:#475569;
+  --a1:#0284c7;   /* 蓝 */
+  --a2:#7c3aed;   /* 紫 */
+  --a3:#059669;   /* 绿 */
+  --glass:rgba(255, 255, 255, 0.75);
+  --gbor:rgba(15,23,42,.08);
+  --gsh:0 10px 40px rgba(0,0,0,.05);
+  --ease:cubic-bezier(.25,.46,.45,.94);
+  --serif:'Noto Serif SC','Lora',Georgia,serif;
+  --display:'Lora','Georgia',serif;
+  --mono:'JetBrains Mono','Consolas',monospace;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;
+  background:var(--bg);color:var(--ink);
+  font-family:var(--serif);font-size:16px;
+  -webkit-font-smoothing:antialiased;
+  letter-spacing:.3px;}
+
+/* 顶部进度条 */
+.progress-bar {
+  position: fixed; top: 0; left: 0; height: 4px; background: linear-gradient(90deg, var(--a1), var(--a2), var(--a3));
+  width: 0%; z-index: 999; transition: width 0.4s var(--ease);
+}
+
+.amb{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(circle at 10% 40%, rgba(2,132,199,.06) 0%, transparent 50%),
+    radial-gradient(circle at 90% 30%, rgba(124,58,237,.05) 0%, transparent 50%),
+    radial-gradient(circle at 50% 90%, rgba(5,150,105,.04) 0%, transparent 50%);}
+.amb-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(15,23,42,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(15,23,42,.03) 1px,transparent 1px);
+  background-size:40px 40px;
+  mask-image:radial-gradient(circle at center,black 40%,transparent 90%);
+  -webkit-mask-image:radial-gradient(circle at center,black 40%,transparent 90%);}
+
+.deck{position:fixed;inset:0;z-index:1; overflow-y: auto;}
+.slide{
+  position:absolute;inset:0; display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;
+  transition:opacity .6s var(--ease),transform .6s var(--ease);
+  transform:scale(.97) translateY(15px); padding: 40px 20px;
+}
+.slide.active{opacity:1;pointer-events:auto;transform:none; z-index: 10;}
+.slide.out{opacity:0;transform:scale(.97) translateY(-15px); z-index: 5;}
+
+.glass-card{
+  background:var(--glass); backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border:1px solid var(--gbor);border-radius:20px;
+  box-shadow:var(--gsh);padding:40px;
+  transition:transform .3s var(--ease),box-shadow .3s;
+}
+.glass-card:hover{ box-shadow:0 16px 50px rgba(2,132,199,.1); transform:translateY(-2px); }
+
+.grad{background:linear-gradient(135deg,var(--a1) 0%,var(--a2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.grad-green{background:linear-gradient(135deg,var(--a3) 0%,var(--a1) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+
+.eyebrow{font-size:12px;letter-spacing:.2em;color:var(--a1); text-transform:uppercase;font-weight:700;margin-bottom:12px; font-family:var(--display);}
+.display-title{font-family:var(--display);font-size:clamp(2.5rem,5vw,4.5rem); font-weight:800;letter-spacing:-.025em;line-height:1.15;margin-bottom:20px;}
+.section-title{font-family:var(--display);font-size:clamp(1.8rem,3.5vw,3rem); font-weight:800;letter-spacing:-.02em;line-height:1.2;margin-bottom:20px;}
+.body-text{font-size:clamp(1rem,1.5vw,1.25rem);color:var(--muted); line-height:1.7;font-family:var(--serif);}
+.accent-rule{width:60px;height:4px;border-radius:2px;margin:16px 0; background:linear-gradient(90deg,var(--a1),var(--a2));}
+
+.two-col{display:flex;gap:50px;align-items:center; width:100%;max-width:1300px;padding:0 60px;height:100%;}
+.col-left{flex:1.1;display:flex;flex-direction:column;justify-content:center;}
+.col-right{flex:0.9;display:flex;flex-direction:column;justify-content:center;}
+.center-col { display:flex;flex-direction:column;align-items:center; width:100%;max-width:1000px;padding:0 40px; }
+
+.nav{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  display:flex;gap:8px;z-index:200; background:rgba(255,255,255,.95);backdrop-filter:blur(24px);
+  padding:10px 16px;border-radius:100px; border:1px solid var(--gbor); box-shadow:0 8px 32px rgba(0,0,0,.08);
+}
+.nav-btn{
+  background:transparent;border:none;color:var(--ink); padding:10px 24px;border-radius:100px;cursor:pointer;
+  font-size:1rem;font-weight:600; transition:all .2s;font-family:var(--serif);
+}
+.nav-btn:hover{background:rgba(2,132,199,.1);color:var(--a1);}
+.nav-dots-wrap{display:flex;gap:8px;align-items:center;padding:0 12px;}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:rgba(15,23,42,.15); border:none;cursor:pointer;padding:0;transition:all .25s;}
+.nav-dot.on{background:var(--a1);transform:scale(1.5);}
+.slide-num{
+  position:fixed;top:30px;right:40px; font-family:var(--display);font-size:1rem;font-weight:700;
+  color:var(--a1);z-index:200;letter-spacing:2px; background:rgba(2,132,199,.05);
+  padding:8px 16px;border-radius:10px; border:1px solid rgba(2,132,199,.15);
+}
+
+.insight-box{
+  background:linear-gradient(135deg,rgba(2,132,199,.06) 0%,rgba(124,58,237,.03) 100%);
+  border:1.5px solid rgba(2,132,199,.15);border-radius:16px;
+  padding:20px 26px;font-size:1.05rem;line-height:1.6; font-family:var(--serif);margin-top:20px;
+}
+
+/* S2 Patch 动画增强 */
+.demo-stage { width: 100%; height: 260px; display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 24px; }
+.patch-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 0px; width: 180px; height: 180px;
+  transition: all 0.8s var(--spring); transform-style: preserve-3d;
+}
+.patch-grid.sliced { gap: 10px; transform: scale(1.15); }
+.patch-grid.flattened { display: flex; gap: 8px; width: 100%; height: 60px; justify-content: center; transform: scale(1); }
+.patch-cell {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180"><rect width="180" height="180" fill="%23e2e8f0"/><circle cx="90" cy="80" r="45" fill="%23cbd5e1"/><path d="M10 180 L70 90 L130 150 L180 100 L180 180 Z" fill="%2394a3b8"/></svg>');
+  width: 100%; height: 100%; transition: all 0.8s var(--spring); border-radius: 4px; position: relative;
+}
+.patch-cell::after {
+  content: attr(data-pos); position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 1.2rem; font-weight: 700; color: white; background: rgba(0,0,0,0.4);
+  opacity: 0; transition: opacity 0.4s; border-radius: inherit;
+}
+.patch-grid.sliced .patch-cell { box-shadow: 0 6px 16px rgba(2,132,199,.2); border: 2px solid rgba(2,132,199,.4); }
+.patch-grid.flattened .patch-cell { width: 45px; height: 45px; border-radius: 8px; border-width: 1px; }
+.patch-grid.positioned .patch-cell::after { opacity: 1; }
+
+.patch-cell:nth-child(1) { background-position: 0% 0%; }
+.patch-cell:nth-child(2) { background-position: 50% 0%; }
+.patch-cell:nth-child(3) { background-position: 100% 0%; }
+.patch-cell:nth-child(4) { background-position: 0% 50%; }
+.patch-cell:nth-child(5) { background-position: 50% 50%; }
+.patch-cell:nth-child(6) { background-position: 100% 50%; }
+.patch-cell:nth-child(7) { background-position: 0% 100%; }
+.patch-cell:nth-child(8) { background-position: 50% 100%; }
+.patch-cell:nth-child(9) { background-position: 100% 100%; }
+
+.demo-btn {
+  padding: 12px 24px; border-radius: 10px; border: none; cursor: pointer;
+  background: linear-gradient(135deg, var(--a1), var(--a2)); color: white;
+  font-family: var(--display); font-weight: 700; font-size: 1rem;
+  box-shadow: 0 6px 16px rgba(2,132,199,.25); transition: all 0.2s;
+}
+.demo-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(2,132,199,.35); }
+.demo-btn:disabled { background: var(--muted); opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* S4 CNN vs ViT 交互网格 */
+.vs-wrap { display: flex; gap: 60px; width: 100%; justify-content: center; margin-top: 30px; }
+.vs-box { flex: 1; max-width: 340px; display: flex; flex-direction: column; align-items: center; }
+.vs-title { font-family: var(--display); font-size: 1.25rem; font-weight: 800; margin-bottom: 20px; text-align:center;}
+.vs-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;
+  background: rgba(15,23,42,.04); border: 1px solid var(--gbor); padding: 8px; border-radius: 12px;
+}
+.vs-cell { width: 38px; height: 38px; background: rgba(255,255,255,.9); border-radius: 6px; transition: all 0.25s ease; cursor: crosshair; }
+/* CNN: 红色管状视野 */
+.vs-cell.cnn-hover { background: #ef4444; transform: scale(1.15); z-index: 2; box-shadow: 0 4px 12px rgba(239,68,68,0.5); border-radius: 50%; }
+.vs-cell.cnn-neighbor { background: rgba(239,68,68,0.3); border-radius: 50%;}
+/* ViT: 蓝色全局星空视野 */
+.vs-cell.vit-hover { background: var(--a1); transform: scale(1.15); z-index: 2; box-shadow: 0 4px 12px rgba(2,132,199,0.5); }
+.vs-cell.vit-related { background: rgba(2,132,199,0.45); animation: pulse 1.5s infinite; }
+@keyframes pulse { 0% { opacity: 0.5; transform:scale(0.95); } 50% { opacity: 1; background: rgba(2,132,199,0.6); transform:scale(1.05); } 100% { opacity: 0.5; transform:scale(0.95); } }
+
+/* ═══ DINOv3 WebML 样式集成 ═══ */
+.dino-ui-wrap {
+  width:100%; height: 500px; display:flex; flex-direction:column; 
+  border-radius:16px; overflow:hidden; border:1px solid var(--gbor); 
+  box-shadow:0 12px 40px rgba(0,0,0,0.1); background: #ffffff; position: relative;
+}
+.dino-toolbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 20px; background: rgba(15,23,42,.03); border-bottom: 1px solid var(--gbor);
+  font-size: 0.95rem; flex-shrink: 0; flex-wrap: wrap; gap: 10px;
+}
+.dino-status {
+  display: flex; align-items: center; gap: 8px; color: var(--a1);
+  font-family: var(--serif); font-weight: 600; font-size: 0.9rem;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.dino-spinner { width: 16px; height: 16px; animation: spin 1s linear infinite; display: none; }
+.dino-dropzone {
+  flex: 1; position: relative; display: flex; align-items: center; justify-content: center;
+  background: var(--bg); cursor: pointer; transition: all 0.3s;
+}
+.dino-dropzone.dashed {
+  border: 2px dashed rgba(2,132,199,0.3); border-radius: 12px; margin: 16px;
+  width: calc(100% - 32px); height: calc(100% - 32px); background: rgba(2,132,199,0.02);
+}
+.dino-dropzone.dragover { border-color: var(--a1); background: rgba(2,132,199,0.08); }
+.dino-placeholder { text-align: center; color: var(--muted); pointer-events: none; }
+#dinoCanvas { display: none; max-width: 100%; max-height: 100%; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); cursor: crosshair; }
+/* 自定义 Toggle Switch */
+.switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 24px; }
+.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+input:checked + .slider { background-color: var(--a1); }
+input:checked + .slider:before { transform: translateX(20px); }
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
+.slide.active .anim-1{animation:fadeUp .8s cubic-bezier(.16,1,.3,1) .05s both;}
+.slide.active .anim-2{animation:fadeUp .8s cubic-bezier(.16,1,.3,1) .15s both;}
+.slide.active .anim-3{animation:fadeUp .8s cubic-bezier(.16,1,.3,1) .25s both;}
+.slide.active .anim-4{animation:fadeUp .8s cubic-bezier(.16,1,.3,1) .35s both;}
+.slide.active .anim-5{animation:fadeUp .8s cubic-bezier(.16,1,.3,1) .45s both;}
+
+@media (max-width: 960px) {
+  .two-col { flex-direction: column; padding: 0 20px; gap: 30px; }
+  .center-col { padding: 0 20px; }
+  .col-left, .col-right { width: 100%; padding: 0 !important; }
+  .slide { padding-top: 60px; padding-bottom: 100px; }
+  .vs-wrap { flex-direction: column; align-items: center; gap:30px;}
+  .dino-ui-wrap { height: 400px; }
+  .dino-toolbar { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+<div class="amb"></div>
+<div class="amb-grid"></div>
+
+<div class="deck" id="deck">
+
+<!-- SLIDE 1: Intro -->
+<div class="slide active" id="s0">
+  <div class="two-col">
+    <div class="col-left">
+      <div class="eyebrow anim-1">Vision Transformer · 01</div>
+      <h1 class="display-title anim-2">
+        AI 如何拥有<br><span class="grad">全局视野？</span>
+      </h1>
+      <div class="accent-rule anim-3"></div>
+      <p class="body-text anim-3" style="margin-bottom:20px;">
+        过去，AI 看图片就像“盲人摸象”，只能通过卷积网络（CNN）一点点扫描局部特征。<br><br>
+        2020年，谷歌提出了一个颠覆认知的想法：<br>
+        <strong style="color:var(--a1); font-size:1.35rem;">把图片当成一句话来读！</strong>
+      </p>
+      <div class="insight-box anim-4" style="background:var(--bg);">
+        💡 <strong>通识之问：</strong><br>
+        如果直接把每个像素当成一个词，一张普通手机照片会有几千万个“词”，AI 根本算不过来。<br>
+        <strong>如何给图片“分词”呢？</strong>
+      </div>
+    </div>
+    <div class="col-right anim-3">
+      <div class="glass-card" style="text-align:center; padding: 50px 30px;">
+        <div style="font-size:4rem; margin-bottom:20px; line-height:1;">🖼️ ➔ 🧩 ➔ 🔤</div>
+        <div style="font-family:var(--display);font-size:1.4rem;font-weight:800;margin-bottom:12px;color:var(--ink);">
+          跨越模态的统一
+        </div>
+        <div class="body-text" style="font-size:1.05rem;">
+          用处理自然语言的 Transformer 架构，<br>直接征服视觉领域。
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 2: Patching -->
+<div class="slide" id="s1">
+  <div class="center-col">
+    <div class="eyebrow anim-1">Image Serialization · 02</div>
+    <h2 class="section-title anim-2" style="text-align:center;">
+      第一步：像切蛋糕一样<span class="grad">切分图片</span>
+    </h2>
+    <div class="accent-rule anim-2" style="margin:0 auto 20px;"></div>
+    <p class="body-text anim-3" style="text-align:center;max-width:800px;margin-bottom:30px;">
+      ViT 的第一步异常简单粗暴：将图片切分为固定大小的“小方块（Patch）”。<br>
+      每个方块就像拼图的一角，<strong>在 AI 眼里，它就等同于一句话中的一个“词（Token）”</strong>。
+    </p>
+
+    <div class="glass-card anim-4" style="width:100%; max-width: 860px; text-align:center; padding: 30px;">
+      <div class="demo-stage" id="patchStage">
+        <div class="patch-grid" id="patchGrid">
+          <!-- 3x3 injected by JS -->
+        </div>
+      </div>
+      <div style="display:flex;gap:16px;justify-content:center; flex-wrap:wrap;">
+        <button class="demo-btn" id="btnSlice" onclick="demoSlice()">1. 切成小方块</button>
+        <button class="demo-btn" id="btnFlatten" onclick="demoFlatten()" disabled style="background:linear-gradient(135deg,var(--a3),var(--a1))">2. 排成一列 (展平)</button>
+        <button class="demo-btn" id="btnPos" onclick="demoPos()" disabled style="background:linear-gradient(135deg,var(--a2),var(--a1))">3. 盖上位置编号</button>
+        <button class="demo-btn" id="btnReset" onclick="demoReset()" style="background:var(--muted); color:white;">↺ 重置</button>
+      </div>
+      <div class="insight-box" id="patchDesc" style="margin-top:24px; font-size:1rem; text-align:center; font-weight:500;">
+        一张完整的图像（未经过任何处理）。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: Architecture -->
+<div class="slide" id="s2">
+  <div class="two-col">
+    <div class="col-left">
+      <div class="eyebrow anim-1">Unified Architecture · 03</div>
+      <h2 class="section-title anim-2">
+        万物同源的 <span class="grad-green">Q / K / V</span>
+      </h2>
+      <div class="accent-rule anim-2"></div>
+      <p class="body-text anim-3" style="margin-bottom:20px;">
+        图片变成序列后，剩下的就和 ChatGPT 处理文字<strong>完全一样</strong>了！<br>
+        每个图像块化身为 <strong>Q（查询）、K（标签）、V（内容）</strong>，在网络中互相交流。
+      </p>
+      
+      <div class="anim-4" style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
+        <div style="padding:16px; background:rgba(2,132,199,.06); border:1px solid rgba(2,132,199,.2); border-radius:12px;">
+          <strong style="color:var(--a1); font-size:1.1rem;">🔍 Q (Query)：找朋友</strong><br>
+          <span class="body-text" style="font-size:0.95rem;">这个车轮块问：“谁是车身？谁是马路？”</span>
+        </div>
+        <div style="padding:16px; background:rgba(5,150,105,.06); border:1px solid rgba(5,150,105,.2); border-radius:12px;">
+          <strong style="color:var(--a3); font-size:1.1rem;">🏷️ K (Key)：亮身份</strong><br>
+          <span class="body-text" style="font-size:0.95rem;">其他方块回答：“我是金属材质！”、“我是黑色柏油！”</span>
+        </div>
+      </div>
+      
+      <div class="insight-box anim-5" style="margin-top:0;">
+        通过这种问答机制，远在天边的像素块瞬间建立了语义联系，这就是<strong>自注意力机制（Self-Attention）</strong>的魔法。
+      </div>
+    </div>
+    <div class="col-right anim-3">
+      <div class="glass-card" style="display:flex;flex-direction:column;align-items:center;gap:16px; padding:40px 20px;">
+        <div style="display:flex;gap:8px;">
+          <div style="width:40px;height:40px;background:#cbd5e1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:bold;color:#fff;">1</div>
+          <div style="width:40px;height:40px;background:#94a3b8;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:bold;color:#fff;">2</div>
+          <div style="width:40px;height:40px;background:#64748b;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:bold;color:#fff;">3</div>
+        </div>
+        <div style="color:var(--muted);font-size:1.5rem; font-weight:bold;">↓</div>
+        <div style="font-family:var(--display);font-weight:700;color:var(--a3);font-size:1.1rem; text-align:center;">
+          送入 Transformer
+        </div>
+        <div style="color:var(--muted);font-size:1.5rem; font-weight:bold;">↓</div>
+        <div style="display:flex;gap:12px;">
+          <div style="padding:10px 18px;background:rgba(2,132,199,.1);border:2px solid rgba(2,132,199,.3);border-radius:8px;color:var(--a1);font-weight:800;font-size:1.2rem;">Q</div>
+          <div style="padding:10px 18px;background:rgba(5,150,105,.1);border:2px solid rgba(5,150,105,.3);border-radius:8px;color:var(--a3);font-weight:800;font-size:1.2rem;">K</div>
+          <div style="padding:10px 18px;background:rgba(124,58,237,.1);border:2px solid rgba(124,58,237,.3);border-radius:8px;color:var(--a2);font-weight:800;font-size:1.2rem;">V</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: CNN vs ViT -->
+<div class="slide" id="s3">
+  <div class="center-col">
+    <div class="eyebrow anim-1">Local vs Global · 04</div>
+    <h2 class="section-title anim-2" style="text-align:center;">
+      <span class="grad">近视眼</span> vs <span class="grad">上帝视角</span>
+    </h2>
+    <div class="accent-rule anim-2" style="margin:0 auto 16px;"></div>
+    <p class="body-text anim-3" style="text-align:center;max-width:860px;">
+      请将鼠标在下方网格中移动。传统的 CNN 就像拿着手电筒，只能看到光圈内的邻居；<br>
+      而 ViT 在第一眼，就能跨越整个屏幕，找到与其内在特征相关的任何区域。
+    </p>
+
+    <div class="vs-wrap anim-4">
+      <div class="vs-box">
+        <div class="vs-title" style="color:#ef4444;">传统 CNN：局部感受野</div>
+        <div class="vs-grid" id="cnnGrid" onmouseleave="clearGrids()"></div>
+        <div class="insight-box" style="margin-top:20px; font-size:0.95rem; width:100%; text-align:center; background:rgba(239,68,68,.05); border-color:rgba(239,68,68,.2);">
+          只能看到相邻的 3x3 邻居<br>必须叠几百层才能勉强看清全图。
+        </div>
+      </div>
+      
+      <div class="vs-box">
+        <div class="vs-title" style="color:var(--a1);">ViT：全局注意力</div>
+        <div class="vs-grid" id="vitGrid" onmouseleave="clearGrids()"></div>
+        <div class="insight-box" style="margin-top:20px; font-size:0.95rem; width:100%; text-align:center;">
+          无视物理距离<br>直接点亮全图中具有<strong style="color:var(--a1)">相同语义</strong>的区域。
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: DINOv3 Real Demo (WebML) -->
+<div class="slide" id="s4">
+  <div class="center-col" style="max-width: 1100px;">
+    <div class="eyebrow anim-1">Live WebML Demo · 05</div>
+    <h2 class="section-title anim-2" style="text-align:center;">
+      <span class="grad">DINOv3</span>：真正在浏览器本地运行的 ViT
+    </h2>
+    <div class="accent-rule anim-2" style="margin:0 auto 16px;"></div>
+    <p class="body-text anim-3" style="text-align:center;max-width:860px; margin-bottom: 20px;">
+      理论不如实践。下面集成了基于 <strong>Transformers.js</strong> 驱动的 DINOv3 模型。<br>
+      你可以在下方直接上传图片，模型会在你的设备本地实时计算特征并渲染注意力热力图！
+    </p>
+
+    <!-- 纯前端 DINOv3 UI 容器 -->
+    <div class="anim-4 dino-ui-wrap">
+      <div class="dino-toolbar">
+        <div style="display:flex; gap:16px; align-items:center;">
+          <button id="dinoExampleBtn" style="padding:6px 14px; background:var(--a1); color:white; border:none; border-radius:6px; cursor:pointer; font-family:var(--serif); font-weight:600; font-size:0.9rem;">加载示例图片</button>
+          <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-weight:500;">
+            <span style="color:var(--ink)">本地上传图</span>
+            <input type="file" id="dinoImageLoader" accept="image/*" style="display:none;" />
+          </label>
+        </div>
+        <div class="dino-status" id="dinoStatus">
+          <svg id="dinoSpinner" class="dino-spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" stroke-opacity="0.25"></circle>
+            <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span id="dinoStatusText">正在初始化浏览器 AI 引擎...</span>
+        </div>
+        <div style="display:flex; gap:12px; align-items:center; font-weight:500;">
+          <span style="color:var(--muted)">纯热力图</span>
+          <label class="switch">
+            <input type="checkbox" id="dinoModeToggle" checked>
+            <span class="slider"></span>
+          </label>
+          <span style="color:var(--muted)">原图叠加</span>
+        </div>
+      </div>
+      
+      <div class="dino-dropzone dashed" id="dinoDropZone">
+        <div class="dino-placeholder" id="dinoPlaceholder">
+          <div style="font-size:3rem; margin-bottom:12px;">🖼️</div>
+          <div style="font-size:1.2rem; font-weight:700; color:var(--ink); margin-bottom:6px;">点击上传 或 拖拽图片至此</div>
+          <div style="font-size:0.9rem; margin-bottom:12px;">(支持 PNG, JPG 等格式)</div>
+          <div style="font-size:0.8rem; padding: 6px 12px; background: rgba(3,105,161,0.08); border-radius:4px; display:inline-block; color:var(--a1);">
+            🔒 所有推理计算均在您的设备本地完成，不上云端
+          </div>
+        </div>
+        <canvas id="dinoCanvas"></canvas>
+      </div>
+    </div>
+    
+    <div class="insight-box anim-5" style="text-align:center; font-size:1rem; width:100%; max-width:860px; padding:12px 24px; margin-top:16px;">
+      🔥 <strong>交互提示：</strong>上传图片后，将鼠标悬停在图像的各个位置。由于 DINOv3 深度理解了像素间的全局关联，你会发现光标附近的整个物体或相同语义区域会被瞬间点亮！
+    </div>
+  </div>
+</div>
+
+</div><!-- /deck -->
+
+<div class="nav">
+  <button class="nav-btn" onclick="go(cur-1)">‹ 上一页</button>
+  <div class="nav-dots-wrap" id="navDots"></div>
+  <button class="nav-btn" onclick="go(cur+1)">下一页 ›</button>
+</div>
+<div class="slide-num" id="slideNum">1 / 5</div>
+
+<!-- ══════════════════════════════════
+   核心逻辑层
+══════════════════════════════════ -->
+<script>
+/* ═══ 幻灯片引擎 ═══ */
+const N=5; let cur=0; const done=new Set();
+
+function updateProgress() {
+  document.getElementById('progressBar').style.width = ((cur + 1) / N * 100) + '%';
+  document.getElementById('slideNum').textContent = (cur + 1) + ' / ' + N;
+}
+
+function go(n){
+  if(n<0||n>=N) return;
+  const ss=document.querySelectorAll('.slide');
+  ss[cur].classList.remove('active'); ss[cur].classList.add('out');
+  const old=cur; cur=n; ss[cur].classList.add('active');
+  document.querySelectorAll('.nav-dot').forEach((d,i)=>d.classList.toggle('on',i===cur));
+  updateProgress();
+  setTimeout(()=>{
+    ss[old].classList.remove('out');
+    if(!done.has(cur)){done.add(cur);boot(cur);}
+  },80);
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();go(cur+1);}
+  if(e.key==='ArrowLeft'){e.preventDefault();go(cur-1);}
+});
+const nd=document.getElementById('navDots');
+for(let i=0;i<N;i++){
+  const d=document.createElement('button');
+  d.className='nav-dot'+(i===0?' on':'');
+  d.onclick=()=>go(i); nd.appendChild(d);
+}
+function boot(n){
+  if(n===1) initPatchDemo();
+  if(n===3) initVSGrids();
+}
+
+/* ═══ S2: Patch Demo ═══ */
+let patchInited = false;
+function initPatchDemo() {
+  if (patchInited) return; patchInited = true;
+  const grid = document.getElementById('patchGrid');
+  grid.innerHTML = '';
+  for(let i=0; i<9; i++) {
+    let cell = document.createElement('div');
+    cell.className = 'patch-cell';
+    cell.setAttribute('data-pos', i+1);
+    grid.appendChild(cell);
+  }
+}
+function demoSlice() {
+  const grid = document.getElementById('patchGrid');
+  grid.className = 'patch-grid sliced';
+  document.getElementById('btnSlice').disabled = true;
+  document.getElementById('btnFlatten').disabled = false;
+  document.getElementById('patchDesc').innerHTML = '<strong>图像被物理切断。</strong><br>传统的一张大图，变成了 9 块互不相连的拼图。';
+}
+function demoFlatten() {
+  const grid = document.getElementById('patchGrid');
+  grid.className = 'patch-grid flattened';
+  document.getElementById('btnFlatten').disabled = true;
+  document.getElementById('btnPos').disabled = false;
+  document.getElementById('patchDesc').innerHTML = '<strong>排成一队（展平）。</strong><br>但问题来了：现在它们全长得一样，AI 怎么知道谁是左上角，谁是右下角？';
+}
+function demoPos() {
+  const grid = document.getElementById('patchGrid');
+  grid.classList.add('positioned');
+  document.getElementById('btnPos').disabled = true;
+  document.getElementById('patchDesc').innerHTML = '<strong>注入位置编号（Position Embedding）！</strong><br>现在，带有编号的方块正式成为了可以喂给大模型的 <strong>Token</strong>！';
+}
+function demoReset() {
+  const grid = document.getElementById('patchGrid');
+  grid.className = 'patch-grid';
+  document.getElementById('btnSlice').disabled = false;
+  document.getElementById('btnFlatten').disabled = true;
+  document.getElementById('btnPos').disabled = true;
+  document.getElementById('patchDesc').innerHTML = '一张完整的图像（未经过任何处理）。';
+}
+
+/* ═══ S4: CNN vs ViT 交互 ═══ */
+let vsInited = false;
+const VS_SIZE = 7;
+// 隐藏的语义蒙版 (模拟一个圆环形状)
+const semanticMask = [
+  0,0,1,1,1,0,0,
+  0,1,0,0,0,1,0,
+  1,0,0,0,0,0,1,
+  1,0,0,0,0,0,1,
+  1,0,0,0,0,0,1,
+  0,1,0,0,0,1,0,
+  0,0,1,1,1,0,0
+];
+
+function initVSGrids() {
+  if (vsInited) return; vsInited = true;
+  const cGrid = document.getElementById('cnnGrid');
+  const vGrid = document.getElementById('vitGrid');
+  for(let i=0; i<VS_SIZE*VS_SIZE; i++) {
+    let cCell = document.createElement('div');
+    cCell.className = 'vs-cell'; cCell.id = 'cnn_'+i;
+    cCell.onmouseenter = () => hoverCell(i);
+    cGrid.appendChild(cCell);
+    
+    let vCell = document.createElement('div');
+    vCell.className = 'vs-cell'; vCell.id = 'vit_'+i;
+    vCell.onmouseenter = () => hoverCell(i);
+    vGrid.appendChild(vCell);
+  }
+}
+function hoverCell(idx) {
+  clearGrids();
+  const cx = idx % VS_SIZE;
+  const cy = Math.floor(idx / VS_SIZE);
+  // CNN 局部
+  for(let dy=-1; dy<=1; dy++) {
+    for(let dx=-1; dx<=1; dx++) {
+      let nx = cx + dx, ny = cy + dy;
+      if(nx>=0 && nx<VS_SIZE && ny>=0 && ny<VS_SIZE) {
+        let nIdx = ny * VS_SIZE + nx;
+        let cell = document.getElementById('cnn_'+nIdx);
+        if(dx===0 && dy===0) cell.classList.add('cnn-hover');
+        else cell.classList.add('cnn-neighbor');
+      }
+    }
+  }
+  // ViT 全局
+  let isTarget = semanticMask[idx] === 1;
+  for(let i=0; i<VS_SIZE*VS_SIZE; i++) {
+    let cell = document.getElementById('vit_'+i);
+    if(i === idx) {
+      cell.classList.add('vit-hover');
+    } else {
+      if (isTarget && semanticMask[i] === 1) {
+        cell.classList.add('vit-related');
+      } else if (!isTarget && semanticMask[i] === 0 && Math.random() > 0.7) {
+        cell.classList.add('vit-related');
+      }
+    }
+  }
+}
+function clearGrids() {
+  document.querySelectorAll('.vs-cell').forEach(el => { el.className = 'vs-cell'; });
+}
+
+window.addEventListener('load',()=>{
+  updateProgress();
+  done.add(0);
+});
+</script>
+
+<!-- ══════════════════════════════════
+   S5: DINOv3 本地 Transformers.js 逻辑
+══════════════════════════════════ -->
+<script type="module">
+  import { pipeline, RawImage, matmul } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2";
+
+  // 模型配置
+  const MODEL_ID = "onnx-community/dinov3-vits16-pretrain-lvd1689m-ONNX";
+  const EXAMPLE_IMAGE_URL = "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/cats.png";
+
+  // DOM 元素绑定
+  const imageLoader = document.getElementById("dinoImageLoader");
+  const exampleBtn = document.getElementById("dinoExampleBtn");
+  const imageCanvas = document.getElementById("dinoCanvas");
+  const ctx = imageCanvas.getContext("2d");
+  const spinner = document.getElementById("dinoSpinner");
+  const statusText = document.getElementById("dinoStatusText");
+  const dropZone = document.getElementById("dinoDropZone");
+  const placeholder = document.getElementById("dinoPlaceholder");
+  const modeToggle = document.getElementById("dinoModeToggle");
+
+  // 应用状态
+  let extractor = null;
+  let similarityScores = null;
+  let originalImage = null;
+  let patchSize = null;
+  let isOverlayMode = true; // 默认 checked 是原图叠加
+  let lastHoverData = null;
+  let animationFrameId = null;
+  let lastMouseEvent = null;
+  let maxPixels = null;
+
+  // 更新UI状态提示
+  function updateStatus(text, isLoading = false) {
+    statusText.textContent = text;
+    spinner.style.display = isLoading ? "block" : "none";
+  }
+
+  // 初始化模型引擎
+  async function initWebML() {
+    const isWebGpuSupported = !!navigator.gpu;
+    const isMobile = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    maxPixels = isMobile ? 1048576 : 2097152; // 限制手机显存
+
+    const device = isWebGpuSupported ? "webgpu" : "wasm";
+    const dtype = isWebGpuSupported ? "q4" : "q8";
+
+    let msg = `正在加载 AI 模型 (${device.toUpperCase()})`;
+    if (isMobile) msg += " · 检测为移动设备";
+    updateStatus(msg + " (首次加载可能需几十秒)...", true);
+
+    try {
+      extractor = await pipeline("image-feature-extraction", MODEL_ID, {
+        device, dtype
+      });
+      extractor.processor.image_processor.do_resize = false;
+      patchSize = extractor.model.config.patch_size;
+      updateStatus("✅ 模型就绪。请选择或拖拽图片进行分析。");
+      dropZone.classList.remove('dashed'); 
+      dropZone.classList.add('dashed'); // 激活边框
+    } catch (error) {
+      updateStatus("模型加载失败，请刷新页面重试。");
+      console.error("Model loading error:", error);
+    }
+
+    // 绑定事件
+    imageLoader.addEventListener("change", handleImageUpload);
+    exampleBtn.addEventListener("click", handleExample);
+    imageCanvas.addEventListener("mousemove", handleMouseMove);
+    imageCanvas.addEventListener("mouseleave", clearHighlights);
+    imageCanvas.addEventListener("touchmove", handleTouchMove, {passive: false});
+    imageCanvas.addEventListener("touchend", clearHighlights);
+    dropZone.addEventListener("dragover", handleDragOver);
+    dropZone.addEventListener("dragleave", handleDragLeave);
+    dropZone.addEventListener("drop", handleDrop);
+    modeToggle.addEventListener("change", handleModeChange);
+  }
+
+  // 事件处理
+  async function handleExample() {
+    updateStatus("正在下载示例图片...", true);
+    try {
+      // 规避可能得CORS问题直接将图片转为Blob
+      const response = await fetch(EXAMPLE_IMAGE_URL);
+      const blob = await response.blob();
+      loadImageOntoCanvas(URL.createObjectURL(blob));
+    } catch (error) {
+      updateStatus("加载示例图片失败。");
+      console.error(error);
+    }
+  }
+
+  function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (file) loadImageOntoCanvas(URL.createObjectURL(file));
+  }
+
+  function handleDragOver(event) { event.preventDefault(); dropZone.classList.add("dragover"); }
+  function handleDragLeave(event) { event.preventDefault(); dropZone.classList.remove("dragover"); }
+  function handleDrop(event) {
+    event.preventDefault(); dropZone.classList.remove("dragover");
+    const file = event.dataTransfer.files[0];
+    if (file && file.type.startsWith("image/")) {
+      loadImageOntoCanvas(URL.createObjectURL(file));
+    }
+  }
+
+  function handleModeChange(event) {
+    isOverlayMode = event.target.checked;
+    if (lastHoverData) drawHighlights(lastHoverData.queryIndex, lastHoverData.allPatches);
+    else clearHighlights();
+  }
+
+  // 加载与画布绘制
+  function loadImageOntoCanvas(imageUrl) {
+    originalImage = new Image();
+    originalImage.onload = async () => {
+      if (!patchSize) { updateStatus("模型尚未就绪，请稍等..."); return; }
+
+      placeholder.style.display = "none";
+      imageCanvas.style.display = "block";
+      dropZone.classList.remove("dashed"); // 取消虚线背景方便看图
+
+      // 容器自适应缩放 (限制尺寸防爆显存)
+      const containerW = dropZone.clientWidth - 20;
+      const containerH = dropZone.clientHeight - 20;
+      let scale = Math.min(containerW / originalImage.naturalWidth, containerH / originalImage.naturalHeight);
+      if (scale > 1) scale = 1; // 不放大原图
+
+      let newWidth = originalImage.naturalWidth * scale;
+      let newHeight = originalImage.naturalHeight * scale;
+
+      const numPixels = newWidth * newHeight;
+      if (numPixels > maxPixels) {
+        const sr = Math.sqrt(maxPixels / numPixels);
+        newWidth *= sr; newHeight *= sr;
+      }
+
+      // 将尺寸对齐到 PatchSize 的整数倍
+      const croppedWidth = Math.floor(newWidth / patchSize) * patchSize;
+      const croppedHeight = Math.floor(newHeight / patchSize) * patchSize;
+
+      if (croppedWidth < patchSize || croppedHeight < patchSize) {
+        updateStatus("图片缩放后过小，无法处理。"); return;
+      }
+
+      imageCanvas.width = croppedWidth;
+      imageCanvas.height = croppedHeight;
+      ctx.drawImage(originalImage, 0, 0, croppedWidth, croppedHeight);
+
+      await processImage();
+    };
+    originalImage.src = imageUrl;
+  }
+
+  // Transformer 推理
+  async function processImage() {
+    if (!extractor) return;
+    updateStatus("🧠 AI 正在本地计算 ViT 全局注意力特征...", true);
+    similarityScores = null; lastHoverData = null;
+    
+    try {
+      const imageData = await RawImage.fromCanvas(imageCanvas);
+      // 执行提取
+      const features = await extractor(imageData, { pooling: "none" });
+      const numRegisterTokens = extractor.model.config.num_register_tokens ?? 0;
+      const startIndex = 1 + numRegisterTokens; // 略过 cls token
+      const patchFeatures = features.slice(null, [startIndex, null]);
+      
+      // L2 归一化并计算矩阵点积(余弦相似度)
+      const normalizedFeatures = patchFeatures.normalize(2, -1);
+      const scores = await matmul(normalizedFeatures, normalizedFeatures.permute(0, 2, 1));
+      similarityScores = (await scores.tolist())[0];
+      
+      updateStatus(`✨ 分析完成！尺寸: ${imageCanvas.width}x${imageCanvas.height}。请用鼠标/手指在图片上滑动探索注意力。`);
+    } catch (error) {
+      updateStatus("处理过程中出现错误，请检查控制台。");
+      console.error(error);
+    }
+  }
+
+  // 交互与渲染
+  function handleTouchMove(event) {
+    if (event.touches.length > 0) {
+      event.preventDefault(); // 防止屏幕滚动
+      handleMouseMove(event.touches[0]);
+    }
+  }
+
+  function handleMouseMove(event) {
+    lastMouseEvent = event;
+    if (!animationFrameId) animationFrameId = requestAnimationFrame(drawLoop);
+  }
+
+  function drawLoop() {
+    if (!lastMouseEvent || !similarityScores || !originalImage) {
+      animationFrameId = null; return;
+    }
+
+    const rect = imageCanvas.getBoundingClientRect();
+    const scaleX = imageCanvas.width / rect.width;
+    const scaleY = imageCanvas.height / rect.height;
+    const x = (lastMouseEvent.clientX - rect.left) * scaleX;
+    const y = (lastMouseEvent.clientY - rect.top) * scaleY;
+
+    if (x < 0 || x >= imageCanvas.width || y < 0 || y >= imageCanvas.height) {
+      animationFrameId = null; return;
+    }
+
+    const patchesPerRow = imageCanvas.width / patchSize;
+    const patchX = Math.floor(x / patchSize);
+    const patchY = Math.floor(y / patchSize);
+    const queryPatchIndex = patchY * patchesPerRow + patchX;
+
+    if (queryPatchIndex < 0 || queryPatchIndex >= similarityScores.length || !similarityScores[queryPatchIndex]) {
+      animationFrameId = null; return;
+    }
+
+    const allPatches = Array.from(similarityScores[queryPatchIndex]).map((score, index) => ({ score, index }));
+    lastHoverData = { queryIndex: queryPatchIndex, allPatches };
+    drawHighlights(queryPatchIndex, allPatches);
+
+    animationFrameId = null;
+  }
+
+  // 热力图颜色映射 (Inferno)
+  const INFERNO = [
+    [0.0, [0, 0, 4]], [0.1, [39, 12, 69]], [0.2, [84, 15, 104]], [0.3, [128, 31, 103]],
+    [0.4, [170, 48, 88]], [0.5, [209, 70, 68]], [0.6, [240, 97, 47]], [0.7, [253, 138, 28]],
+    [0.8, [252, 185, 26]], [0.9, [240, 231, 56]], [1.0, [252, 255, 160]]
+  ];
+  function getInfernoColor(t) {
+    for (let i = 1; i < INFERNO.length; i++) {
+      const [t_prev, c_prev] = INFERNO[i - 1];
+      const [t_curr, c_curr] = INFERNO[i];
+      if (t <= t_curr) {
+        const ti = (t - t_prev) / (t_curr - t_prev);
+        const r = c_prev[0] + ti * (c_curr[0] - c_prev[0]);
+        const g = c_prev[1] + ti * (c_curr[1] - c_prev[1]);
+        const b = c_prev[2] + ti * (c_curr[2] - c_prev[2]);
+        return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+      }
+    }
+    return `rgb(252,255,160)`;
+  }
+
+  function drawHighlights(queryIndex, allPatches) {
+    const patchesPerRow = imageCanvas.width / patchSize;
+
+    // 清空重绘底层
+    if (isOverlayMode) {
+      ctx.drawImage(originalImage, 0, 0, imageCanvas.width, imageCanvas.height);
+      ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
+      ctx.fillRect(0, 0, imageCanvas.width, imageCanvas.height);
+    } else {
+      ctx.fillStyle = getInfernoColor(0);
+      ctx.fillRect(0, 0, imageCanvas.width, imageCanvas.height);
+    }
+
+    if (allPatches.length > 0) {
+      const scores = allPatches.map(p => p.score);
+      const minScore = Math.min(...scores);
+      const maxScore = Math.max(...scores);
+      const scoreRange = maxScore - minScore;
+
+      for (const patch of allPatches) {
+        if (patch.index === queryIndex) continue;
+        const normalizedScore = scoreRange > 0.0001 ? (patch.score - minScore) / scoreRange : 1;
+        const patchY = Math.floor(patch.index / patchesPerRow);
+        const patchX = patch.index % patchesPerRow;
+
+        if (isOverlayMode) {
+          const brightness = Math.pow(normalizedScore, 2) * 0.85;
+          ctx.fillStyle = `rgba(255, 255, 255, ${brightness})`;
+        } else {
+          ctx.fillStyle = getInfernoColor(normalizedScore);
+        }
+        ctx.fillRect(patchX * patchSize, patchY * patchSize, patchSize, patchSize);
+      }
+    }
+
+    // 绘制鼠标中心的高亮框
+    const queryY = Math.floor(queryIndex / patchesPerRow);
+    const queryX = queryIndex % patchesPerRow;
+    ctx.strokeStyle = isOverlayMode ? "rgba(129, 188, 255, 0.9)" : "cyan";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(queryX * patchSize, queryY * patchSize, patchSize, patchSize);
+  }
+
+  function clearHighlights() {
+    if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
+    lastMouseEvent = null; lastHoverData = null;
+    if (originalImage) ctx.drawImage(originalImage, 0, 0, imageCanvas.width, imageCanvas.height);
+  }
+
+  // 启动服务
+  initWebML();
+</script>
+</body>
+</html>

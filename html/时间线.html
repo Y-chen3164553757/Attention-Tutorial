@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attention 因果演进 · 1986–2017</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700&family=Noto+Serif+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;800&display=swap" rel="stylesheet">
+<script>
+window.MathJax={
+  tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]},
+  startup:{typeset:false},chtml:{scale:0.88}
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js"></script>
+<style>
+/* ── 色彩与基础系统 ── */
+:root{
+  --bg:#f8fafc;--white:#fff;--ink:#0f172a;--muted:#475569;--subtle:#94a3b8;--line:#e2e8f0;
+  --nlp:#0369a1;--nlp-l:rgba(3,105,161,.09); --nlp-glow:rgba(3,105,161,.3);
+  --cv:#7c3aed;--cv-l:rgba(124,58,237,.09); --cv-glow:rgba(124,58,237,.3);
+  --pain:#b91c1c;--pain-l:rgba(185,28,28,.04);
+  --brk:#15803d;--brk-l:rgba(21,128,61,.04);
+  --serif:'Noto Serif SC','Lora',serif;
+  --display:'Lora',serif;
+  --mono:'JetBrains Mono','Consolas',monospace;
+  --spring:cubic-bezier(.34,1.4,.64,1);
+  --ease:cubic-bezier(.25,1,.35,1);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--serif);-webkit-font-smoothing:antialiased;}
+
+/* 网格背景 (底层) */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(15,23,42,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(15,23,42,.03) 1px,transparent 1px);
+  background-size:48px 48px;
+  mask-image:radial-gradient(ellipse at 50% 50%,black 25%,transparent 80%);
+  -webkit-mask-image:radial-gradient(ellipse at 50% 50%,black 25%,transparent 80%);
+}
+
+/* 巨型年份水印 */
+.bg-year {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  font-family: var(--mono); font-size: clamp(12rem, 35vw, 40rem); font-weight: 800;
+  color: var(--ink); opacity: 0; z-index: 1; pointer-events: none;
+  transition: opacity 0.8s var(--ease), transform 0.2s linear;
+  user-select: none;
+}
+.bg-year.show { opacity: 0.03; }
+
+/* 动态呼吸光场 */
+.ambient-glow {
+  position: fixed; border-radius: 50%; filter: blur(100px); opacity: 0;
+  z-index: 2; pointer-events: none; transition: opacity 1.5s var(--ease), transform 0.2s linear;
+}
+#glow-nlp { top: -20vh; left: -10vw; width: 60vw; height: 60vw; background: radial-gradient(circle, var(--nlp-glow) 0%, transparent 60%); }
+#glow-cv { bottom: -20vh; right: -10vw; width: 60vw; height: 60vw; background: radial-gradient(circle, var(--cv-glow) 0%, transparent 60%); }
+
+/* 粒子连线画布 */
+#cvs { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+
+/* ── 侧边栏 ── */
+.sidebar{
+  position:fixed;left:0;top:0;bottom:0;width:clamp(60px, 5vw, 72px);z-index:300;
+  background:rgba(248,250,252,.85);backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  border-right:1px solid rgba(255,255,255,0.6); box-shadow: 2px 0 20px rgba(0,0,0,0.02);
+  display:flex;flex-direction:column;align-items:center;
+  padding-top:32px;
+}
+.sb-title{
+  writing-mode:vertical-lr;
+  font-family:var(--display);font-size:clamp(16px, 1.5vw, 20px);font-weight:700;
+  letter-spacing:.14em;line-height:1;
+  background:linear-gradient(180deg,var(--nlp) 30%,var(--cv) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:16px;
+}
+.sb-div{width:28px;height:1.5px;background:var(--line);margin:12px 0;}
+.sb-year{writing-mode:vertical-lr;font-family:var(--mono);font-size:clamp(10px, 1vw, 12px);color:var(--subtle);letter-spacing:.1em;font-weight:500;}
+
+/* ── 主视口与中心轨道 ── */
+#vp{position:fixed;left:clamp(60px, 5vw, 72px);top:0;right:0;bottom:0;overflow:hidden;z-index:10;}
+#track{
+  position:absolute;left:0;top:0;height:100%;
+  display:flex;align-items:center;
+  padding-left:50vw;
+  will-change:transform;
+  transition:transform .7s var(--spring);
+}
+.axis-line{position:absolute;left:0;right:0;height:1.5px;background:var(--line);pointer-events:none;z-index:4; top:50%; transform:translateY(-50%);}
+.axis-prog{position:absolute;left:0;top:0;height:100%;width:0;background:linear-gradient(90deg,var(--nlp),var(--cv));transition:width .7s var(--spring);box-shadow:0 0 8px rgba(3,105,161,.3);}
+
+.nu{position:relative;flex-shrink:0;height:100%; transition: width 0.3s;}
+
+/* ── 开场封面 ── */
+.intro-wrap {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  transition: opacity .6s var(--ease);
+}
+.intro-wrap.fade { opacity: 0; pointer-events: none; }
+
+.intro-kicker { font-family:var(--mono); font-size:clamp(0.7rem, 1vw, 0.85rem); letter-spacing:.25em; color:var(--subtle); text-transform:uppercase; margin-bottom:16px; }
+.intro-title {
+  font-family:var(--display); font-size:clamp(2.5rem, 5vw, 4rem); font-weight:700;
+  letter-spacing:-.02em; line-height:1.2; text-align: center;
+  background:linear-gradient(135deg, var(--nlp) 0%, var(--cv) 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  margin-bottom:12px;
+}
+.intro-sub { font-family:var(--serif); font-size:clamp(1rem, 1.5vw, 1.25rem); color:var(--muted); margin-bottom: 48px; font-weight: 500;}
+.intro-btn {
+  background: rgba(255,255,255,0.5); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,1);
+  color: var(--ink); padding: 12px 32px; border-radius: 100px;
+  font-family: var(--serif); font-size: clamp(0.9rem, 1.2vw, 1.05rem); font-weight: 600;
+  cursor: pointer; transition: all 0.3s var(--ease); box-shadow: 0 4px 12px rgba(15,23,42,0.05);
+}
+.intro-btn:hover { background: var(--nlp); color: var(--white); border-color: var(--nlp); box-shadow: 0 8px 24px rgba(3,105,161,0.25); transform: translateY(-2px); }
+
+
+/* ── 时间线圆点与年份 ── */
+.dot{position:absolute;top:50%;left:50%;width:14px;height:14px;border-radius:50%;background:var(--bg);border:2px solid var(--subtle);cursor:pointer;z-index:20;transition:all .4s var(--ease);transform:translate(-50%,-50%);}
+.dot::after{content:'';position:absolute;inset:-20px;border-radius:50%;}
+.dot.p-nlp{background:var(--nlp);border-color:var(--nlp);}
+.dot.p-cv{background:var(--cv);border-color:var(--cv);}
+.dot.p-mg{background:var(--ink);border-color:var(--ink);}
+
+@keyframes ripple { 0% { box-shadow: 0 0 0 0 var(--shadow-c); } 100% { box-shadow: 0 0 0 15px transparent; } }
+.dot.a-nlp{background:var(--white);border-color:var(--nlp);border-width:3px;transform:translate(-50%,-50%) scale(1.6); --shadow-c: rgba(3,105,161,0.4); animation: ripple 2s infinite;}
+.dot.a-cv{background:var(--white);border-color:var(--cv);border-width:3px;transform:translate(-50%,-50%) scale(1.6); --shadow-c: rgba(124,58,237,0.4); animation: ripple 2s infinite;}
+.dot.a-mg{background:var(--ink);border-color:var(--ink);border-width:3px;transform:translate(-50%,-50%) scale(1.8); --shadow-c: rgba(15,23,42,0.3); animation: ripple 2s infinite;}
+
+.yr{position:absolute;left:50%;font-family:var(--mono);font-size:clamp(0.9rem, 1.2vw, 1.1rem);font-weight:600;color:var(--subtle);white-space:nowrap;z-index:15;transform:translateX(-50%);transition:color .35s,font-size .3s,font-weight .3s;}
+.yr.up{top:calc(50% + 18px);}
+.yr.dn{bottom:calc(50% + 18px);}
+
+.stem{position:absolute;left:50%;width:1.5px;transform:scaleY(0) translateX(-50%);z-index:5;transition:transform .45s var(--spring) .06s,background .35s; box-shadow: 0 0 6px currentColor;}
+.stem.up{bottom:50%;height:32px;transform-origin:bottom;}
+.stem.dn{top:50%;height:32px;transform-origin:top;}
+.stem.show{transform:scaleY(1) translateX(-50%);}
+
+/* ── 核心内容卡片 (玻璃态质感 + 悬停发光) ── */
+.card{
+  position:absolute;left:50%; width: 90%;
+  opacity:.15;filter:grayscale(80%) blur(1px); pointer-events:none;
+  background:rgba(255,255,255,0.7); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,0.8); border-radius:16px;
+  box-shadow:0 10px 30px rgba(15,23,42,.03), inset 0 1px 1px rgba(255,255,255,1);
+  transition:opacity .6s var(--spring),transform .6s var(--spring),filter .5s,border-color .4s,box-shadow .4s;
+  z-index:30; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain;
+}
+
+.card::-webkit-scrollbar { width: 4px; }
+.card::-webkit-scrollbar-track { background: transparent; }
+.card::-webkit-scrollbar-thumb { background: rgba(15,23,42,0.1); border-radius: 4px; }
+.card:hover::-webkit-scrollbar-thumb { background: var(--subtle); }
+
+.card.up{bottom:calc(50% + 40px); max-height:calc(50vh - 60px); transform:translateX(-50%) translateY(10px) scale(.85); transform-origin:bottom center;}
+.card.dn{top:calc(50% + 40px); max-height:calc(50vh - 100px); transform:translateX(-50%) translateY(-10px) scale(.85); transform-origin:top center;}
+
+/* 激活状态 */
+.card.on{opacity:1;filter:none;transform:translateX(-50%) translateY(0) scale(1);pointer-events:auto;box-shadow:0 12px 40px rgba(15,23,42,.08), inset 0 1px 1px rgba(255,255,255,1);}
+.card.on.nlp-c{border-bottom: 2px solid var(--nlp);}
+.card.on.cv-c{border-bottom: 2px solid var(--cv);}
+.card.on.mg-c{border-bottom: 2px solid var(--ink);}
+
+/* 悬停光晕强化质感 */
+.card.on.nlp-c:hover { box-shadow:0 16px 50px rgba(3,105,161,.15), inset 0 1px 1px rgba(255,255,255,1); transform:translateX(-50%) translateY(-2px); }
+.card.on.cv-c:hover { box-shadow:0 16px 50px rgba(124,58,237,.15), inset 0 1px 1px rgba(255,255,255,1); transform:translateX(-50%) translateY(2px); }
+.card.on.mg-c:hover { box-shadow:0 16px 50px rgba(15,23,42,.12), inset 0 1px 1px rgba(255,255,255,1); transform:translateX(-50%) translateY(-2px); }
+
+.stripe{height:4px;margin:0;flex-shrink:0;}
+.stripe.nlp{background:linear-gradient(90deg,var(--nlp),#38bdf8);}
+.stripe.cv{background:linear-gradient(90deg,var(--cv),#c084fc);}
+.stripe.mg{background:linear-gradient(90deg,var(--nlp),var(--cv));}
+
+.cbody{padding:clamp(16px, 2vw, 24px);}
+.ctop{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.badge{font-family:var(--mono);font-size:clamp(0.6rem, 0.8vw, 0.75rem);letter-spacing:.14em;text-transform:uppercase;font-weight:700;padding:4px 10px;border-radius:100px;border:1px solid;}
+.badge.nlp{color:var(--nlp);border-color:rgba(3,105,161,.28);background:var(--nlp-l);}
+.badge.cv{color:var(--cv);border-color:rgba(124,58,237,.28);background:var(--cv-l);}
+.badge.mg{color:var(--ink);border-color:rgba(15,23,42,.18);background:rgba(15,23,42,.04);}
+.cyear{font-family:var(--mono);font-size:clamp(0.95rem, 1.2vw, 1.1rem);font-weight:700;color:var(--subtle);}
+
+.ctitle{font-family:var(--display);font-size:clamp(1.25rem, 1.8vw, 1.45rem);font-weight:700;color:var(--ink);line-height:1.3;margin-bottom:14px;}
+
+.causal{padding:10px 14px;border-radius:0 6px 6px 0;border-left:3px solid;margin-bottom:14px;}
+.causal.pain{border-color:var(--pain);background:var(--pain-l);}
+.causal.brk{border-color:var(--brk);background:var(--brk-l);}
+.causal.mg{border-color:var(--ink);background:rgba(15,23,42,.04);}
+
+.clbl{font-family:var(--mono);font-size:clamp(0.65rem, 0.8vw, 0.75rem);font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;}
+.causal.pain .clbl{color:var(--pain);}
+.causal.brk  .clbl{color:var(--brk);}
+.causal.mg   .clbl{color:var(--ink);}
+
+.ctxt{font-size:clamp(0.9rem, 1.2vw, 1rem);line-height:1.65;color:var(--ink); text-align:justify;}
+.cdesc{font-size:clamp(0.85rem, 1.1vw, 0.95rem);line-height:1.7;color:var(--muted);margin-bottom:16px;text-align:justify;}
+
+.fml{background:rgba(241,245,249,0.5);border:1px solid rgba(226,232,240,0.8);border-radius:8px;padding:12px 14px 10px;overflow-x:auto;}
+.ftag{font-family:var(--mono);font-size:clamp(0.6rem, 0.8vw, 0.75rem);color:var(--subtle);letter-spacing:.1em;text-transform:uppercase;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.ftag::after{content:'';flex:1;height:1px;background:var(--line);}
+mjx-container{display:flex!important;justify-content:center;color:var(--ink)!important;outline:none;font-size:clamp(0.9em, 1.2vw, 1em)!important; margin: 0 !important;}
+
+/* ── 底部导航 ── */
+.ctrl{
+  position:fixed;bottom:24px;transform:translateX(-50%);
+  display:flex;align-items:center;gap:12px;z-index:300;
+  background:rgba(255,255,255,.8);backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  padding:8px 20px;border-radius:100px;border:1px solid rgba(255,255,255,0.8);
+  box-shadow:0 8px 30px rgba(15,23,42,.06), inset 0 1px 1px rgba(255,255,255,1);
+}
+.cbtn{background:transparent;border:none;color:var(--muted);font-family:var(--serif);font-size:clamp(0.85rem, 1vw, 0.95rem);font-weight:600;cursor:pointer;padding:6px 14px;border-radius:100px;transition:all .2s;}
+.cbtn:hover:not(:disabled){background:var(--nlp-l);color:var(--nlp);}
+.cbtn:disabled{opacity:.3;cursor:not-allowed;}
+.csep{width:1px;height:18px;background:var(--line);}
+.cdots{display:flex;gap:8px;align-items:center;}
+.cdot{width:6px;height:6px;border-radius:50%;background:var(--line);border:none;cursor:pointer;padding:0;transition:all .3s var(--spring);}
+.cdot.on-nlp{background:var(--nlp);transform:scale(2); box-shadow: 0 0 6px var(--nlp-glow);}
+.cdot.on-cv{background:var(--cv);transform:scale(2); box-shadow: 0 0 6px var(--cv-glow);}
+.cdot.on-mg{background:var(--ink);transform:scale(2); box-shadow: 0 0 6px rgba(15,23,42,0.3);}
+.prog{position:fixed;bottom:24px;right:24px;z-index:300;font-family:var(--mono);font-size:clamp(0.8rem, 1vw, 0.9rem);font-weight:600;color:var(--nlp);letter-spacing:.05em;background:rgba(255,255,255,0.8);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,1);padding:6px 14px;border-radius:8px;box-shadow:0 4px 16px rgba(15,23,42,.05);}
+</style>
+</head>
+<body>
+
+<div class="bg-year" id="bgYear">1986</div>
+<div class="ambient-glow" id="glow-nlp"></div>
+<div class="ambient-glow" id="glow-cv"></div>
+
+<aside class="sidebar">
+  <div class="sb-title">Attention<br>因果演进</div>
+  <div class="sb-div"></div>
+  <div class="sb-year">1986–2017</div>
+</aside>
+
+<div id="vp">
+  <canvas id="cvs"></canvas>
+  <div id="track">
+    <div class="axis-line" id="axisLine"><div class="axis-prog" id="axProg"></div></div>
+  </div>
+</div>
+
+<div class="ctrl" id="ctrl">
+  <button class="cbtn" id="prevBtn">‹ 溯源</button>
+  <div class="csep"></div>
+  <div class="cdots" id="cdots"></div>
+  <div class="csep"></div>
+  <button class="cbtn" id="nextBtn">演进 ›</button>
+</div>
+<div class="prog" id="progBadge"></div>
+
+<script>
+const DATA=[
+  {year:1986,track:'nlp',side:'up',badge:'NLP 轨',title:'RNN — 序列建模的起点',
+   causal:'pain',clbl:'痛点 · 梯度消失',
+   ctxt:'链式求导导致梯度呈指数衰减，序列稍长便「失忆」，无法捕捉长程依赖（Long-term Dependency）。',
+   desc:'首次用隐藏状态在时间步间传递信息，奠定了序列建模范式，但其“短视”的底层数学缺陷催生了下一次突破。',
+   fml:'h_t=\\tanh(W_{hh}h_{t-1}+W_{xh}x_t+b)',ftag:'RNN Hidden State'},
+  {year:1989,track:'cv',side:'dn',badge:'CNN 轨',title:'LeNet — 卷积视觉的开山之作',
+   causal:'pain',clbl:'局限 · 局部感受野',
+   ctxt:'卷积核只能感知局部像素窗口（如 3×3），无法直接建立图像全局语义关系，视野被永远困在小方块里。',
+   desc:'首创了卷积加池化的分层结构，但这种「管中窥豹」的局部物理局限，注定了它在未来会被全局架构所颠覆。',
+   fml:'y=f\\!\\left(\\sum_{m,n}w_{m,n}x_{i+m,j+n}+b\\right)',ftag:'Local Convolution'},
+  {year:1997,track:'nlp',side:'up',badge:'NLP 轨',title:'LSTM — 门控记忆解决遗忘',
+   causal:'pain',clbl:'死穴 · 串行计算枷锁',
+   ctxt:'通过门控搭建梯度高速公路，长文遗忘问题终解。但其底层机制要求：必须先算完 $t{-}1$ 步才能计算 $t$ 步。',
+   desc:'在 GPU 擅长大杀四方的并行计算时代，LSTM 严苛的串行逻辑导致算力极大浪费，无法承载海量数据的预训练。',
+   fml:'C_t=f_t\\odot C_{t-1}+i_t\\odot\\tilde{C}_t',ftag:'Cell State Highway'},
+  {year:2012,track:'cv',side:'dn',badge:'CNN 轨',title:'AlexNet — 深度视觉大爆发',
+   causal:'pain',clbl:'深层迷宫 · 全局盲区依然',
+   ctxt:'ReLU 与 Dropout 彻底引爆了深度学习。但大范围的全局语义依然只能靠层层叠加来间接聚合，信息传递路径极其漫长。',
+   desc:'此时的 AI 处于分裂状态，视觉与语言互不相通，两大赛道都在苦苦找寻能够一步到位建立“全局依赖”的上帝钥匙。',
+   fml:'\\text{ReLU}(x)=\\max(0,\\,x)',ftag:'ReLU Activation'},
+  {year:2014,track:'nlp',side:'up',badge:'NLP 轨',title:'Seq2Seq + Token — 坍缩瓶颈',
+   causal:'pain',clbl:'死穴 · 定长向量坍缩',
+   ctxt:'文本正式确立被切分为 <strong style="color:var(--nlp)">Token</strong>。但旧架构强迫将所有 Token 压缩进一个固定维度的极小向量中。',
+   desc:'这就如同要把一整本百科全书硬塞进一张小字条。输入序列越长，信息丢失越严重，长篇翻译质量发生灾难性雪崩。',
+   fml:'c=h_T\\quad(\\text{fixed-dim bottleneck})',ftag:'Fixed Context Vector'},
+  {year:2015,track:'nlp',side:'up',badge:'NLP 轨',title:'Attention — 打破定长魔咒',
+   causal:'brk',clbl:'突破 · 动态权重检索',
+   ctxt:'Decoder 生成新 Token 时，不再依赖单一死板的向量，而是拥有了“回头看”的能力，按相似度动态聚焦不同位置。',
+   desc:'定长瓶颈被彻底粉碎！虽然此时的 Attention 还只依附于缓慢的 RNN 架构，但它证明了“动态对齐”拥有无限的潜力。',
+   fml:'c_i=\\sum_j\\alpha_{ij}h_j,\\;\\alpha_{ij}=\\text{softmax}(e_{ij})',ftag:'Dynamic Attention Weighting'},
+  {year:2015,track:'cv',side:'dn',badge:'CNN 轨',title:'ResNet — 铺垫大模型深渊',
+   causal:'brk',clbl:'突破 · 跨层残差连接',
+   ctxt:'极简的公式 $\\mathcal{H}(x)=\\mathcal{F}(x)+x$ 允许特征跨层直达，彻底解决了网络退化，让模型深度直冲百层以上。',
+   desc:'这看似只是视觉领域的突破，但残差结构后来直接成为了 Transformer 能疯狂堆叠上百层 Block 的绝对隐形基石。',
+   fml:'\\mathcal{H}(x)=\\mathcal{F}(x)+x',ftag:'Residual Connection'},
+  {year:2016,track:'nlp',side:'up',badge:'NLP 轨',title:'Self-Attention — 独立觉醒',
+   causal:'brk',clbl:'认知飞跃 · 彻底剥离 RNN',
+   ctxt:'研究者顿悟：既然能跨语言对齐，为何不让一句话「自己注意自己」？Self-Attention 实现了一步到位的全局内部对齐。',
+   desc:'Attention 彻底摘掉了“辅助插件”的帽子，进化为了极其强大的独立特征提取器，旧架构的末日敲响了。',
+   fml:'\\text{score}(q,k)=\\dfrac{q\\cdot k}{\\sqrt{d_k}}',ftag:'Self-Attention Score'},
+  {year:2017,track:'mg',side:'up',badge:'NLP × CNN 汇流',title:'Transformer — 大一统降临',
+   causal:'mg',clbl:'终局 · 三大死穴同时粉碎',
+   ctxt:'Google 拍板：彻底抛弃 RNN 与 CNN！仅凭 Self-Attention 叠加残差，任意距离的 Token 在计算第一步就能产生直接的全局交互。',
+   desc:'串行枷锁、局部近视、信息压缩——三大死穴被彻底粉碎。GPU 算力狂飙时代正式开启，这就是我们将要解剖的绝对核心。',
+   fml:'\\mathrm{Attention}(Q,K,V)=\\mathrm{softmax}\\!\\left(\\tfrac{QK^\\top}{\\sqrt{d_k}}\\right)V',ftag:'Scaled Dot-Product Attention · 2017'}
+];
+
+let curIdx = -1;
+let NODE_W = 460;
+
+/* ── 粒子系统 (神经网络连线效果) ── */
+let cvs, ctx;
+let particles = [];
+const NUM_PARTICLES = 60;
+let mx = 0, my = 0; // 鼠标视差
+
+function initCanvas() {
+  cvs = document.getElementById('cvs');
+  ctx = cvs.getContext('2d', { alpha: true });
+  particles = [];
+  for(let i=0; i<NUM_PARTICLES; i++){
+    particles.push({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
+      r: Math.random() * 1.5 + 0.5
+    });
+  }
+  requestAnimationFrame(animateCanvas);
+}
+
+function animateCanvas() {
+  ctx.clearRect(0, 0, cvs.width, cvs.height);
+
+  // 神经元连线逻辑
+  ctx.lineWidth = 0.5;
+  for(let i=0; i<particles.length; i++){
+    let p1 = particles[i];
+    p1.x += p1.vx; p1.y += p1.vy;
+    if(p1.x < 0 || p1.x > cvs.width) p1.vx *= -1;
+    if(p1.y < 0 || p1.y > cvs.height) p1.vy *= -1;
+
+    // 绘制粒子
+    ctx.beginPath(); ctx.arc(p1.x, p1.y, p1.r, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(148, 163, 184, ${curIdx === -1 ? 0.1 : 0.3})`;
+    ctx.fill();
+
+    // 绘制距离相近的连线
+    for(let j=i+1; j<particles.length; j++){
+      let p2 = particles[j];
+      let dx = p1.x - p2.x, dy = p1.y - p2.y;
+      let distSq = dx*dx + dy*dy;
+      if(distSq < 15000) {
+        ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+        ctx.strokeStyle = `rgba(148, 163, 184, ${(15000 - distSq)/15000 * (curIdx === -1 ? 0.05 : 0.15)})`;
+        ctx.stroke();
+      }
+    }
+  }
+
+  // 绘制最终收束虚线
+  if(curIdx === DATA.length-1) {
+    const cx=cvs.width/2, cy=cvs.height/2, g=55;
+    [['rgba(3,105,161,.6)',cy-30],['rgba(124,58,237,.6)',cy+30]].forEach(([col,sy])=>{
+      ctx.beginPath(); ctx.moveTo(cx-g,sy); ctx.bezierCurveTo(cx-g+20,sy,cx-10,cy,cx,cy);
+      ctx.strokeStyle=col; ctx.lineWidth=2; ctx.setLineDash([4,4]); ctx.stroke(); ctx.setLineDash([]);
+    });
+    ctx.beginPath(); ctx.arc(cx,cy,4.5,0,Math.PI*2); ctx.fillStyle='#0f172a'; ctx.fill();
+  }
+  requestAnimationFrame(animateCanvas);
+}
+
+
+function init(){
+  const track = document.getElementById('track');
+  const dots = document.getElementById('cdots');
+
+  /* 极简封面节点 */
+  const introNu = document.createElement('div');
+  introNu.className = 'nu';
+  introNu.id = 'introNode';
+  introNu.innerHTML = `
+    <div class="intro-wrap" id="introWrap">
+      <div class="intro-kicker">1986 — 2017</div>
+      <div class="intro-title">Attention<br>的必然诞生</div>
+      <div class="intro-sub">大模型底层架构的因果演进</div>
+      <button class="intro-btn" onclick="go(0)">开启推演探索 ›</button>
+    </div>
+  `;
+  track.appendChild(introNu);
+
+  /* 数据节点 */
+  DATA.forEach((d, i) => {
+    const isUp = d.side === 'up', isMg = d.track === 'mg';
+    const bCls = isMg ? 'mg' : d.track === 'cv' ? 'cv' : 'nlp';
+    const cCls = isMg ? 'mg-c' : d.track === 'cv' ? 'cv-c' : 'nlp-c';
+
+    const nu = document.createElement('div');
+    nu.className = 'nu';
+    nu.innerHTML = `
+      <div class="dot" id="dot${i}" onclick="go(${i})"></div>
+      <div class="yr ${isUp?'up':'dn'}" id="yr${i}">${d.year}</div>
+      <div class="stem ${isUp?'up':'dn'}" id="st${i}"></div>
+      <div class="card ${cCls} ${isUp?'up':'dn'}" id="c${i}">
+        <div class="stripe ${bCls}"></div>
+        <div class="cbody">
+          <div class="ctop"><span class="badge ${bCls}">${d.badge}</span><span class="cyear">${d.year}</span></div>
+          <div class="ctitle">${d.title}</div>
+          <div class="causal ${d.causal}">
+            <div class="clbl">${d.clbl}</div>
+            <div class="ctxt">${d.ctxt}</div>
+          </div>
+          <div class="cdesc">${d.desc}</div>
+          <div class="fml"><div class="ftag">${d.ftag}</div><div>$$${d.fml}$$</div></div>
+        </div>
+      </div>`;
+    track.appendChild(nu);
+
+    const cd = document.createElement('button');
+    cd.className = 'cdot'; cd.id = 'cd'+i; cd.onclick = () => go(i);
+    dots.appendChild(cd);
+  });
+
+  initCanvas();
+  handleResize();
+  renderIntro();
+
+  // 鼠标视差事件
+  document.addEventListener('mousemove', e => {
+    mx = (e.clientX / window.innerWidth - 0.5) * 2; // -1 to 1
+    my = (e.clientY / window.innerHeight - 0.5) * 2;
+    document.getElementById('bgYear').style.transform = `translate(calc(-50% + ${mx * -30}px), calc(-50% + ${my * -30}px))`;
+    document.getElementById('glow-nlp').style.transform = `translate(${mx * -40}px, ${my * -40}px)`;
+    document.getElementById('glow-cv').style.transform = `translate(${mx * 40}px, ${my * 40}px)`;
+  });
+}
+
+function handleResize() {
+  const vpWidth = window.innerWidth;
+  NODE_W = vpWidth < 600 ? vpWidth * 0.85 : (vpWidth < 900 ? 400 : 480);
+  document.querySelectorAll('.nu').forEach(n => n.style.width = NODE_W + 'px');
+  document.getElementById('ctrl').style.left = `calc(var(--sidebar-w, 72px) + (100vw - var(--sidebar-w, 72px)) / 2)`;
+
+  if(cvs) { cvs.width = document.getElementById('vp').clientWidth; cvs.height = document.getElementById('vp').clientHeight; }
+
+  if(curIdx === -1) renderIntro(); else updateView();
+}
+
+function renderIntro(){
+  document.getElementById('track').style.transform = `translate3d(${-NODE_W * 0.5}px, 0, 0)`;
+  document.getElementById('axProg').style.width = '0px';
+
+  DATA.forEach((_,i) => {
+    document.getElementById('dot'+i)?.classList.remove('p-nlp','p-cv','p-mg','a-nlp','a-cv','a-mg');
+    document.getElementById('c'+i)?.classList.remove('on');
+    document.getElementById('st'+i)?.classList.remove('show');
+  });
+  document.getElementById('prevBtn').disabled = true;
+  document.getElementById('progBadge').style.opacity = '0';
+  document.getElementById('introWrap')?.classList.remove('fade');
+  document.querySelectorAll('.cdot').forEach(d => d.className = 'cdot');
+
+  document.getElementById('bgYear').classList.remove('show');
+  document.getElementById('glow-nlp').style.opacity = '0';
+  document.getElementById('glow-cv').style.opacity = '0';
+}
+
+function updateView(){
+  const tx = - (curIdx + 1.5) * NODE_W;
+  document.getElementById('track').style.transform = `translate3d(${tx}px, 0, 0)`;
+  document.getElementById('axProg').style.width = `calc(50vw + ${(curIdx + 1.5) * NODE_W}px)`;
+
+  document.getElementById('introWrap')?.classList.add('fade');
+  document.getElementById('progBadge').style.opacity = '1';
+  document.getElementById('progBadge').textContent = (curIdx + 1) + ' / ' + DATA.length;
+
+  let nlpActive = false, cvActive = false;
+
+  DATA.forEach((_,i) => {
+    const d=DATA[i], t=d.track;
+    const dot=document.getElementById('dot'+i), card=document.getElementById('c'+i), stem=document.getElementById('st'+i), yr=document.getElementById('yr'+i);
+    dot.className='dot'; card?.classList.remove('on'); stem?.classList.remove('show');
+    yr.style.color=''; yr.style.fontWeight='';
+
+    if(i < curIdx){
+      dot.classList.add(t==='cv'?'p-cv':t==='mg'?'p-mg':'p-nlp');
+      yr.style.color=t==='cv'?'var(--cv)':t==='mg'?'var(--ink)':'var(--nlp)';
+    } else if(i === curIdx){
+      dot.classList.add(t==='cv'?'a-cv':t==='mg'?'a-mg':'a-nlp');
+      card?.classList.add('on');
+      stem.style.background=t==='cv'?'var(--cv)':t==='mg'?'var(--ink)':'var(--nlp)'; stem.classList.add('show');
+      yr.style.color=t==='cv'?'var(--cv)':t==='mg'?'var(--ink)':'var(--nlp)'; yr.style.fontWeight='700';
+
+      // 更新年份水印
+      const bgY = document.getElementById('bgYear');
+      bgY.textContent = d.year; bgY.classList.add('show');
+
+      if(t==='nlp') nlpActive = true;
+      if(t==='cv') cvActive = true;
+      if(t==='mg') { nlpActive = true; cvActive = true; }
+    }
+
+    const cd=document.getElementById('cd'+i); cd.className='cdot';
+    if(i === curIdx) cd.classList.add(t==='cv'?'on-cv':t==='mg'?'on-mg':'on-nlp');
+  });
+
+  // 控制氛围光晕
+  document.getElementById('glow-nlp').style.opacity = nlpActive ? '0.8' : '0.1';
+  document.getElementById('glow-cv').style.opacity = cvActive ? '0.8' : '0.1';
+
+  document.getElementById('prevBtn').disabled = (curIdx < 0);
+  document.getElementById('nextBtn').disabled = (curIdx >= DATA.length - 1);
+
+  if(window.MathJax && MathJax.typesetPromise){
+    const c = document.getElementById('c'+curIdx);
+    if(c) MathJax.typesetPromise([c]).catch(()=>{});
+  }
+}
+
+function go(n){
+  if(n<0){ curIdx=-1; renderIntro(); return; }
+  curIdx = Math.max(0, Math.min(n, DATA.length-1));
+  updateView();
+}
+
+document.getElementById('prevBtn').addEventListener('click', () => go(curIdx - 1));
+document.getElementById('nextBtn').addEventListener('click', () => go(curIdx + 1));
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' ') { e.preventDefault(); go(curIdx+1); }
+  if(e.key==='ArrowLeft') { e.preventDefault(); go(curIdx-1); }
+});
+
+// 保留卡片内部滚动不触发横向切换的修复
+let _w=false;
+window.addEventListener('wheel',e=>{
+  if(e.target.closest('.card')) return;
+  if(_w)return;_w=true;setTimeout(()=>_w=false,650);
+  if(e.deltaY>0) go(curIdx+1); else go(curIdx-1);
+},{passive:true});
+
+window.addEventListener('resize',()=>{
+  clearTimeout(window._rt);
+  window._rt = setTimeout(handleResize, 150);
+});
+
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>
