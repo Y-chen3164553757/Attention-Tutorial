@@ -1,6 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  type KeyboardEvent as ReactKeyboardEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -11,7 +10,6 @@ import type { ChapterComponentProps } from '../catalog';
 import { type DemoIcon, type KaitiGifItem, kaitiGifItems } from './chapter-data';
 import './KaitiChapter.css';
 
-type ModalStatus = 'loading' | 'playing' | 'stopped';
 const PAGE_META = [
   { id: 'intro', title: '开题', maxStep: 0 },
   { id: 'demo', title: '能力演示', maxStep: 2 },
@@ -56,120 +54,41 @@ function ChapterIcon({ icon }: { icon: DemoIcon }) {
   );
 }
 
-function captureImageToCanvas(image: HTMLImageElement, canvas: HTMLCanvasElement) {
-  const width = image.naturalWidth || image.width;
-  const height = image.naturalHeight || image.height;
-
-  if (!width || !height) {
-    return false;
-  }
-
-  canvas.width = width;
-  canvas.height = height;
-  const context = canvas.getContext('2d');
-  if (!context) {
-    return false;
-  }
-
-  context.clearRect(0, 0, width, height);
-  context.drawImage(image, 0, 0, width, height);
-  return true;
-}
-
 function KaitiGifCard({
   item,
-  showHints,
-  onOpen,
+  isFullscreen,
 }: {
   item: KaitiGifItem;
-  showHints: boolean;
-  onOpen: () => void;
+  isFullscreen: boolean;
 }) {
-  const imageRef = useRef<HTMLImageElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [frozenReady, setFrozenReady] = useState(false);
-
-  useEffect(() => {
-    const image = imageRef.current;
-    const canvas = canvasRef.current;
-    if (!image || !canvas) {
-      return undefined;
-    }
-
-    let cancelled = false;
-
-    const captureFirstFrame = () => {
-      if (cancelled) {
-        return;
-      }
-
-      const captured = captureImageToCanvas(image, canvas);
-      if (captured) {
-        setFrozenReady(true);
-      }
-    };
-
-    const scheduleCapture = () => {
-      requestAnimationFrame(() => requestAnimationFrame(captureFirstFrame));
-    };
-
-    if (image.complete && image.naturalWidth > 0) {
-      scheduleCapture();
-    } else {
-      image.addEventListener('load', scheduleCapture, { once: true });
-    }
-
-    return () => {
-      cancelled = true;
-      image.removeEventListener('load', scheduleCapture);
-    };
-  }, [item.src]);
-
   const iconClass = item.id === 'text' ? 'kaiti-icon-text' : item.id === 'image' ? 'kaiti-icon-image' : 'kaiti-icon-video';
 
-  const handleKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      onOpen();
-    }
-  };
-
   return (
-    <button type="button" className="kaiti-gif-card" onClick={onOpen} onKeyDown={handleKeyDown}>
-      <div className="kaiti-card-header">
+    <motion.div layout className="kaiti-auto-gif">
+      <motion.div layout="position" className="kaiti-auto-gif-header">
         <div className={`kaiti-card-icon ${iconClass}`}>
           <ChapterIcon icon={item.id} />
         </div>
-
         <div>
-          <div className="kaiti-card-title">{item.title}</div>
-          <div className="kaiti-card-subtitle">{item.subtitle}</div>
+          <div className="kaiti-auto-gif-title">{item.title}</div>
+          <div className="kaiti-auto-gif-subtitle">{item.subtitle}</div>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="kaiti-gif-frame">
+      <motion.div layout="position" className="kaiti-auto-gif-media">
         <img
-          ref={imageRef}
           src={item.src}
           alt={item.title}
-          style={{ visibility: frozenReady ? 'hidden' : 'visible' }}
         />
-        <canvas ref={canvasRef} aria-hidden="true" style={{ opacity: frozenReady ? 1 : 0 }} />
-        {showHints ? (
-          <div className="kaiti-play-hint">
-            <div className="kaiti-play-icon">▶</div>
-          </div>
-        ) : null}
-      </div>
+      </motion.div>
 
-      {showHints ? (
-        <div className="kaiti-status-row">
-          <span className="kaiti-status-badge">
-            <span className="kaiti-status-dot" />点击播放
-          </span>
-        </div>
-      ) : null}
-    </button>
+      {isFullscreen && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="kaiti-gif-playing">
+          <span className="kaiti-gif-playing-dot" />
+          AI 生成中
+        </motion.div>
+      )}
+    </motion.div>
   );
 }
 
@@ -177,20 +96,10 @@ export default function KaitiChapter({ showHints, onRequestChapterNav, requested
   const [currentPage, setCurrentPage] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [pageDirection, setPageDirection] = useState<1 | -1>(1);
-  const [modalIndex, setModalIndex] = useState<number | null>(null);
-  const [modalStatus, setModalStatus] = useState<ModalStatus>('loading');
-  const [modalSource, setModalSource] = useState('');
-  const [progressActive, setProgressActive] = useState(false);
-  const [progressDuration, setProgressDuration] = useState(0);
-  const [modalFrozen, setModalFrozen] = useState(false);
   const coverCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const modalImageRef = useRef<HTMLImageElement | null>(null);
-  const modalCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const timerRef = useRef<number | null>(null);
   const pageRef = useRef(0);
   const stepRef = useRef(0);
 
-  const activeItem = modalIndex === null ? null : kaitiGifItems[modalIndex];
   const activePageMeta = PAGE_META[currentPage];
 
   useEffect(() => {
@@ -208,13 +117,6 @@ export default function KaitiChapter({ showHints, onRequestChapterNav, requested
     onPageChange?.(currentPage);
   }, [currentPage, onPageChange]);
 
-  const clearPlaybackTimer = useCallback(() => {
-    if (timerRef.current !== null) {
-      window.clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
-
   const goToPage = useCallback((pageIndex: number, direction: 1 | -1, targetStep?: number) => {
     const nextMeta = PAGE_META[pageIndex];
     if (!nextMeta) {
@@ -227,10 +129,6 @@ export default function KaitiChapter({ showHints, onRequestChapterNav, requested
   }, []);
 
   const advanceStep = useCallback(() => {
-    if (modalIndex !== null) {
-      return;
-    }
-
     const pageIndex = pageRef.current;
     const stepIndex = stepRef.current;
     const maxStep = PAGE_META[pageIndex].maxStep;
@@ -242,14 +140,12 @@ export default function KaitiChapter({ showHints, onRequestChapterNav, requested
 
     if (pageIndex < PAGE_META.length - 1) {
       goToPage(pageIndex + 1, 1, 0);
+    } else {
+      onRequestChapterNav?.();
     }
-  }, [goToPage, modalIndex]);
+  }, [goToPage, onRequestChapterNav]);
 
   const retreatStep = useCallback(() => {
-    if (modalIndex !== null) {
-      return;
-    }
-
     const pageIndex = pageRef.current;
     const stepIndex = stepRef.current;
 
@@ -262,101 +158,27 @@ export default function KaitiChapter({ showHints, onRequestChapterNav, requested
       const previousPage = pageIndex - 1;
       goToPage(previousPage, -1, PAGE_META[previousPage].maxStep);
     }
-  }, [goToPage, modalIndex]);
+  }, [goToPage]);
 
   const goToNextPage = useCallback(() => {
-    if (modalIndex !== null) {
-      return;
-    }
-
     const pageIndex = pageRef.current;
     if (pageIndex < PAGE_META.length - 1) {
       goToPage(pageIndex + 1, 1, 0);
+    } else {
+      onRequestChapterNav?.();
     }
-  }, [goToPage, modalIndex]);
+  }, [goToPage, onRequestChapterNav]);
 
   const goToPreviousPage = useCallback(() => {
-    if (modalIndex !== null) {
-      return;
-    }
-
     const pageIndex = pageRef.current;
     if (pageIndex > 0) {
       const previousPage = pageIndex - 1;
       goToPage(previousPage, -1, PAGE_META[previousPage].maxStep);
     }
-  }, [goToPage, modalIndex]);
-
-  const stopPlayback = useCallback(() => {
-    clearPlaybackTimer();
-
-    const image = modalImageRef.current;
-    const canvas = modalCanvasRef.current;
-    if (image && canvas && captureImageToCanvas(image, canvas)) {
-      setModalFrozen(true);
-    }
-
-    setModalStatus('stopped');
-  }, [clearPlaybackTimer]);
-
-  const beginPlayback = useCallback(
-    (index: number) => {
-      const item = kaitiGifItems[index];
-      if (!item) {
-        return;
-      }
-
-      clearPlaybackTimer();
-      setModalIndex(index);
-      setModalStatus('loading');
-      setModalSource(`${item.src}?t=${Date.now()}`);
-      setProgressDuration(item.duration);
-      setProgressActive(false);
-      setModalFrozen(false);
-    },
-    [clearPlaybackTimer],
-  );
-
-  const handleModalImageLoad = useCallback(() => {
-    if (!activeItem) {
-      return;
-    }
-
-    setModalFrozen(false);
-    setModalStatus('playing');
-    requestAnimationFrame(() => setProgressActive(true));
-    timerRef.current = window.setTimeout(stopPlayback, activeItem.duration);
-  }, [activeItem, stopPlayback]);
-
-  const closeModal = useCallback(() => {
-    clearPlaybackTimer();
-    setModalIndex(null);
-    setModalSource('');
-    setProgressActive(false);
-    setModalFrozen(false);
-  }, [clearPlaybackTimer]);
+  }, [goToPage]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (modalIndex !== null) {
-        if (event.key === 'Escape') {
-          event.preventDefault();
-          closeModal();
-        }
-
-        if (event.key === 'ArrowLeft' && modalIndex > 0) {
-          event.preventDefault();
-          beginPlayback(modalIndex - 1);
-        }
-
-        if (event.key === 'ArrowRight' && modalIndex < kaitiGifItems.length - 1) {
-          event.preventDefault();
-          beginPlayback(modalIndex + 1);
-        }
-
-        return;
-      }
-
       if (event.key === 'ArrowRight' || event.key === ' ') {
         event.preventDefault();
         advanceStep();
@@ -380,14 +202,7 @@ export default function KaitiChapter({ showHints, onRequestChapterNav, requested
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [advanceStep, beginPlayback, closeModal, goToNextPage, goToPreviousPage, modalIndex, retreatStep]);
-
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = 'hidden';
-    };
-  }, [modalIndex]);
+  }, [advanceStep, goToNextPage, goToPreviousPage, retreatStep]);
 
   useEffect(() => {
     const canvas = coverCanvasRef.current;
@@ -473,15 +288,6 @@ export default function KaitiChapter({ showHints, onRequestChapterNav, requested
     };
   }, [currentPage]);
 
-  const modalBadgeClass =
-    modalStatus === 'loading'
-      ? 'kaiti-modal-badge kaiti-modal-badge-loading'
-      : modalStatus === 'playing'
-        ? 'kaiti-modal-badge kaiti-modal-badge-playing'
-        : 'kaiti-modal-badge kaiti-modal-badge-stopped';
-
-  const modalBadgeText = modalStatus === 'loading' ? '加载中…' : modalStatus === 'playing' ? '播放中' : '已播完';
-
   const demoStage = currentPage === 1 ? currentStep : 0;
 
   const pageContent = useMemo(() => {
@@ -560,6 +366,8 @@ export default function KaitiChapter({ showHints, onRequestChapterNav, requested
           animate={{
             y: demoStage === 0 ? 164 : 0,
             scale: demoStage === 0 ? 1.02 : 0.94,
+            opacity: demoStage === 1 ? 0 : 1,
+            pointerEvents: demoStage === 1 ? 'none' : 'auto'
           }}
           transition={{ duration: 0.72, ease: [0.16, 1, 0.3, 1] }}
         >
@@ -576,25 +384,29 @@ export default function KaitiChapter({ showHints, onRequestChapterNav, requested
         </motion.div>
 
         <AnimatePresence>
-          {demoStage >= 1 ? (
+          {demoStage >= 0 ? (
             <motion.div
+              layout
               key="demo-grid"
               initial={{ opacity: 0, y: 22 }}
-              animate={{ opacity: 1, y: 0 }}
+              animate={{ 
+                opacity: demoStage === 0 ? 0 : 1, 
+                y: demoStage === 0 ? 22 : 0,
+                pointerEvents: demoStage === 0 ? 'none' : 'auto'
+              }}
               exit={{ opacity: 0, y: 16 }}
               transition={{ duration: 0.48, ease: [0.16, 1, 0.3, 1] }}
               className="kaiti-stage-demo-body"
             >
-              <div className="kaiti-gif-grid">
-                {kaitiGifItems.map((item, index) => (
+              <motion.div layout className={demoStage === 1 ? 'kaiti-fullscreen-gifs' : 'kaiti-gif-grid'}>
+                {kaitiGifItems.map((item) => (
                   <KaitiGifCard
                     key={item.id}
                     item={item}
-                    showHints={showHints}
-                    onOpen={() => beginPlayback(index)}
+                    isFullscreen={demoStage === 1}
                   />
                 ))}
-              </div>
+              </motion.div>
             </motion.div>
           ) : null}
         </AnimatePresence>
@@ -631,7 +443,7 @@ export default function KaitiChapter({ showHints, onRequestChapterNav, requested
         </AnimatePresence>
       </motion.div>
     );
-  }, [beginPlayback, currentPage, demoStage, goToPage, onRequestChapterNav, pageDirection, showHints]);
+  }, [currentPage, demoStage, goToPage, onRequestChapterNav, pageDirection]);
 
   return (
     <div className="kaiti-root">
@@ -681,125 +493,6 @@ export default function KaitiChapter({ showHints, onRequestChapterNav, requested
           <AnimatePresence mode="wait">{pageContent}</AnimatePresence>
         </div>
       </div>
-
-      <AnimatePresence>
-        {activeItem ? (
-          <motion.div
-            key="modal"
-            className="kaiti-modal-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={(event) => {
-              if (event.target === event.currentTarget) {
-                closeModal();
-              }
-            }}
-          >
-            <motion.div
-              className="kaiti-modal-box"
-              initial={{ opacity: 0, y: 22, scale: 0.94 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 18, scale: 0.98 }}
-              transition={{ type: 'spring', stiffness: 250, damping: 24 }}
-            >
-              <button
-                type="button"
-                className="kaiti-modal-nav kaiti-modal-nav-prev"
-                onClick={() => modalIndex !== null && beginPlayback(modalIndex - 1)}
-                disabled={modalIndex === 0}
-                aria-label="上一个演示"
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                className="kaiti-modal-nav kaiti-modal-nav-next"
-                onClick={() => modalIndex !== null && beginPlayback(modalIndex + 1)}
-                disabled={modalIndex === kaitiGifItems.length - 1}
-                aria-label="下一个演示"
-              >
-                ›
-              </button>
-
-              <div className="kaiti-modal-header">
-                <div className="kaiti-modal-title-wrap">
-                  <div
-                    className={[
-                      'kaiti-modal-icon',
-                      activeItem.id === 'text'
-                        ? 'kaiti-icon-text'
-                        : activeItem.id === 'image'
-                          ? 'kaiti-icon-image'
-                          : 'kaiti-icon-video',
-                    ].join(' ')}
-                  >
-                    <ChapterIcon icon={activeItem.id} />
-                  </div>
-                  <div>
-                    <div className="kaiti-card-title">{activeItem.title}</div>
-                    <div className="kaiti-card-subtitle">{activeItem.subtitle}</div>
-                  </div>
-                </div>
-
-                <button type="button" className="kaiti-modal-close" onClick={closeModal} aria-label="关闭播放弹窗">
-                  ✕
-                </button>
-              </div>
-
-              <div className="kaiti-modal-media">
-                <img
-                  ref={modalImageRef}
-                  src={modalSource}
-                  alt={activeItem.title}
-                  onLoad={handleModalImageLoad}
-                  style={{ visibility: modalFrozen ? 'hidden' : 'visible' }}
-                />
-                <canvas ref={modalCanvasRef} aria-hidden="true" style={{ opacity: modalFrozen ? 1 : 0 }} />
-                <div
-                  className={progressActive ? 'kaiti-modal-progress kaiti-modal-progress-running' : 'kaiti-modal-progress'}
-                  style={{ transition: progressActive ? `width ${progressDuration}ms linear` : 'none' }}
-                />
-              </div>
-
-              <div className="kaiti-modal-footer mt-4">
-                <div className="kaiti-modal-dots">
-                  {kaitiGifItems.map((item, index) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className={index === modalIndex ? 'kaiti-modal-dot kaiti-modal-dot-active' : 'kaiti-modal-dot'}
-                      onClick={() => beginPlayback(index)}
-                      aria-label={`切换到${item.title}`}
-                    />
-                  ))}
-                </div>
-
-                <div className="kaiti-modal-actions">
-                  <span className={modalBadgeClass}>
-                    <span className={modalStatus === 'stopped' ? 'kaiti-status-dot' : 'kaiti-status-dot kaiti-modal-dot-pulse'} />
-                    {modalBadgeText}
-                  </span>
-
-                  {modalStatus === 'stopped' ? (
-                    <button type="button" className="kaiti-modal-replay" onClick={() => modalIndex !== null && beginPlayback(modalIndex)}>
-                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2.5"
-                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                        />
-                      </svg>
-                      重新播放
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
     </div>
   );
 }

@@ -89,6 +89,27 @@ export default function AttentionChapter({
   
   return (
     <div className="attention-root">
+      {/* 统一的网格散光与数字水印 */}
+      <div className="attention-glow-nlp" />
+      <div className="attention-glow-cv" />
+      
+      {[
+        ['Token', '词元化'],
+        ['Q K V', '映射'],
+        ['Q · K', '相似度'],
+        ['Softmax', '权重'],
+        ['Σ V', '信息聚合'],
+        ['Multi-Head', '多头机制']
+      ].map((pair, idx) => (
+        <div
+          key={idx}
+          className={`attention-watermark-layer ${page === idx ? 'is-active' : ''}`}
+        >
+          <div className="attention-watermark-left">{pair[0]}</div>
+          <div className="attention-watermark-right">{pair[1]}</div>
+        </div>
+      ))}
+
       <header className="attention-header">
         <div>
           <div className="attention-kicker">Chapter 03 · 什么是 Attention</div>
