@@ -10,10 +10,9 @@ import './AttentionChapter.css';
 // 步骤常量定义
 // ============================================================
 const PAGE_COUNT = 4;
-const STEPS = [8, 5, 8, 7]; // 每页的步骤数：Slide2 有 8 步 (0-7)
-const S2_PROJ_STEP = 2;       // 投影步骤索引
-const S2_MATRIX_BASE = 3;    // 矩阵运算起始步骤
-const S2_PROJ_SUBSTEPS_MAX = 4;
+const STEPS = [8, 5, 10, 7]; // 每页的步骤数：Slide2 有 10 步 (0-9)
+const S2_PROJ_STEP = 2;       // 投影步骤起始索引
+const S2_MATRIX_BASE = 5;    // 矩阵运算起始步骤
 
 // ============================================================
 // 矩阵数据
@@ -541,8 +540,8 @@ const TensorizeCard = ({ tokens, resultMat, resultDim, side, delay }: {
 // ============================================================
 // Slide 2: Attention 运算推演
 // ============================================================
-const Slide2 = ({ step, projStep }: { step: number; projStep: number }) => {
-  // matrixStep: -1=step3 Q·Kᵀ, 0=step4 缩放, 1=step5 归一化, 2=step6 加权输出, 3=step7 残差链接
+const Slide2 = ({ step }: { step: number }) => {
+  // matrixStep: -1=step5 Q·Kᵀ, 0=step6 缩放, 1=step7 归一化, 2=step8 加权输出, 3=step9 残差链接
   const matrixStep = step > S2_MATRIX_BASE ? step - S2_MATRIX_BASE - 1 : -1;
   const SEQ_A = ['它', '好', '可', '爱'] as const;
   const SEQ_B = ['有', '一', '只', '小', '猫'] as const;
@@ -551,25 +550,6 @@ const Slide2 = ({ step, projStep }: { step: number; projStep: number }) => {
   const getMatrixCols = () => {
     if (matrixStep === 2 || matrixStep === 3) return 2; // O 和 O' 矩阵是 4×2
     return 5;
-  };
-
-  // 获取底部说明文字
-  const getFooterText = () => {
-    if (step === S2_PROJ_STEP) {
-      if (projStep < 2) return <><strong>Q</strong>（Query）代表「我要问什么」——A 侧每个词向量经训练好的权重 <strong>W<sub>Q</sub></strong> 投影后生成。</>;
-      if (projStep >= 2 && projStep < 3) return <><strong>K</strong>（Key）代表「我有什么特征」——B 侧词向量经 <strong>W<sub>K</sub></strong> 投影。Q 与 Kᵀ 的点积将衡量 A 中每个词与 B 中每个词的相关程度。</>;
-      return <><strong>V</strong>（Value）代表「我能提供什么内容」——经 <strong>W<sub>V</sub></strong> 投影，B 侧的原始语义被重新编码，等待被 <strong>α</strong> 加权后输出。</>;
-    }
-    if (step === S2_MATRIX_BASE + 3) return <>加权求和得到 <i>O</i>——每个词经 Attention 后的<strong>新向量表示</strong>，携带了目标侧最相关的语义信息。<i>O</i> 可作为<strong>下一层 Transformer</strong> 的输入，继续深度推理。</>;
-    if (step === S2_MATRIX_BASE + 4) return <>残差连接将注意力输出 <i>O</i> 与输入 <i>X<sub>pos</sub></i> 相加，帮助梯度流动，使深层网络训练更稳定。</>;
-    if (step >= S2_MATRIX_BASE) {
-      if (step === S2_MATRIX_BASE) return <>A 侧 4 个词与 B 侧 5 个词做<strong>点积</strong>，得到 4×5 相似度矩阵。数值越大代表越相关，蓝色格点为相对得分最高区域。</>;
-      if (step === S2_MATRIX_BASE + 1) return <>所有得分<strong>除以 √d<sub>k</sub></strong>（d 为向量维度）。防止 d 较大时点积值过大，导致 Softmax 梯度趋于零，利于训练稳定。</>;
-      if (step === S2_MATRIX_BASE + 2) return <>每行经 <strong>Softmax</strong> 归一化（行和为 1），转化为<strong>概率 α</strong>。<strong>O = α · V</strong> 将作为<strong>下一层的输入</strong>，持续聚合语义。</>;
-    }
-    if (step === 0) return <>两侧<strong>原始序列</strong>已就位。下一步<strong>「张量化」</strong>将一步完成符号→向量的映射。</>;
-    if (step === 1) return <><strong>张量化</strong>：将离散字词一步映射为高维连续向量，堆叠为词矩阵<strong>X<sub>A</sub></strong>（4×d）与 <strong>X<sub>B</sub></strong>（5×d）。</>;
-    return null;
   };
 
   return (
@@ -613,9 +593,9 @@ const Slide2 = ({ step, projStep }: { step: number; projStep: number }) => {
               <div className='a-s2-step-title'>0. 序列与张量化</div>
               <div className='a-s2-step-desc'>A、B 序列就位后，经<strong>张量化</strong>一步转换为词矩阵。</div>
             </div>
-            <div className={`a-s2-step ${step === S2_PROJ_STEP ? 'a-active' : ''}`}>
+            <div className={`a-s2-step ${step === 2 || step === 3 || step === 4 ? 'a-active' : ''}`}>
               <div className='a-s2-step-title'>1. 特征跨域投影</div>
-              <div className='a-s2-step-desc'><i>X<sub>A</sub></i> <i>W<sub>Q</sub></i> → <i>Q</i>；<i>X<sub>B</sub></i> <i>W<sub>K</sub></i> → <i>K</i>，<i>X<sub>B</sub></i> <i>W<sub>V</sub></i> → <i>V</i>。</div>
+              <div className='a-s2-step-desc'>step=2: <i>X<sub>A</sub></i> <i>W<sub>Q</sub></i> → <i>Q</i>；step=3: <i>X<sub>B</sub></i> <i>W<sub>K</sub></i> → <i>K</i>；step=4: <i>X<sub>B</sub></i> <i>W<sub>V</sub></i> → <i>V</i>。</div>
             </div>
             <div className={`a-s2-step ${step === S2_MATRIX_BASE ? 'a-active' : ''}`}>
               <div className='a-s2-step-title'>2. 计算跨域内积</div>
@@ -640,10 +620,9 @@ const Slide2 = ({ step, projStep }: { step: number; projStep: number }) => {
           </div>
         </div>
 
-        {/* 右侧: 运算区域 */}
-        <div className='a-s2-g-stage'>
-          <div className='a-s2-stage' style={{ flex: 1, position: 'relative', minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
-
+        {/* 右侧区域：包含推演区和说明栏 */}
+        <div className='a-s2-right-area'>
+          <div className='a-s2-g-stage'>
             {/* 步骤 0-1: 序列展示 */}
             <div className={`a-mat-view ${step <= 1 ? 'a-active' : ''}`}>
               <div className='a-s2-embed-stage'>
@@ -692,72 +671,101 @@ const Slide2 = ({ step, projStep }: { step: number; projStep: number }) => {
               </div>
             </div>
 
-            {/* 步骤 2: 投影阶段 */}
-            <div className={`a-mat-view ${step === S2_PROJ_STEP ? 'a-active' : ''}`}>
+            {/* 步骤 2-4: 投影阶段（Q/K/V 三步分别动画，左右排列） */}
+            <div className={`a-mat-view ${step >= S2_PROJ_STEP && step < S2_MATRIX_BASE ? 'a-active' : ''}`}>
               <div className='a-s2-proj-stage'>
-                <div className='a-s2-stage-main'>
-                  <div className='a-s2-proj-flow'>
-                    {/* A 侧: X_A × W_Q → Q */}
-                    <div className='a-s2-proj-block'>
-                      <div className='a-s2-proj-block-lbl'>
-                        <motion.span className='a-s2-proj-block-tag' style={{ background:'rgba(2,132,199,.1)', color:'var(--Q)', borderColor:'rgba(2,132,199,.25)' }} initial={{ opacity:0, y:-8 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.05, duration:0.35 }}>A 侧 → Query</motion.span>
-                      </div>
+                <div className='a-s2-proj-flow'>
+
+                  {/* Q 投影行：左侧竖排标签，右侧计算+结果矩阵 */}
+                  <div className='a-s2-proj-pair'>
+                    <div className='a-s2-proj-left'>
+                      <motion.span className='a-s2-proj-side-tag' style={{ color:'var(--Q)', borderColor:'rgba(2,132,199,.3)', background:'rgba(2,132,199,.08)' }}
+                        initial={{ opacity:0, x:-10 }} animate={{ opacity:step >= 2 ? 1 : 0, x:step >= 2 ? 0 : -10 }}
+                        transition={{ duration:0.4, ease:'easeOut' }}>A<br/>侧<br/>→<br/>Query</motion.span>
+                    </div>
+                    <div className='a-s2-proj-right'>
                       <div className='a-s2-proj-mat-row'>
-                        <motion.div className='a-s2-proj-xbox' initial={{ opacity:0, scale:0.7 }} animate={{ opacity:1, scale:1 }} transition={{ delay:0.1, duration:0.4 }}>
-                          <div className='a-s2-proj-xmat'><div className='a-s2-proj-xmat-lbl'>X<sub>A</sub></div><div className='a-s2-proj-xmat-grid'>{[...Array(16)].map((_,i)=><motion.span key={i} initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.12+i*0.015, duration:0.2 }}/>)}</div><div className='a-s2-proj-xmat-dim'>4 × d</div></div>
+                        <motion.div className='a-s2-proj-xbox'
+                          initial={{ opacity:0, scale:0.6, y:10 }} animate={{ opacity:step >= 2 ? 1 : 0, scale:step >= 2 ? 1 : 0.6, y:step >= 2 ? 0 : 10 }}
+                          transition={{ duration:0.4, ease:'easeOut', delay:step >= 2 ? 0.05 : 0 }}>
+                          <div className='a-s2-proj-xmat'><div className='a-s2-proj-xmat-lbl'>X<sub>A</sub></div><div className='a-s2-proj-xmat-grid'>{[...Array(16)].map((_,i)=><motion.span key={i} initial={{ opacity:0 }} animate={{ opacity:step >= 2 ? 1 : 0 }} transition={{ delay:step >= 2 ? 0.1+i*0.012 : 0, duration:0.25, ease:'easeOut' }}/>)}</div><div className='a-s2-proj-xmat-dim'>4 × d</div></div>
                         </motion.div>
-                        <motion.span className='a-s2-proj-op' initial={{ opacity:0 }} animate={{ opacity:projStep>=1?1:0 }}>×</motion.span>
-                        <motion.div className='a-s2-proj-wbox' initial={{ opacity:0, scale:0.7 }} animate={{ opacity:projStep>=1?1:0, scale:projStep>=1?1:0.7 }} style={{ opacity:projStep>=1?1:0, transform:projStep>=1?'none':'scale(0.7)' }}>
+                        <motion.span className='a-s2-proj-op' initial={{ opacity:0, scale:0.5 }} animate={{ opacity:step >= 2 ? 1 : 0, scale:step >= 2 ? 1 : 0.5 }} transition={{ duration:0.35, ease:'easeOut', delay:step >= 2 ? 0.18 : 0 }}>×</motion.span>
+                        <motion.div className='a-s2-proj-wbox'
+                          initial={{ opacity:0, scale:0.5, y:10 }} animate={{ opacity:step >= 2 ? 1 : 0, scale:step >= 2 ? 1 : 0.5, y:step >= 2 ? 0 : 10 }}
+                          transition={{ duration:0.4, ease:'easeOut', delay:step >= 2 ? 0.25 : 0 }}>
                           <div className='a-s2-proj-wmat'><div className='a-s2-proj-wmat-lbl'>W<sub>Q</sub></div><div className='a-s2-proj-wmat-grid'>{[...Array(12)].map((_,i)=><span key={i}/>)}</div><div className='a-s2-proj-wmat-dim'>d × d</div></div>
                         </motion.div>
-                        <motion.span className='a-s2-proj-eq-sym' initial={{ opacity:0, scale:0.5 }} animate={{ opacity:projStep>=1?1:0, scale:projStep>=1?1:0.5 }}>=</motion.span>
-                        <motion.div className='a-s2-proj-resbox' initial={{ opacity:0, scale:0.5 }} animate={{ opacity:projStep>=1?1:0, scale:projStep>=1?1:0.5 }} style={{ opacity:projStep>=1?1:0, transform:projStep>=1?'none':'scale(0.5)' }}>
+                        <motion.span className='a-s2-proj-eq-sym' initial={{ opacity:0, scale:0.5 }} animate={{ opacity:step >= 2 ? 1 : 0, scale:step >= 2 ? 1 : 0.5 }} transition={{ duration:0.35, ease:'easeOut', delay:step >= 2 ? 0.38 : 0 }}>=</motion.span>
+                        <motion.div className='a-s2-proj-resbox'
+                          initial={{ opacity:0, scale:0.4, y:10 }} animate={{ opacity:step >= 2 ? 1 : 0, scale:step >= 2 ? 1 : 0.4, y:step >= 2 ? 0 : 10 }}
+                          transition={{ duration:0.45, ease:'easeOut', delay:step >= 2 ? 0.48 : 0 }}>
                           <div className='a-s2-proj-resmat' style={{ borderColor:'rgba(2,132,199,.3)', background:'rgba(2,132,199,.06)' }}><div className='a-s2-proj-resmat-lbl' style={{ color:'var(--Q)' }}>Q</div><div className='a-s2-proj-resmat-grid'>{[...Array(16)].map((_,i)=><span key={i}/>)}</div><div className='a-s2-proj-resmat-dim'>4 × d</div></div>
                         </motion.div>
                       </div>
                     </div>
+                  </div>
 
-                    {/* B 侧: X_B × W_K → K, X_B × W_V → V */}
-                    <div className='a-s2-proj-block'>
-                      <div className='a-s2-proj-block-lbl'>
-                        <motion.span className='a-s2-proj-block-tag' style={{ background:'rgba(5,150,105,.1)', color:'var(--K)', borderColor:'rgba(5,150,105,.25)' }} initial={{ opacity:0, y:-8 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.3, duration:0.35 }}>B 侧 → Key & Value</motion.span>
-                      </div>
-                      <div className='a-s2-proj-bx-row'>
-                        <motion.div className='a-s2-proj-xbox' initial={{ opacity:0, scale:0.7 }} animate={{ opacity:1, scale:1 }} transition={{ delay:0.35, duration:0.4 }}>
-                          <div className='a-s2-proj-xmat'><div className='a-s2-proj-xmat-lbl'>X<sub>B</sub></div><div className='a-s2-proj-xmat-grid'>{[...Array(25)].map((_,i)=><motion.span key={i} initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.37+i*0.01, duration:0.2 }}/>)}</div><div className='a-s2-proj-xmat-dim'>5 × d</div></div>
+                  {/* K 投影行 */}
+                  <div className='a-s2-proj-pair'>
+                    <div className='a-s2-proj-left'>
+                      <motion.span className='a-s2-proj-side-tag' style={{ color:'var(--K)', borderColor:'rgba(5,150,105,.3)', background:'rgba(5,150,105,.08)' }}
+                        initial={{ opacity:0, x:-10 }} animate={{ opacity:step >= 3 ? 1 : 0, x:step >= 3 ? 0 : -10 }}
+                        transition={{ duration:0.4, ease:'easeOut' }}>B<br/>侧<br/>→<br/>Key</motion.span>
+                    </div>
+                    <div className='a-s2-proj-right'>
+                      <div className='a-s2-proj-mat-row'>
+                        <motion.div className='a-s2-proj-xbox'
+                          initial={{ opacity:0, scale:0.6, y:10 }} animate={{ opacity:step >= 3 ? 1 : 0, scale:step >= 3 ? 1 : 0.6, y:step >= 3 ? 0 : 10 }}
+                          transition={{ duration:0.4, ease:'easeOut', delay:step >= 3 ? 0.05 : 0 }}>
+                          <div className='a-s2-proj-xmat'><div className='a-s2-proj-xmat-lbl'>X<sub>B</sub></div><div className='a-s2-proj-xmat-grid'>{[...Array(25)].map((_,i)=><motion.span key={i} initial={{ opacity:0 }} animate={{ opacity:step >= 3 ? 1 : 0 }} transition={{ delay:step >= 3 ? 0.1+i*0.008 : 0, duration:0.25, ease:'easeOut' }}/>)}</div><div className='a-s2-proj-xmat-dim'>5 × d</div></div>
                         </motion.div>
-                        <motion.span className='a-s2-proj-op' initial={{ opacity:0 }} animate={{ opacity:projStep>=2?1:0 }}>×</motion.span>
-                        <motion.div className='a-s2-proj-wbox' initial={{ opacity:0, scale:0.6 }} animate={{ opacity:projStep>=2?1:0, scale:projStep>=2?1:0.6 }} style={{ opacity:projStep>=2?1:0, transform:projStep>=2?'none':'scale(0.6)' }}>
+                        <motion.span className='a-s2-proj-op' initial={{ opacity:0, scale:0.5 }} animate={{ opacity:step >= 3 ? 1 : 0, scale:step >= 3 ? 1 : 0.5 }} transition={{ duration:0.35, ease:'easeOut', delay:step >= 3 ? 0.18 : 0 }}>×</motion.span>
+                        <motion.div className='a-s2-proj-wbox'
+                          initial={{ opacity:0, scale:0.5, y:10 }} animate={{ opacity:step >= 3 ? 1 : 0, scale:step >= 3 ? 1 : 0.5, y:step >= 3 ? 0 : 10 }}
+                          transition={{ duration:0.4, ease:'easeOut', delay:step >= 3 ? 0.25 : 0 }}>
                           <div className='a-s2-proj-wmat'><div className='a-s2-proj-wmat-lbl'>W<sub>K</sub></div><div className='a-s2-proj-wmat-grid'>{[...Array(12)].map((_,i)=><span key={i}/>)}</div><div className='a-s2-proj-wmat-dim'>d × d</div></div>
                         </motion.div>
-                        <motion.span className='a-s2-proj-eq-sym' initial={{ opacity:0, scale:0.5 }} animate={{ opacity:projStep>=2?1:0, scale:projStep>=2?1:0.5 }}>=</motion.span>
-                        <motion.div className='a-s2-proj-resbox' initial={{ opacity:0, scale:0.5 }} animate={{ opacity:projStep>=2?1:0, scale:projStep>=2?1:0.5 }} style={{ opacity:projStep>=2?1:0, transform:projStep>=2?'none':'scale(0.5)' }}>
+                        <motion.span className='a-s2-proj-eq-sym' initial={{ opacity:0, scale:0.5 }} animate={{ opacity:step >= 3 ? 1 : 0, scale:step >= 3 ? 1 : 0.5 }} transition={{ duration:0.35, ease:'easeOut', delay:step >= 3 ? 0.38 : 0 }}>=</motion.span>
+                        <motion.div className='a-s2-proj-resbox'
+                          initial={{ opacity:0, scale:0.4, y:10 }} animate={{ opacity:step >= 3 ? 1 : 0, scale:step >= 3 ? 1 : 0.4, y:step >= 3 ? 0 : 10 }}
+                          transition={{ duration:0.45, ease:'easeOut', delay:step >= 3 ? 0.48 : 0 }}>
                           <div className='a-s2-proj-resmat' style={{ borderColor:'rgba(5,150,105,.3)', background:'rgba(5,150,105,.06)' }}><div className='a-s2-proj-resmat-lbl' style={{ color:'var(--K)' }}>K</div><div className='a-s2-proj-resmat-grid'>{[...Array(25)].map((_,i)=><span key={i}/>)}</div><div className='a-s2-proj-resmat-dim'>5 × d</div></div>
                         </motion.div>
-                        <motion.div className='a-s2-proj-or' aria-hidden initial={{ opacity:0 }} animate={{ opacity:projStep>=3?0.7:0 }}>|</motion.div>
-                        <motion.span className='a-s2-proj-op' initial={{ opacity:0 }} animate={{ opacity:projStep>=3?1:0 }}>×</motion.span>
-                        <motion.div className='a-s2-proj-wbox' initial={{ opacity:0, scale:0.6 }} animate={{ opacity:projStep>=3?1:0, scale:projStep>=3?1:0.6 }} style={{ opacity:projStep>=3?1:0, transform:projStep>=3?'none':'scale(0.6)' }}>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* V 投影行 */}
+                  <div className='a-s2-proj-pair'>
+                    <div className='a-s2-proj-left'>
+                      <motion.span className='a-s2-proj-side-tag' style={{ color:'var(--V)', borderColor:'rgba(225,29,72,.3)', background:'rgba(225,29,72,.08)' }}
+                        initial={{ opacity:0, x:-10 }} animate={{ opacity:step >= 4 ? 1 : 0, x:step >= 4 ? 0 : -10 }}
+                        transition={{ duration:0.4, ease:'easeOut' }}>B<br/>侧<br/>→<br/>Value</motion.span>
+                    </div>
+                    <div className='a-s2-proj-right'>
+                      <div className='a-s2-proj-mat-row'>
+                        <motion.div className='a-s2-proj-xbox'
+                          initial={{ opacity:0, scale:0.6, y:10 }} animate={{ opacity:step >= 4 ? 1 : 0, scale:step >= 4 ? 1 : 0.6, y:step >= 4 ? 0 : 10 }}
+                          transition={{ duration:0.4, ease:'easeOut', delay:step >= 4 ? 0.05 : 0 }}>
+                          <div className='a-s2-proj-xmat'><div className='a-s2-proj-xmat-lbl'>X<sub>B</sub></div><div className='a-s2-proj-xmat-grid'>{[...Array(25)].map((_,i)=><motion.span key={i} initial={{ opacity:0 }} animate={{ opacity:step >= 4 ? 1 : 0 }} transition={{ delay:step >= 4 ? 0.1+i*0.008 : 0, duration:0.25, ease:'easeOut' }}/>)}</div><div className='a-s2-proj-xmat-dim'>5 × d</div></div>
+                        </motion.div>
+                        <motion.span className='a-s2-proj-op' initial={{ opacity:0, scale:0.5 }} animate={{ opacity:step >= 4 ? 1 : 0, scale:step >= 4 ? 1 : 0.5 }} transition={{ duration:0.35, ease:'easeOut', delay:step >= 4 ? 0.18 : 0 }}>×</motion.span>
+                        <motion.div className='a-s2-proj-wbox'
+                          initial={{ opacity:0, scale:0.5, y:10 }} animate={{ opacity:step >= 4 ? 1 : 0, scale:step >= 4 ? 1 : 0.5, y:step >= 4 ? 0 : 10 }}
+                          transition={{ duration:0.4, ease:'easeOut', delay:step >= 4 ? 0.25 : 0 }}>
                           <div className='a-s2-proj-wmat'><div className='a-s2-proj-wmat-lbl'>W<sub>V</sub></div><div className='a-s2-proj-wmat-grid'>{[...Array(12)].map((_,i)=><span key={i}/>)}</div><div className='a-s2-proj-wmat-dim'>d × d</div></div>
                         </motion.div>
-                        <motion.span className='a-s2-proj-eq-sym' initial={{ opacity:0, scale:0.5 }} animate={{ opacity:projStep>=3?1:0, scale:projStep>=3?1:0.5 }}>=</motion.span>
-                        <motion.div className='a-s2-proj-resbox' initial={{ opacity:0, scale:0.5 }} animate={{ opacity:projStep>=3?1:0, scale:projStep>=3?1:0.5 }} style={{ opacity:projStep>=3?1:0, transform:projStep>=3?'none':'scale(0.5)' }}>
+                        <motion.span className='a-s2-proj-eq-sym' initial={{ opacity:0, scale:0.5 }} animate={{ opacity:step >= 4 ? 1 : 0, scale:step >= 4 ? 1 : 0.5 }} transition={{ duration:0.35, ease:'easeOut', delay:step >= 4 ? 0.38 : 0 }}>=</motion.span>
+                        <motion.div className='a-s2-proj-resbox'
+                          initial={{ opacity:0, scale:0.4, y:10 }} animate={{ opacity:step >= 4 ? 1 : 0, scale:step >= 4 ? 1 : 0.4, y:step >= 4 ? 0 : 10 }}
+                          transition={{ duration:0.45, ease:'easeOut', delay:step >= 4 ? 0.48 : 0 }}>
                           <div className='a-s2-proj-resmat' style={{ borderColor:'rgba(225,29,72,.3)', background:'rgba(225,29,72,.06)' }}><div className='a-s2-proj-resmat-lbl' style={{ color:'var(--V)' }}>V</div><div className='a-s2-proj-resmat-grid'>{[...Array(25)].map((_,i)=><span key={i}/>)}</div><div className='a-s2-proj-resmat-dim'>5 × d</div></div>
                         </motion.div>
                       </div>
                     </div>
-
-                    {/* 汇总提示 */}
-                    <motion.div className='a-s2-proj-summary' initial={{ opacity:0, y:12 }} animate={{ opacity:projStep>=4?1:0, y:projStep>=4?0:12 }} style={{ opacity:projStep>=4?1:0, transform:`translateY(${projStep>=4?0:12}px)` }}>
-                      <div className='a-s2-proj-summary-box'>
-                        <span style={{ color:'var(--Q)', fontFamily:'var(--mono)', fontWeight:700 }}>Q</span>
-                        <span style={{ color:'var(--muted)' }}> × </span>
-                        <span style={{ color:'var(--K)', fontFamily:'var(--mono)', fontWeight:700 }}>Kᵀ</span>
-                        <span style={{ color:'var(--muted)' }}> × </span>
-                        <span style={{ color:'var(--V)', fontFamily:'var(--mono)', fontWeight:700 }}>V</span>
-                        <span style={{ color:'var(--muted)', marginLeft:8 }}>→ softmax(QKᵀ/√d_k) V</span>
-                      </div>
-                    </motion.div>
                   </div>
+
                 </div>
               </div>
             </div>
@@ -778,12 +786,85 @@ const Slide2 = ({ step, projStep }: { step: number; projStep: number }) => {
               </div>
             </div>
           </div>
-        </div>
 
-        {/* 底部说明栏: 仅在右侧 */}
-        <footer className='a-s2-derive-foot'>
-          <p className='a-s2-derive-foot-text'>{getFooterText()}</p>
-        </footer>
+          {/* 说明栏：step<2 和 step>=5 单行动画；step=2/3/4 三行累积 */}
+          <footer className='a-s2-derive-foot'>
+            {step >= 2 && step < S2_MATRIX_BASE ? (
+              <div className='a-s2-foot-lines'>
+                <motion.div className='a-s2-foot-line' key='foot-q' initial={{ opacity:0, x:-14 }} animate={{ opacity:1, x:0 }} transition={{ duration:0.45, ease:'easeOut' }}>
+                  <span className='a-s2-foot-line-dot' style={{ background:'rgba(2,132,199,.5)' }}/>
+                  <span className='a-s2-derive-foot-text'>将序列 A 的词向量矩阵 <strong>X<sub>A</sub></strong> 与可学习的权重矩阵 <strong>W<sub>Q</sub></strong> 相乘，得到 <strong>Query (Q)</strong>。</span>
+                </motion.div>
+                {step >= 3 && (
+                  <motion.div className='a-s2-foot-line' key='foot-k' initial={{ opacity:0, x:-14 }} animate={{ opacity:1, x:0 }} transition={{ duration:0.45, ease:'easeOut' }}>
+                    <span className='a-s2-foot-line-dot' style={{ background:'rgba(5,150,105,.5)' }}/>
+                    <span className='a-s2-derive-foot-text'>将序列 B 的词向量矩阵 <strong>X<sub>B</sub></strong> 与 <strong>W<sub>K</sub></strong> 相乘，得到 <strong>Key (K)</strong>，用于计算注意力权重。</span>
+                  </motion.div>
+                )}
+                {step >= 4 && (
+                  <motion.div className='a-s2-foot-line' key='foot-v' initial={{ opacity:0, x:-14 }} animate={{ opacity:1, x:0 }} transition={{ duration:0.45, ease:'easeOut' }}>
+                    <span className='a-s2-foot-line-dot' style={{ background:'rgba(225,29,72,.5)' }}/>
+                    <span className='a-s2-derive-foot-text'>同样将 <strong>X<sub>B</sub></strong> 与 <strong>W<sub>V</sub></strong> 相乘，得到 <strong>Value (V)</strong>，用于加权求和输出。</span>
+                  </motion.div>
+                )}
+              </div>
+            ) : (
+              <AnimatePresence mode='wait'>
+                <motion.div
+                  key={step}
+                  className='a-s2-foot-single'
+                  initial={{ opacity:0, y:8, filter:'blur(3px)' }}
+                  animate={{ opacity:1, y:0, filter:'blur(0px)' }}
+                  exit={{ opacity:0, y:-8, filter:'blur(3px)' }}
+                  transition={{ duration:0.4, ease:'easeOut' }}
+                >
+                  {step === 0 && (
+                    <>
+                      <span className='a-s2-foot-line-dot' style={{ background:'rgba(100,116,139,.5)' }}/>
+                      <span className='a-s2-derive-foot-text'>两侧<strong>原始序列</strong>已就位。接下来进入<strong>「张量化」</strong>，将离散字词一步映射为高维连续向量。</span>
+                    </>
+                  )}
+                  {step === 1 && (
+                    <>
+                      <span className='a-s2-foot-line-dot' style={{ background:'rgba(124,58,237,.5)' }}/>
+                      <span className='a-s2-derive-foot-text'><strong>张量化</strong>完成：四个词映射为 <strong>X<sub>A</sub></strong>（4×d），五个词映射为 <strong>X<sub>B</sub></strong>（5×d），堆叠为词矩阵。</span>
+                    </>
+                  )}
+                  {step === S2_MATRIX_BASE && (
+                    <>
+                      <span className='a-s2-foot-line-dot' style={{ background:'rgba(2,132,199,.5)' }}/>
+                      <span className='a-s2-derive-foot-text'>A 侧 4 个词与 B 侧 5 个词做<strong>点积</strong>，得到 4×5 相似度矩阵。数值越大代表越相关，蓝色格点为相对得分最高区域。</span>
+                    </>
+                  )}
+                  {step === S2_MATRIX_BASE + 1 && (
+                    <>
+                      <span className='a-s2-foot-line-dot' style={{ background:'rgba(5,150,105,.5)' }}/>
+                      <span className='a-s2-derive-foot-text'>所有得分<strong>除以 √d<sub>k</sub></strong>（d 为向量维度）。防止 d 较大时点积值过大，导致 Softmax 梯度趋于零，利于训练稳定。</span>
+                    </>
+                  )}
+                  {step === S2_MATRIX_BASE + 2 && (
+                    <>
+                      <span className='a-s2-foot-line-dot' style={{ background:'rgba(225,29,72,.5)' }}/>
+                      <span className='a-s2-derive-foot-text'>每行经 <strong>Softmax</strong> 归一化（行和为 1），转化为<strong>概率 α</strong>。<strong>O = α · V</strong> 将作为<strong>下一层的输入</strong>，持续聚合语义。</span>
+                    </>
+                  )}
+                  {step === S2_MATRIX_BASE + 3 && (
+                    <>
+                      <span className='a-s2-foot-line-dot' style={{ background:'rgba(124,58,237,.5)' }}/>
+                      <span className='a-s2-derive-foot-text'>加权求和得到 <strong>O</strong>——每个词经 Attention 后的<strong>新向量表示</strong>，携带了目标侧最相关的语义信息，可作为<strong>下一层 Transformer</strong> 的输入。</span>
+                    </>
+                  )}
+                  {step === S2_MATRIX_BASE + 4 && (
+                    <>
+                      <span className='a-s2-foot-line-dot' style={{ background:'rgba(100,116,139,.5)' }}/>
+                      <span className='a-s2-derive-foot-text'>残差连接将注意力输出 <strong>O</strong> 与输入 <strong>X<sub>pos</sub></strong> 相加，帮助梯度流动，使深层网络训练更稳定。</span>
+                    </>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            )}
+          </footer>
+        </div>
       </div>
     </div>
   );
@@ -860,23 +941,10 @@ const Slide3 = ({ step }: { step: number }) => {
 // 主组件
 // ============================================================
 export default function AttentionChapter({
-  showHints, onRequestChapterNav, requestedPageIndex = 0, onPageChange
+  onRequestChapterNav, requestedPageIndex = 0, onPageChange
 }: ChapterComponentProps) {
   const [page, setPage] = useState(requestedPageIndex);
   const [step, setStep] = useState(0);
-  const [projStep, setProjStep] = useState(0);
-  const prevStepRef = useRef(0);
-
-  useEffect(() => {
-    if (page !== 2) setProjStep(0);
-  }, [page]);
-
-  useEffect(() => {
-    if (page === 2 && step === S2_PROJ_STEP && prevStepRef.current === S2_PROJ_STEP - 1) {
-      setProjStep(0);
-    }
-    prevStepRef.current = step;
-  }, [page, step]);
 
   const getWatermarkText = () => {
     if (page === 1) {
@@ -885,7 +953,9 @@ export default function AttentionChapter({
       if (step >= 3) return 'Positional Encoding (Sin/Cos)';
     } else if (page === 2) {
       if (step <= 1) return 'Sequence A / B → Tensorization → X_A, X_B';
-      if (step === S2_PROJ_STEP) return 'Cross-Attention Projection Q, K, V';
+      if (step === 2) return 'Projection: X_A × W_Q → Q';
+      if (step === 3) return 'Projection: X_B × W_K → K';
+      if (step === 4) return 'Projection: X_B × W_V → V';
       if (step === S2_MATRIX_BASE) return 'Inner Product Q·Kᵀ';
       if (step === S2_MATRIX_BASE + 1) return 'Scaled logits / √d_k';
       if (step === S2_MATRIX_BASE + 2) return 'Softmax → probability α';
@@ -964,23 +1034,15 @@ export default function AttentionChapter({
   }, []);
 
   const advance = useCallback(() => {
-    if (page === 2 && step === S2_PROJ_STEP && projStep < S2_PROJ_SUBSTEPS_MAX) {
-      setProjStep(p => p + 1);
-      return;
-    }
     if (step < STEPS[page] - 1) setStep(s => s + 1);
     else if (page < PAGE_COUNT - 1) { setPage(p => p + 1); setStep(0); }
     else onRequestChapterNav();
-  }, [page, step, projStep, onRequestChapterNav]);
+  }, [page, step, onRequestChapterNav]);
 
   const retreat = useCallback(() => {
-    if (page === 2 && step === S2_PROJ_STEP && projStep > 0) {
-      setProjStep(p => p - 1);
-      return;
-    }
     if (step > 0) setStep(s => s - 1);
     else if (page > 0) { setPage(p => p - 1); setStep(STEPS[page - 1] - 1); }
-  }, [page, step, projStep]);
+  }, [page, step]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -1018,7 +1080,7 @@ export default function AttentionChapter({
           <motion.div key={page} initial={{opacity:0, scale:0.98, y: 30}} animate={{opacity:1, scale:1, y: 0}} exit={{opacity:0, scale:0.98, y: -30}} transition={{duration:0.8, ease: [0.4, 0, 0.2, 1]}} style={{width:'100%',height:'100%',position:'absolute'}}>
             {page===0 && <Slide0 step={step}/>}
             {page===1 && <Slide1 step={step}/>}
-            {page===2 && <Slide2 step={step} projStep={projStep} />}
+            {page===2 && <Slide2 step={step} />}
             {page===3 && <Slide3 step={step}/>}
           </motion.div>
         </AnimatePresence>
