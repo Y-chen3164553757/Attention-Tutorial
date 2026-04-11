@@ -23,7 +23,7 @@ export const timelineData: TimelineEvent[] = [
     title: '阶段一：符号主义与早期神经网络',
     causalType: 'pain',
     causalLabel: '人工强加的注意力 → 组合爆炸',
-    content: '1956 年达特茅斯会议确立符号主义为正统路线。麦卡锡主导的「逻辑理论 家」、费根鲍姆的专家系统与 Cyc 计划，试图将百万条人类常识转化为 If-Then 代码——本质上是人类在为机器强行分配"注意力"，告诉机器遇到什么条件必须关注什么。\n\n1958  年罗森布拉特发明感知机，打开了让机器自主学习注意力的大门，却在 1969 年被明斯基的数学证明打入冷宫，神经网络研究冻结长达十年。转机在于：1974 年保罗·韦伯斯推导出反向传播算法（BP），1986 年辛顿等人重新发表，为多层神经网络提供了「责任分配」的数 学基础——这正是机器未来能自主调整注意力权重的底层引擎。',
+    content: '1956 年达特茅斯会议确立符号主义为正统路线。麦卡锡主导的「逻辑理论家」、费根鲍姆的专家系统与 Cyc 计划，试图将百万条人类常识转化为 If-Then 代码——本质上是人类在为机器强行分配"注意力"，告诉机器遇到什么条件必须关注什么。\n\n1958 年罗森布拉特发明感知机，打开了让机器自主学习注意力的大门，却在 1969 年被明斯基的数学证明打入冷宫，神经网络研究冻结长达十年。转机在于：1974 年保罗·韦伯斯推导出反向传播算法（BP），1986 年辛顿等人重新发表，为多层神经网络提供了「责任分配」的数学基础——这正是机器未来能自主调整注意力权重的底层引擎。',
     desc: '"在这个阶段，机器没有自己的注意力。人类试图做机器的大脑，却被现实的复杂性压垮。"',
     formula: '\\Delta w_{ij} = -\\eta \\dfrac{\\partial E}{\\partial w_{ij}}',
     formulaTag: '反向传播：注意力权重的底层引擎'
@@ -65,8 +65,8 @@ export const timelineData: TimelineEvent[] = [
     title: '阶段四：注意力机制演进与 Transformer 诞生',
     causalType: 'brk',
     causalLabel: '自注意力 + 残差连接 → 现代大模型核心',
-    content: '2014 年 Bahdanau 提出软注意力 (Soft Attention)，首次让解码器在生成每个词时动态对齐编码器的所有隐状态——机器终于获得了自主分配注意力的权力，翻译质量大幅提升。2015 年 Luong 进一步简化了注意力计算方式。\n\n2017 年，Google 8 位研究员发表《阶段四：注意力机制演进与 Transformer 诞生》，提出 Transformer 架构：完全抛弃 RNN 的顺序 约束，核心是多头自注意力（Multi-Head Self-Attention）与残差连接的堆叠。每个 Token 同时与所有 Token 计算相关性，实现真正的「全局视野」。这篇论文成为了人类历史上被引用最多的 AI 论文之一，GPT、BERT、LLaMA 均直接脱胎于此。',
-    desc: '"阶段四：注意力机制演进与 Transformer 诞生——不仅仅是一种机制，而是架构的全新范式。注意力机制释放了并行的潜力，彻底改变了序列建模的规则。"',
+    content: '2014 年 Bahdanau 提出软注意力 (Soft Attention)，首次让解码器在生成每个词时动态对齐编码器的所有隐状态——机器终于获得了自主分配注意力的权力，翻译质量大幅提升。2015 年 Luong 进一步简化了注意力计算方式。\n\n2017 年，Google 研究员 Vaswani 等人在 NeurIPS 发表论文《Attention Is All You Need》，提出 Transformer 架构：完全抛弃 RNN 的顺序约束，核心是多头自注意力（Multi-Head Self-Attention）与残差连接的堆叠。每个 Token 同时与所有 Token 计算相关性，实现真正的「全局视野」。这篇论文成为了 AI 领域被引用最多的论文之一，GPT、BERT、LLaMA 均直接脱胎于此。',
+    desc: '"Transformer 的提出标志着一个全新范式的诞生——注意力机制释放了并行的潜力，彻底改变了序列建模的规则。"',
     formula: '\\text{Attention}(Q,K,V)=\\text{softmax}\\!\\left(\\dfrac{QK^\\top}{\\sqrt{d_k}}\\right)V',
     formulaTag: 'Scaled Dot-Product Attention'
   }

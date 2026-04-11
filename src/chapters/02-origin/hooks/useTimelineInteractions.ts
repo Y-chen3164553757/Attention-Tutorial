@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
+import { useState, useEffect } from 'react';
 
 // 1. 滚动进度监听 (requestAnimationFrame 节流)
 export function useScrollProgress() {

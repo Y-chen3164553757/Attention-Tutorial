@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>注意力机制 · 终极通识讲座</title>
+<link href="https://fonts.googleapis.cn/css2?family=Noto+Serif+SC:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<script>window.MathJax={tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]},startup:{typeset:false}};</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js"></script>
+<style>
+:root{
+  --bg:#f8fafc;--ink:#0f172a;--muted:#64748b;
+  --a1:#0284c7;--a2:#7c3aed;--a3:#059669;--a4:#e11d48;
+  --Q:#0284c7;--K:#059669;--V:#e11d48;
+  --ease:cubic-bezier(.16,1,.3,1);--spring:cubic-bezier(.25,1,.4,1);
+  --serif:'Noto Serif SC','Lora',Georgia,serif;
+  --display:'Lora',Georgia,serif;
+  --mono:'JetBrains Mono',Consolas,monospace;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{font-size:clamp(13px,1.2vw,20px)}
+body{width:100vw;height:100vh;overflow:hidden;background:#0a0a0f;display:flex;align-items:center;justify-content:center;font-family:var(--serif);color:var(--ink);-webkit-font-smoothing:antialiased}
+
+#stage{width:100%;height:100%;position:relative;background:#fafcff;overflow:hidden;font-size:1rem}
+.amb{position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(circle at 70% 60%,rgba(124,58,237,.06)0%,transparent 60%),radial-gradient(circle at 30% 40%,rgba(2,132,199,.06)0%,transparent 60%),radial-gradient(circle at 50% 100%,rgba(5,150,105,.04)0%,transparent 50%);filter:blur(60px)}
+.amb-grid{position:absolute;inset:0;z-index:0;pointer-events:none;background-image:radial-gradient(rgba(15,23,42,.04)1.5px,transparent 1.5px);background-size:clamp(20px,3vw,40px) clamp(20px,3vw,40px);mask-image:linear-gradient(to bottom,rgba(0,0,0,.6)0%,transparent 80%);-webkit-mask-image:linear-gradient(to bottom,rgba(0,0,0,.6)0%,transparent 80%)}
+
+.deck{position:absolute;inset:0;z-index:1}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .7s var(--ease),transform .7s var(--ease);transform:scale(.98) translateY(15px);overflow-y:auto;overflow-x:hidden}
+.slide.active{opacity:1;pointer-events:auto;transform:none}
+.slide.out{opacity:0;transform:scale(1.01) translateY(-15px)}
+
+.grad{background:linear-gradient(135deg,var(--a1),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.eyebrow{font-size:clamp(.65rem,.9vw,1.05rem);letter-spacing:.25em;color:var(--a1);text-transform:uppercase;font-weight:700;font-family:var(--mono);opacity:.8}
+.display-title{font-family:var(--display);font-size:clamp(1.8rem,4.5vw,4.2rem);font-weight:800;letter-spacing:-.02em;line-height:1.15;margin-bottom:20px;color:var(--ink)}
+
+/* Highlight components */
+.hl-base{transition:all .5s var(--spring);border-radius:6px;padding:4px 8px;margin:0 -4px;position:relative}
+.hl-q-active{background:rgba(2,132,199,.1);color:var(--Q);font-weight:700}
+.hl-k-active{background:rgba(5,150,105,.1);color:var(--K);font-weight:700;border-bottom:2px dashed var(--K)}
+.hl-v-active{background:var(--V);color:#fff;font-weight:700;transform:scale(1.05);display:inline-block;box-shadow:0 6px 16px rgba(225,29,72,.3);z-index:10}
+
+/* ═══ SLIDE 0 ═══ */
+#s0 .s0-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;z-index:10;transition:all 1s var(--spring);padding:0 clamp(20px,6vw,100px)}
+#s0 .s0-center.moved{align-items:flex-start;justify-content:flex-start;padding-top:clamp(40px,7vh,80px);padding-left:clamp(30px,6vw,100px);text-align:left}
+#s0 .s0-title{font-size:clamp(2rem,5vw,5rem);font-weight:800;font-family:var(--display);transition:all 1s var(--spring);margin-bottom:16px;line-height:1.1}
+#s0.moved .s0-title{font-size:clamp(1.4rem,2.5vw,2.4rem)!important}
+#s0 .s0-desc{margin-top:clamp(16px,3vh,40px);max-width:800px;font-weight:400;font-size:clamp(.85rem,1.4vw,1.6rem);line-height:1.8;color:#475569;transition:all .8s var(--spring);overflow:hidden}
+#s0.moved .s0-desc{max-height:0;opacity:0;margin:0;padding:0}
+#s0 .s0-hint{position:absolute;bottom:clamp(20px,5vh,60px);left:50%;transform:translateX(-50%);font-size:clamp(.75rem,1vw,1.1rem);color:var(--muted);opacity:.5;animation:pulse 2.5s infinite;font-family:var(--serif);letter-spacing:3px;transition:opacity .5s;background:rgba(255,255,255,.8);padding:8px 16px;border-radius:50px}
+#s0.moved .s0-hint{opacity:0;pointer-events:none}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:.8}}
+
+#s0 .s0-content{position:absolute;top:0;left:0;right:0;bottom:0;padding:clamp(80px,11vh,160px) clamp(20px,5vw,100px) clamp(20px,3vh,40px);display:grid;grid-template-columns:1.2fr 1fr;gap:clamp(20px,4vw,80px);opacity:0;pointer-events:none;transition:opacity .8s var(--spring) .1s}
+#s0.moved .s0-content{opacity:1;pointer-events:auto}
+
+.paper-card{background:#fff;border-radius:clamp(14px,1.5vw,20px);padding:clamp(24px,3vw,50px) clamp(24px,3vw,60px);box-shadow:0 40px 80px rgba(15,23,42,.04),0 0 0 1px rgba(15,23,42,.02)}
+.paper-body{font-size:clamp(.85rem,1.2vw,1.45rem);line-height:2.2;color:#334155;text-align:justify;margin-bottom:clamp(16px,2vh,30px)}
+.paper-q-body{font-size:clamp(.9rem,1.3vw,1.55rem);color:var(--ink);line-height:1.8;font-weight:600}
+
+.fade-panel{position:absolute;inset:0;transition:opacity .8s ease,transform .8s var(--spring);display:flex;flex-direction:column;justify-content:center}
+.fade-panel.hidden-panel{opacity:0;pointer-events:none;transform:translateX(20px)}
+.step-title{font-size:clamp(1rem,1.5vw,1.8rem);font-weight:700;color:var(--ink);margin-bottom:clamp(12px,2vh,25px);letter-spacing:-.02em}
+.step-list{display:flex;flex-direction:column;gap:clamp(10px,1.5vh,16px)}
+.step-item{display:flex;align-items:flex-start;gap:18px;padding:clamp(10px,1.5vh,16px) clamp(12px,1.5vw,20px);border-radius:16px;position:relative;transition:all .5s var(--spring);opacity:.2;transform:translateX(-10px)}
+.step-item::before{content:'';position:absolute;left:0;top:15px;bottom:15px;width:4px;border-radius:4px;transition:all .5s var(--spring);opacity:0}
+.step-num{font-size:1.2rem;font-weight:700;color:var(--muted);font-family:var(--mono);margin-top:4px}
+.step-text{font-size:clamp(.8rem,1.1vw,1.35rem);color:var(--muted);line-height:1.6;font-weight:500}
+.item-active{opacity:1;transform:translateX(0);background:rgba(255,255,255,.9);box-shadow:0 10px 30px rgba(15,23,42,.05)}
+.item-active::before{opacity:1}
+.item-active.q-mode::before{background:var(--Q)}.item-active.q-mode .step-num{color:var(--Q)}
+.item-active.k-mode::before{background:var(--K)}.item-active.k-mode .step-num{color:var(--K)}
+.item-active.v-mode::before{background:var(--V)}.item-active.v-mode .step-num{color:var(--V)}
+.item-active .step-text{color:var(--ink);font-weight:600}
+
+.core-formula-box{padding:clamp(16px,2vw,25px) clamp(18px,2.5vw,30px);background:rgba(255,255,255,.95);border:1px solid rgba(15,23,42,.08);border-radius:16px;text-align:center;box-shadow:0 20px 50px rgba(15,23,42,.05);width:100%;transform:translateY(20px) scale(.95);opacity:0;transition:all .8s var(--spring);margin-bottom:clamp(16px,2vh,30px)}
+.core-formula-box.show{transform:translateY(0) scale(1);opacity:1}
+
+/* ═══ SLIDE 1 ═══ */
+#s1{padding:clamp(20px,4vh,60px) clamp(20px,4vw,80px)}
+.s1-header{text-align:center;margin-bottom:clamp(16px,3vh,40px);transition:all .8s var(--spring)}
+.s1-body{flex:1;display:flex;align-items:center;justify-content:center;gap:clamp(16px,3vw,40px);flex-wrap:wrap}
+.s1-card{flex:1;min-width:clamp(200px,25vw,400px);background:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.9);border-radius:24px;padding:clamp(24px,3vw,40px) clamp(20px,2.5vw,30px);box-shadow:0 20px 40px rgba(15,23,42,.03);display:flex;flex-direction:column;align-items:center;position:relative;opacity:0;transform:translateX(-40px);transition:all .8s var(--spring)}
+.s1-card.active{opacity:1;transform:translateX(0)}
+.s1-card::after{content:'→';position:absolute;right:clamp(-30px,-3vw,-20px);top:50%;transform:translateY(-50%);font-size:clamp(1.5rem,3vw,3rem);color:var(--muted);opacity:.3;font-family:var(--mono)}
+.s1-card:last-child::after{display:none}
+.s1-h{font-size:clamp(1.2rem,2vw,2rem);font-weight:800;color:var(--ink);margin-bottom:8px}
+.s1-sub{font-family:var(--mono);font-size:clamp(.7rem,.9vw,1rem);color:var(--a1);font-weight:700;margin-bottom:clamp(20px,3vh,40px);text-transform:uppercase}
+.tensor-box{background:#f1f5f9;border-radius:12px;padding:clamp(12px,1.5vw,20px);width:100%;text-align:center;border:1px solid #e2e8f0;font-family:var(--mono);font-size:clamp(.9rem,1.2vw,1.4rem);font-weight:bold;margin-bottom:clamp(8px,1vh,15px);position:relative;transition:all .5s}
+.tensor-label{position:absolute;top:-10px;left:20px;background:#fff;padding:0 8px;font-size:.8rem;color:var(--muted);font-weight:700;border-radius:4px;border:1px solid #e2e8f0}
+.tensor-box.highlight{color:#fff;border:none;box-shadow:0 10px 30px rgba(15,23,42,.2);transform:scale(1.05);z-index:10}
+.tensor-box.highlight .tensor-label{color:rgba(255,255,255,.8);border-color:transparent}
+.tensor-box.hl-blue{background:var(--a1);border-color:var(--a1)}.tensor-box.hl-blue .tensor-label{background:var(--a1)}
+.tensor-box.hl-purple{background:var(--a2);border-color:var(--a2)}.tensor-box.hl-purple .tensor-label{background:var(--a2)}
+.tensor-box.hl-dark{background:var(--ink);border-color:var(--ink)}.tensor-box.hl-dark .tensor-label{background:var(--ink)}
+.arr-down{font-size:clamp(1rem,1.5vw,1.5rem);color:var(--muted);margin-bottom:clamp(8px,1vh,15px);text-align:center}
+
+/* ═══ SLIDE 2 ═══ */
+#s2{padding:0}
+.s2-layout{display:flex;width:100%;height:100%;padding:clamp(20px,4vh,60px) clamp(20px,3vw,60px);gap:clamp(16px,3vw,40px)}
+.s2-left{width:clamp(200px,25vw,450px);display:flex;flex-direction:column;flex-shrink:0}
+.s2-right{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden}
+
+.global-formula-box{position:absolute;top:0;right:0;background:rgba(255,255,255,.95);padding:clamp(8px,1.2vw,15px) clamp(16px,2vw,35px);border-radius:16px;border:1px solid rgba(15,23,42,.08);box-shadow:0 15px 40px rgba(0,0,0,.05);display:flex;align-items:center;gap:4px;z-index:50;font-family:'Times New Roman',serif;font-size:clamp(1rem,1.8vw,2.2rem);font-style:italic}
+.gf-part{transition:all .4s ease;color:var(--muted);opacity:.25}
+.gf-part.active{opacity:1;color:var(--ink);transform:scale(1.05)}
+.gf-part.active.hl-q{color:var(--Q);font-weight:bold}
+.gf-part.active.hl-k{color:var(--K);font-weight:bold}
+.gf-part.active.hl-v{color:var(--V);font-weight:bold}
+.gf-part.active.hl-op{color:var(--a4);font-weight:bold}
+.gf-frac{display:flex;flex-direction:column;align-items:center;margin:0 6px;justify-content:center;transition:all .4s ease}
+.gf-frac .top{border-bottom:2px solid var(--muted);padding:0 4px;line-height:1.2;opacity:.25;transition:all .4s}
+.gf-frac .bot{padding:0 4px;line-height:1.2;opacity:.25;transition:all .4s;color:var(--muted)}
+.gf-frac.active-top .top{border-bottom-color:var(--ink);opacity:1}
+.gf-frac.active-bot .bot{color:var(--a4);font-weight:bold;opacity:1;transform:scale(1.1);text-shadow:0 2px 10px rgba(225,29,72,.2)}
+
+.s2-steps{display:flex;flex-direction:column;gap:0;position:relative;margin-top:clamp(20px,3vh,40px)}
+.s2-steps::before{content:'';position:absolute;left:20px;top:20px;bottom:20px;width:2px;background:#e2e8f0;z-index:0}
+.s2-step{position:relative;z-index:1;padding:clamp(12px,1.5vh,20px) 0 clamp(12px,1.5vh,20px) clamp(30px,3vw,50px);opacity:.3;transition:all .4s var(--ease);cursor:pointer}
+.s2-step::before{content:'';position:absolute;left:clamp(10px,1.2vw,14px);top:clamp(18px,2vh,26px);width:14px;height:14px;border-radius:50%;background:#cbd5e1;border:4px solid var(--bg);transition:all .4s var(--spring)}
+.s2-step.active{opacity:1;transform:translateX(10px)}
+.s2-step.active::before{background:var(--Q);transform:scale(1.3);box-shadow:0 0 0 4px rgba(2,132,199,.2)}
+.s2-step-title{font-size:clamp(.8rem,1.2vw,1.4rem);font-weight:700;color:var(--ink);margin-bottom:6px}
+.s2-step-desc{font-size:clamp(.65rem,.9vw,1.05rem);color:var(--muted);line-height:1.5}
+
+.mat-view{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;transform:scale(.95);transition:all .6s var(--spring)}
+.mat-view.active{opacity:1;pointer-events:auto;transform:scale(1)}
+
+/* Sequence rows */
+.seq-row{display:flex;align-items:center;gap:clamp(10px,1.5vw,20px);opacity:0;transform:translateX(-30px);transition:all .8s var(--spring);margin-bottom:clamp(20px,3vh,40px)}
+.seq-row.show{opacity:1;transform:translateX(0)}
+.seq-title{font-family:var(--mono);font-size:clamp(.8rem,1.1vw,1.2rem);font-weight:bold;width:clamp(80px,10vw,140px);text-align:right}
+.seq-tokens{display:flex;gap:clamp(6px,.8vw,10px);background:#fff;padding:clamp(8px,1vw,15px) clamp(10px,1.5vw,20px);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.05)}
+.seq-tk{font-size:clamp(.9rem,1.3vw,1.5rem);font-weight:600;padding:clamp(4px,.5vw,8px) clamp(8px,1vw,16px);border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0}
+.seq-tk.q{color:var(--Q);border-color:rgba(2,132,199,.2);background:rgba(2,132,199,.05)}
+.seq-tk.k{color:var(--K);border-color:rgba(5,150,105,.2);background:rgba(5,150,105,.05)}
+
+.proj-lines{display:flex;gap:clamp(20px,3vw,40px);opacity:0;transition:all .8s var(--spring);transform:translateY(-20px);align-items:center}
+.proj-lines.show{opacity:1;transform:translateY(0)}
+.p-arr{display:flex;flex-direction:column;align-items:center;gap:10px}
+.p-arr span{font-size:2rem;color:#cbd5e1}
+.p-w{font-family:'Times New Roman',serif;font-style:italic;font-size:clamp(.8rem,1.1vw,1.3rem);background:#fff;padding:4px 12px;border-radius:6px;border:1px solid #e2e8f0;color:var(--muted)}
+.p-res{width:clamp(60px,6vw,100px);height:clamp(60px,6vw,100px);display:flex;align-items:center;justify-content:center;border-radius:16px;font-size:clamp(1.5rem,2.5vw,2.5rem);font-family:'Times New Roman',serif;font-style:italic;color:#fff;box-shadow:0 10px 20px rgba(0,0,0,.1)}
+
+/* Matrix calculation */
+.matrix-wrap{display:inline-grid;gap:clamp(4px,.5vw,8px);align-items:center;justify-items:center;background:#fff;padding:clamp(16px,2vw,30px) clamp(20px,2.5vw,40px);border-radius:24px;box-shadow:0 20px 50px rgba(15,23,42,.05),0 0 0 1px rgba(15,23,42,.03);margin-top:20px}
+.m-cell{width:clamp(40px,4.5vw,75px);height:clamp(32px,3.2vw,55px);display:flex;align-items:center;justify-content:center;font-family:'Times New Roman',serif;font-size:clamp(.75rem,1.2vw,1.5rem);color:var(--ink);border-radius:8px;transition:all .4s var(--spring);position:relative;opacity:0;transform:scale(.8)}
+.m-cell.show-cell{opacity:1;transform:scale(1)}
+.m-cell.header{font-family:var(--serif);font-size:clamp(.7rem,1vw,1.3rem);font-weight:700;background:transparent;opacity:1;transform:none}
+.m-cell.val{background:#f8fafc;border:1px solid #f1f5f9}
+.m-cell.val.hl-row{background:rgba(2,132,199,.05);border-color:rgba(2,132,199,.2)}
+.m-cell.val.hl-cross{background:var(--Q);color:#fff;font-weight:bold;transform:scale(1.15);box-shadow:0 10px 20px rgba(2,132,199,.3);z-index:10;border:none}
+.m-cell.val.softmax-hl{background:var(--V);color:#fff;font-weight:bold;transform:scale(1.1);box-shadow:0 10px 20px rgba(225,29,72,.3);border:none}
+
+.token-tag{padding:4px 12px;border-radius:8px;font-size:clamp(.65rem,.9vw,1.2rem);background:#fff;border:1px solid #cbd5e1;white-space:nowrap;transition:all .3s}
+.token-tag.q-tag{border-color:rgba(2,132,199,.4);color:var(--Q)}
+.token-tag.k-tag{border-color:rgba(5,150,105,.4);color:var(--K)}
+.token-tag.hl-active{background:var(--Q);color:#fff;border-color:var(--Q);transform:scale(1.1);box-shadow:0 4px 10px rgba(2,132,199,.2)}
+
+.math-comment{margin-top:clamp(12px,2vh,30px);padding:clamp(10px,1.5vw,20px) clamp(14px,2vw,30px);font-size:clamp(.7rem,1.1vw,1.35rem);line-height:1.6;color:var(--ink);text-align:center;min-height:60px;display:flex;align-items:center;justify-content:center;width:100%;max-width:clamp(400px,60vw,900px);font-weight:500}
+
+/* ═══ SLIDE 3 ═══ */
+.s3-layout{display:flex;flex-direction:column;width:100%;height:100%;padding:clamp(20px,4vh,60px) clamp(20px,4vw,80px);align-items:center}
+.s3-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(20px,4vw,50px);width:100%;max-width:1600px;margin-top:clamp(10px,2vh,20px);flex:1}
+.s3-panel{background:#fff;border-radius:24px;padding:clamp(16px,2vw,30px) clamp(20px,2.5vw,40px);box-shadow:0 20px 50px rgba(15,23,42,.05),0 0 0 1px rgba(15,23,42,.03);display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden}
+.s3-p-title{font-size:clamp(.9rem,1.4vw,1.7rem);font-weight:800;color:var(--ink);margin-bottom:clamp(8px,1.5vh,15px);display:flex;align-items:center;gap:12px}
+
+.sa-matrix-wrap{display:inline-grid;grid-template-columns:auto repeat(6,clamp(32px,3.5vw,52px));grid-template-rows:auto repeat(6,clamp(32px,3.5vw,52px));gap:4px;background:#fff;padding:20px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.05),0 0 0 1px rgba(0,0,0,.03);opacity:0;transform:translateY(20px);transition:all .8s var(--spring);margin-top:10px}
+.sa-matrix-wrap.show{opacity:1;transform:translateY(0)}
+.sa-cell{width:clamp(32px,3.5vw,52px);height:clamp(32px,3.5vw,52px);display:flex;align-items:center;justify-content:center;font-family:'Times New Roman',serif;font-size:clamp(.6rem,1vw,1.2rem);border-radius:6px;background:#f8fafc;transition:all .4s var(--spring);opacity:0;transform:scale(.8)}
+.sa-cell.show-cell{opacity:1;transform:scale(1)}
+.sa-cell.header{font-family:var(--serif);font-size:clamp(.6rem,.9vw,1.1rem);font-weight:bold;background:transparent;color:var(--muted);opacity:1;transform:none}
+.sa-cell.val.hl{color:#fff;font-weight:bold;transform:scale(1.15);z-index:10;border:none;box-shadow:0 10px 20px rgba(0,0,0,.2)}
+.sa-cell.masked{background:repeating-linear-gradient(45deg,#f1f5f9,#f1f5f9 5px,#e2e8f0 5px,#e2e8f0 10px)!important;color:transparent;border:none;opacity:.6}
+.hl-color-1{background:var(--Q)}.hl-color-2{background:var(--K)}.hl-color-3{background:var(--V)}
+
+.mh-stage{display:flex;flex-direction:column;gap:15px;width:100%;margin-top:10px}
+.mh-head{background:#f8fafc;border-radius:16px;padding:clamp(10px,1.2vw,18px) clamp(16px,2vw,30px);display:flex;justify-content:space-between;align-items:center;border-left:6px solid #cbd5e1;opacity:0;transform:translateX(-20px);transition:all .6s var(--spring);box-shadow:0 4px 10px rgba(0,0,0,.02)}
+.mh-head.show{opacity:1;transform:translateX(0)}
+.mh-head.focus{transform:scale(1.05) translateX(10px);box-shadow:0 15px 30px rgba(0,0,0,.08);background:#fff}
+.mh-head#mh-1.focus{border-left-color:var(--Q)}.mh-head#mh-2.focus{border-left-color:var(--K)}.mh-head#mh-3.focus{border-left-color:var(--V)}
+.mh-title{font-weight:bold;font-size:clamp(.75rem,1vw,1.3rem);color:var(--muted);transition:color .4s}
+.mh-head#mh-1.focus .mh-title{color:var(--Q)}.mh-head#mh-2.focus .mh-title{color:var(--K)}.mh-head#mh-3.focus .mh-title{color:var(--V)}
+.mh-conn{font-family:var(--mono);background:#fff;padding:6px 18px;border-radius:20px;border:1px solid #e2e8f0;font-size:clamp(.7rem,.9vw,1.2rem);color:var(--muted);font-weight:600;box-shadow:0 2px 5px rgba(0,0,0,.02);transition:all .4s}
+.mh-head.focus .mh-conn{color:var(--ink);border-color:transparent}
+.mh-head#mh-1.focus .mh-conn{background:rgba(2,132,199,.1)}.mh-head#mh-2.focus .mh-conn{background:rgba(5,150,105,.1)}.mh-head#mh-3.focus .mh-conn{background:rgba(225,29,72,.1)}
+
+.mh-formula-banner{margin-top:auto;padding:clamp(12px,1.5vw,20px) clamp(16px,2vw,25px);background:rgba(255,255,255,.95);border:1px solid rgba(15,23,42,.08);border-radius:16px;text-align:center;box-shadow:0 20px 50px rgba(15,23,42,.05);width:100%;transform:translateY(20px);opacity:0;transition:all .8s var(--spring);font-family:'Times New Roman',serif;font-style:italic;color:var(--ink);font-size:clamp(.9rem,1.4vw,1.7rem)}
+.mh-formula-banner.show{transform:translateY(0);opacity:1}
+
+/* Nav */
+.nav{position:fixed;bottom:clamp(12px,3vh,30px);left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:200}
+.nav-wrap{display:flex;gap:14px;align-items:center;padding:10px 22px;background:rgba(255,255,255,.55);backdrop-filter:blur(16px);border-radius:100px;border:1px solid rgba(15,23,42,.05);box-shadow:0 8px 24px rgba(0,0,0,.05)}
+.nav-dot{width:7px;height:7px;border-radius:50%;background:rgba(15,23,42,.18);border:none;cursor:pointer;padding:0;transition:all .4s var(--spring)}
+.nav-dot.on{background:var(--ink);transform:scale(1.8)}
+.key-hint{position:fixed;bottom:clamp(40px,6vh,70px);left:50%;transform:translateX(-50%);font-size:clamp(.65rem,.8vw,.85rem);color:var(--muted);opacity:.4;font-family:var(--serif);letter-spacing:2px;z-index:199;pointer-events:none}
+
+@media(max-width:900px){
+  #s0 .s0-content{grid-template-columns:1fr;overflow-y:auto}
+  .s2-layout{flex-direction:column}
+  .s2-left{width:100%;flex-direction:row;flex-wrap:wrap;gap:8px}
+  .s2-left .eyebrow,.s2-left .display-title{display:none}
+  .s2-steps{flex-direction:row;flex-wrap:wrap;margin-top:0}
+  .s2-steps::before{display:none}
+  .s2-step{padding:6px 12px}
+  .s2-step::before{display:none}
+  .s3-grid{grid-template-columns:1fr}
+  .global-formula-box{position:relative;top:auto;right:auto;margin-bottom:8px;font-size:.9rem!important}
+  .s1-card::after{display:none}
+}
+@media(max-width:600px){
+  html{font-size:12px}
+  .m-cell{width:28px;height:24px;font-size:.65rem}
+  .sa-cell{width:28px;height:28px;font-size:.55rem}
+}
+</style>
+</head>
+<body>
+<div id="stage">
+<div class="amb"></div>
+<div class="amb-grid"></div>
+<div class="deck" id="deck">
+
+<!-- ═══ S0: 概念引言 ═══ -->
+<div class="slide active" id="s0">
+  <div class="s0-center" id="s0-center">
+    <div class="eyebrow">PART 1 · INTUITION</div>
+    <h1 class="s0-title" id="s0-title">什么是 <span class="grad">Attention</span>？</h1>
+    <div class="s0-desc" id="s0-desc">
+      人类在面对海量信息时，并不会平均分配大脑算力。<br>
+      而是带着目标，将目光聚焦于关键的"特征线索"，过滤无关背景。
+    </div>
+  </div>
+  <div class="s0-hint" id="s0-hint">按 [空格] 或 [→] 键步进推演</div>
+
+  <div class="s0-content" id="s0-content">
+    <div style="display:flex;flex-direction:column;justify-content:center">
+      <div class="paper-card">
+        <div class="paper-body">
+          "2024年，深度求索发布了新一代大语言模型 DeepSeek-V3。为突破长上下文推理的内存瓶颈，<span id="p1-k-sentence" class="hl-base">该模型全面采用了<strong id="p1-v-word" class="hl-base">多头潜在注意力（MLA）</strong>架构。</span>测试表明，DeepSeek-V3 在数学和代码能力上全面对标顶尖闭源模型，同时保持了极高的训练效率。"
+        </div>
+        <div style="border-top:1px dashed rgba(15,23,42,.1);margin:25px 0"></div>
+        <div style="font-family:var(--mono);color:var(--a1);font-weight:700;margin-bottom:10px;font-size:1rem">Q: 用户提问</div>
+        <div class="paper-q-body"><span id="p1-q-sentence" class="hl-base">DeepSeek-V3 解决显存瓶颈的架构是什么？</span></div>
+      </div>
+    </div>
+    <div style="position:relative">
+      <div id="human-wrapper" class="fade-panel">
+        <h3 class="step-title">人类认知本能：目标导向</h3>
+        <div class="step-list">
+          <div id="h-q" class="step-item"><span class="step-num">01</span><span class="step-text">阅读问题，建立寻找目标（Query）。</span></div>
+          <div id="h-k" class="step-item"><span class="step-num">02</span><span class="step-text">扫读原文，定位匹配特征（Key）。</span></div>
+          <div id="h-v" class="step-item"><span class="step-num">03</span><span class="step-text">锁定线索，提取核心实体（Value）。</span></div>
+        </div>
+      </div>
+      <div id="machine-wrapper" class="fade-panel hidden-panel">
+        <div id="f-box" class="core-formula-box">
+          <div style="font-family:'Times New Roman',serif;font-style:italic;color:var(--ink)">
+            $$ \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V $$
+          </div>
+        </div>
+        <div id="machine-steps" style="opacity:0;transition:opacity .5s">
+          <h3 class="step-title" style="color:var(--muted);font-family:var(--mono)">机器注意力：高维映射</h3>
+          <div class="step-list">
+            <div id="m-q" class="step-item" style="padding:10px 16px"><div style="width:100%"><div style="font-weight:700;color:var(--Q);font-size:1.05rem;margin-bottom:2px;font-family:var(--mono)">Query (Q)</div><div class="step-text" style="font-size:1.3rem;color:var(--ink)">「我要找什么信息？」</div></div></div>
+            <div id="m-k" class="step-item" style="padding:10px 16px"><div style="width:100%"><div style="font-weight:700;color:var(--K);font-size:1.05rem;margin-bottom:2px;font-family:var(--mono)">Key (K)</div><div class="step-text" style="font-size:1.3rem;color:var(--ink)">「我有什么特征？」</div></div></div>
+            <div id="m-v" class="step-item" style="padding:10px 16px"><div style="width:100%"><div style="font-weight:700;color:var(--V);font-size:1.05rem;margin-bottom:2px;font-family:var(--mono)">Value (V)</div><div class="step-text" style="font-size:1.3rem;color:var(--ink)">「我能提供的内容。」</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ S1: 张量化前置处理 ═══ -->
+<div class="slide" id="s1">
+  <div class="s1-header">
+    <div class="eyebrow">PRE-COMPUTATION</div>
+    <h1 class="display-title">驶入矩阵前：<span class="grad">文本的张量化</span></h1>
+    <p style="font-size:clamp(.8rem,1.3vw,1.6rem);color:var(--muted)">我们以序列 <strong style="color:var(--ink)">"有一只小猫"</strong> 为例，计算机如何理解？</p>
+  </div>
+  <div class="s1-body" id="s1-body">
+    <div class="s1-card" id="s1-c1">
+      <h3 class="s1-h">Tokenization</h3><div class="s1-sub">离散切分</div>
+      <div class="tensor-box"><span class="tensor-label">Text</span>"有一只小猫"</div>
+      <div class="arr-down">↓</div>
+      <div class="tensor-box highlight hl-blue"><span class="tensor-label">Token IDs</span>[ 15, 23, 89, 44, 91 ]</div>
+    </div>
+    <div class="s1-card" id="s1-c2">
+      <h3 class="s1-h">Embedding</h3><div class="s1-sub">查表获取语义向量</div>
+      <div class="tensor-box"><span class="tensor-label">Input</span>IDs</div>
+      <div class="arr-down">× W<sub>emb</sub> (权重表) ↓</div>
+      <div class="tensor-box highlight hl-purple" style="font-family:'Times New Roman',serif;font-style:italic;font-size:clamp(.9rem,1.2vw,1.5rem)"><span class="tensor-label">Word Matrix</span>X ∈ ℝ<sup>5 × d</sup></div>
+    </div>
+    <div class="s1-card" id="s1-c3">
+      <h3 class="s1-h">Positional Enc</h3><div class="s1-sub">注入时序位置信息</div>
+      <div class="tensor-box"><span class="tensor-label">Context</span>X</div>
+      <div class="arr-down">+ P<sub>E</sub> (sin/cos编码) ↓</div>
+      <div class="tensor-box highlight hl-dark" style="font-family:'Times New Roman',serif;font-style:italic;font-size:clamp(1rem,1.5vw,1.8rem)"><span class="tensor-label">Final Tensor</span>X ∈ ℝ<sup>5 × d</sup></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ S2: Attention 运算推演 ═══ -->
+<div class="slide" id="s2">
+  <div class="s2-layout" id="s2-layout">
+    <div class="s2-left">
+      <div class="eyebrow">Attention Flow</div>
+      <h2 class="display-title" style="font-size:clamp(1.2rem,2.5vw,3rem);margin-bottom:10px">Attention运算推演</h2>
+      <div class="s2-steps">
+        <div class="s2-step active" id="s2-step-0"><div class="s2-step-title">0. 序列声明</div><div class="s2-step-desc">明确注意力的双方：查询序列 (A) 与特征序列 (B)。</div></div>
+        <div class="s2-step" id="s2-step-1"><div class="s2-step-title">1. 特征跨域投影</div><div class="s2-step-desc">序列 A 提供查询 <i>Q</i>，序列 B 提供特征库 <i>K, V</i>。</div></div>
+        <div class="s2-step" id="s2-step-2"><div class="s2-step-title">2. 计算跨域内积</div><div class="s2-step-desc"><i>Q · K<sup>T</sup></i>：序列 A 逐词测评与序列 B 的匹配度。</div></div>
+        <div class="s2-step" id="s2-step-3"><div class="s2-step-title">3. 缩放与归一化</div><div class="s2-step-desc">除以 √<i style="font-family:'Times New Roman',serif">d<sub>k</sub></i>，经 Softmax 转化为概率 <i>α</i>。</div></div>
+        <div class="s2-step" id="s2-step-4"><div class="s2-step-title">4. 提取实体价值</div><div class="s2-step-desc">利用 <i>α</i> 乘以内容库 <i>V</i>，吸纳目标知识。</div></div>
+      </div>
+    </div>
+    <div class="s2-right">
+      <div class="global-formula-box" id="global-formula">
+        <span class="gf-part" id="gf-attn">Attn = </span>
+        <span class="gf-part" id="gf-soft">softmax</span>
+        <span class="gf-part" id="gf-open">(</span>
+        <div class="gf-frac" id="gf-frac-wrap">
+          <div class="top" id="gf-qk"><span id="gf-q">Q</span><span id="gf-dot" style="margin:0 4px">·</span><span id="gf-k">K<sup>T</sup></span></div>
+          <div class="bot" id="gf-sqrt">√d<sub>k</sub></div>
+        </div>
+        <span class="gf-part" id="gf-close">)</span>
+        <span class="gf-part" id="gf-v">V</span>
+      </div>
+      <div class="mat-view active" id="mv-0">
+        <div style="display:flex;flex-direction:column;gap:clamp(20px,4vh,40px);width:100%;align-items:center;margin-top:20px">
+          <div class="seq-row" id="intro-seq-a"><div class="seq-title" style="color:var(--Q)">Sequence A<br><small style="font-weight:normal;opacity:.7">(Query Source)</small></div><div class="seq-tokens"><span class="seq-tk q">它</span><span class="seq-tk q">好</span><span class="seq-tk q">可</span><span class="seq-tk q">爱</span></div></div>
+          <div class="seq-row" id="intro-seq-b"><div class="seq-title" style="color:var(--K)">Sequence B<br><small style="font-weight:normal;opacity:.7">(Knowledge Base)</small></div><div class="seq-tokens"><span class="seq-tk k">有</span><span class="seq-tk k">一</span><span class="seq-tk k">只</span><span class="seq-tk k">小</span><span class="seq-tk k">猫</span></div></div>
+        </div>
+        <div class="math-comment" id="comment-v0" style="background:transparent;font-weight:bold;opacity:0;transition:opacity .8s"></div>
+      </div>
+      <div class="mat-view" id="mv-1">
+        <div style="display:flex;gap:clamp(30px,5vw,60px);width:100%;align-items:center;justify-content:center;margin-top:20px">
+          <div class="proj-lines" id="proj-q"><div class="p-arr"><div class="p-w">W<sub>Q</sub></div><span>↓</span></div><div class="p-res" style="background:var(--Q)">Q</div></div>
+          <div class="proj-lines" id="proj-kv"><div class="p-arr"><div class="p-w">W<sub>K</sub></div><span>↓</span><div class="p-res" style="background:var(--K);margin-top:10px">K</div></div><div class="p-arr"><div class="p-w">W<sub>V</sub></div><span>↓</span><div class="p-res" style="background:var(--V);margin-top:10px">V</div></div></div>
+        </div>
+        <div class="math-comment" id="comment-v1" style="background:transparent">映射到隐藏空间：序列 A 生成用于搜索的查询矩阵 Q；序列 B 生成被搜索的键矩阵 K 和内容矩阵 V。</div>
+      </div>
+      <div class="mat-view" id="mv-2">
+        <div class="matrix-wrap" id="matrix-wrap" style="grid-template-columns:auto repeat(5,clamp(40px,4.5vw,75px));grid-template-rows:auto repeat(4,clamp(32px,3.2vw,55px))">
+          <div class="m-cell header show-cell"></div><div class="m-cell header show-cell"><span class="token-tag k-tag">有</span></div><div class="m-cell header show-cell"><span class="token-tag k-tag">一</span></div><div class="m-cell header show-cell"><span class="token-tag k-tag">只</span></div><div class="m-cell header show-cell"><span class="token-tag k-tag">小</span></div><div class="m-cell header show-cell"><span class="token-tag k-tag">猫</span></div>
+          <div class="m-cell header show-cell" style="justify-content:flex-end"><span class="token-tag q-tag" id="q-tag-1">它</span></div><div class="m-cell val" id="c-1-1"></div><div class="m-cell val" id="c-1-2"></div><div class="m-cell val" id="c-1-3"></div><div class="m-cell val" id="c-1-4"></div><div class="m-cell val" id="c-1-5"></div>
+          <div class="m-cell header show-cell" style="justify-content:flex-end"><span class="token-tag q-tag" id="q-tag-2">好</span></div><div class="m-cell val" id="c-2-1"></div><div class="m-cell val" id="c-2-2"></div><div class="m-cell val" id="c-2-3"></div><div class="m-cell val" id="c-2-4"></div><div class="m-cell val" id="c-2-5"></div>
+          <div class="m-cell header show-cell" style="justify-content:flex-end"><span class="token-tag q-tag" id="q-tag-3">可</span></div><div class="m-cell val" id="c-3-1"></div><div class="m-cell val" id="c-3-2"></div><div class="m-cell val" id="c-3-3"></div><div class="m-cell val" id="c-3-4"></div><div class="m-cell val" id="c-3-5"></div>
+          <div class="m-cell header show-cell" style="justify-content:flex-end"><span class="token-tag q-tag" id="q-tag-4">爱</span></div><div class="m-cell val" id="c-4-1"></div><div class="m-cell val" id="c-4-2"></div><div class="m-cell val" id="c-4-3"></div><div class="m-cell val" id="c-4-4"></div><div class="m-cell val" id="c-4-5"></div>
+        </div>
+        <div class="math-comment" id="mv-comment" style="background:transparent">等待计算指令...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ S3: 自注意力与多头协同 ═══ -->
+<div class="slide" id="s3">
+  <div class="s3-layout" id="s3-layout">
+    <div class="eyebrow" style="margin-bottom:10px">The Paradigm</div>
+    <h2 class="display-title" style="font-size:clamp(1.4rem,3vw,3.5rem);text-align:center;margin-bottom:0">大一统模型基石：<span class="grad">自注意力与多头协同</span></h2>
+    <div class="s3-grid">
+      <div class="s3-panel" id="p-self">
+        <div class="s3-p-title" style="color:var(--ink);font-size:clamp(.9rem,1.3vw,1.6rem)"><span style="display:inline-block;width:16px;height:16px;background:var(--ink);border-radius:4px"></span>Self-Attention 内部指代</div>
+        <p style="font-size:clamp(.7rem,1vw,1.15rem);color:var(--muted);margin-bottom:10px;text-align:center;line-height:1.6">
+          合并为单句：<strong>"有 一只 小猫 它 好 可爱"</strong><br>
+          Q, K, V 源自自身，形成 <strong style="color:var(--ink)">6×6 的全局自注意力矩阵</strong>。<br>
+          <small style="opacity:.8;color:var(--muted)">（注：此处展示为全局自注意力机制，序列中的每个词均可与上下文任意词进行特征匹配）</small>
+        </p>
+        <div class="sa-matrix-wrap" id="sa-matrix">
+          <div class="sa-cell header"></div>
+          <div class="sa-cell header">有</div><div class="sa-cell header">一只</div><div class="sa-cell header">小猫</div><div class="sa-cell header">它</div><div class="sa-cell header">好</div><div class="sa-cell header">可爱</div>
+          <div class="sa-cell header" style="text-align:right;justify-content:flex-end;padding-right:10px" id="sa-r-0">有</div>
+          <div class="sa-cell val" id="sa-0-0"></div><div class="sa-cell val" id="sa-0-1"></div><div class="sa-cell val" id="sa-0-2"></div><div class="sa-cell val" id="sa-0-3"></div><div class="sa-cell val" id="sa-0-4"></div><div class="sa-cell val" id="sa-0-5"></div>
+          <div class="sa-cell header" style="text-align:right;justify-content:flex-end;padding-right:10px" id="sa-r-1">一只</div>
+          <div class="sa-cell val" id="sa-1-0"></div><div class="sa-cell val" id="sa-1-1"></div><div class="sa-cell val" id="sa-1-2"></div><div class="sa-cell val" id="sa-1-3"></div><div class="sa-cell val" id="sa-1-4"></div><div class="sa-cell val" id="sa-1-5"></div>
+          <div class="sa-cell header" style="text-align:right;justify-content:flex-end;padding-right:10px" id="sa-r-2">小猫</div>
+          <div class="sa-cell val" id="sa-2-0"></div><div class="sa-cell val" id="sa-2-1"></div><div class="sa-cell val" id="sa-2-2"></div><div class="sa-cell val" id="sa-2-3"></div><div class="sa-cell val" id="sa-2-4"></div><div class="sa-cell val" id="sa-2-5"></div>
+          <div class="sa-cell header" style="text-align:right;justify-content:flex-end;padding-right:10px" id="sa-r-3">它</div>
+          <div class="sa-cell val" id="sa-3-0"></div><div class="sa-cell val" id="sa-3-1"></div><div class="sa-cell val" id="sa-3-2"></div><div class="sa-cell val" id="sa-3-3"></div><div class="sa-cell val" id="sa-3-4"></div><div class="sa-cell val" id="sa-3-5"></div>
+          <div class="sa-cell header" style="text-align:right;justify-content:flex-end;padding-right:10px" id="sa-r-4">好</div>
+          <div class="sa-cell val" id="sa-4-0"></div><div class="sa-cell val" id="sa-4-1"></div><div class="sa-cell val" id="sa-4-2"></div><div class="sa-cell val" id="sa-4-3"></div><div class="sa-cell val" id="sa-4-4"></div><div class="sa-cell val" id="sa-4-5"></div>
+          <div class="sa-cell header" style="text-align:right;justify-content:flex-end;padding-right:10px" id="sa-r-5">可爱</div>
+          <div class="sa-cell val" id="sa-5-0"></div><div class="sa-cell val" id="sa-5-1"></div><div class="sa-cell val" id="sa-5-2"></div><div class="sa-cell val" id="sa-5-3"></div><div class="sa-cell val" id="sa-5-4"></div><div class="sa-cell val" id="sa-5-5"></div>
+        </div>
+      </div>
+      <div class="s3-panel" id="p-multi">
+        <div class="s3-p-title" style="color:var(--a2);font-size:clamp(.9rem,1.3vw,1.6rem)"><span style="display:inline-block;width:16px;height:16px;background:var(--a2);border-radius:4px"></span>Multi-Head 多头拆分</div>
+        <p style="font-size:clamp(.7rem,1vw,1.15rem);color:var(--muted);margin-bottom:10px;text-align:center;line-height:1.6">
+          真实的模型会将特征投射至多个平行的<strong>低维子空间</strong>，<br>
+          从而让不同的"头"去隐喻地捕捉不同维度的语义关联：
+        </p>
+        <div class="mh-stage" id="mh-stage">
+          <div class="mh-head" id="mh-1"><div class="mh-title t1">Head 1: 倾向指代关联</div><div class="mh-conn">它 ➜ 小猫</div></div>
+          <div class="mh-head" id="mh-2"><div class="mh-title t2">Head 2: 倾向数量修饰</div><div class="mh-conn">一只 ➜ 小猫</div></div>
+          <div class="mh-head" id="mh-3"><div class="mh-title t3">Head 3: 倾向情感属性</div><div class="mh-conn">可爱 ➜ 小猫</div></div>
+        </div>
+        <div class="mh-formula-banner" id="mh-formula-banner">
+          <div style="margin-bottom:12px">$$ \text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, \text{head}_2, \text{head}_3)W^O $$</div>
+          <div style="font-size:clamp(.75rem,1.1vw,1.35rem);opacity:.8">$$ \text{where } \text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V) $$</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /deck -->
+</div><!-- /stage -->
+
+<div class="nav"><div class="nav-wrap" id="navDots"></div></div>
+<div class="key-hint">按 [空格] 或 [→] 键步进推演</div>
+
+<script>
+/* ═══ State Machine ═══ */
+const slideConfigs=[{steps:8},{steps:4},{steps:9},{steps:7}];
+let currentSlide=0,currentStep=0;
+const N=4;
+
+const nd=document.getElementById('navDots');
+for(let i=0;i<N;i++){const d=document.createElement('button');d.className='nav-dot'+(i===0?' on':'');d.onclick=()=>{currentSlide=i;currentStep=0;updatePresentation()};nd.appendChild(d)}
+
+function updatePresentation(){
+  document.querySelectorAll('.slide').forEach((s,i)=>{
+    s.classList.remove('active','out');
+    if(i===currentSlide)s.classList.add('active');else s.classList.add('out');
+  });
+  document.querySelectorAll('.nav-dot').forEach((d,i)=>d.classList.toggle('on',i===currentSlide));
+  if(currentSlide===0)renderSlide0(currentStep);
+  if(currentSlide===1)renderSlide1(currentStep);
+  if(currentSlide===2)renderSlide2(currentStep);
+  if(currentSlide===3)renderSlide3(currentStep);
+  if(window.MathJax&&MathJax.typesetPromise)MathJax.typesetPromise([document.querySelectorAll('.slide')[currentSlide]]).catch(()=>{});
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '){
+    e.preventDefault();
+    if(currentStep<slideConfigs[currentSlide].steps-1)currentStep++;
+    else if(currentSlide<N-1){currentSlide++;currentStep=0}
+    updatePresentation();
+  }else if(e.key==='ArrowLeft'){
+    e.preventDefault();
+    if(currentStep>0)currentStep--;
+    else if(currentSlide>0){currentSlide--;currentStep=slideConfigs[currentSlide].steps-1}
+    updatePresentation();
+  }
+});
+
+/* ═══ S0: 概念引言 ═══ */
+function renderSlide0(step){
+  const center=document.getElementById('s0-center'),slide=document.getElementById('s0');
+  const contentWrap=document.getElementById('s0-content');
+  const humanWrapper=document.getElementById('human-wrapper'),machineWrapper=document.getElementById('machine-wrapper');
+  const formulaBox=document.getElementById('f-box'),machineSteps=document.getElementById('machine-steps');
+
+  if(step===0){slide.classList.remove('moved');center.classList.remove('moved');contentWrap.classList.remove('show')}
+  else{slide.classList.add('moved');center.classList.add('moved');contentWrap.classList.add('show')}
+
+  if(step>=1&&step<=3){humanWrapper.classList.remove('hidden-panel');machineWrapper.classList.add('hidden-panel')}
+  else if(step>=4){humanWrapper.classList.add('hidden-panel');machineWrapper.classList.remove('hidden-panel')}
+
+  // Reset all highlights
+  ['h-q','h-k','h-v','m-q','m-k','m-v','p1-q-sentence','p1-k-sentence','p1-v-word'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.className=el.className.replace(/item-active|hl-q-active|hl-k-active|hl-v-active/g,'').trim();
+  });
+
+  if(step===1){document.getElementById('h-q').classList.add('item-active','q-mode');document.getElementById('p1-q-sentence').classList.add('hl-q-active')}
+  if(step===2){document.getElementById('h-k').classList.add('item-active','k-mode');document.getElementById('p1-k-sentence').classList.add('hl-k-active')}
+  if(step===3){document.getElementById('h-v').classList.add('item-active','v-mode');document.getElementById('p1-v-word').classList.add('hl-v-active')}
+
+  if(step===4){formulaBox.classList.add('show');machineSteps.style.opacity='0'}
+  else if(step>=5){formulaBox.classList.add('show');machineSteps.style.opacity='1';
+    if(step>=5){document.getElementById('m-q').classList.add('item-active','q-mode');document.getElementById('p1-q-sentence').classList.add('hl-q-active')}
+    if(step>=6){document.getElementById('m-k').classList.add('item-active','k-mode');document.getElementById('p1-k-sentence').classList.add('hl-k-active')}
+    if(step>=7){document.getElementById('m-v').classList.add('item-active','v-mode');document.getElementById('p1-v-word').classList.add('hl-v-active')}
+  }else{formulaBox.classList.remove('show')}
+}
+
+/* ═══ S1: 张量化前置处理 ═══ */
+function renderSlide1(step){
+  ['s1-c1','s1-c2','s1-c3'].forEach((c,i)=>document.getElementById(c).classList.toggle('active',step>i));
+}
+
+/* ═══ S2: Attention 运算推演 ═══ */
+const matrixRawData=[
+  [1.2,0.5,1.8,2.0,12.6],[1.0,2.5,1.2,1.5,0.8],[0.5,1.0,5.0,2.0,1.5],[1.5,2.2,4.5,8.5,3.0]
+];
+
+function fillMatrixCell(r,c,val,cls='',delayMs=0){
+  const cell=document.getElementById(`c-${r}-${c}`);
+  if(cell){setTimeout(()=>{cell.innerHTML=val;cell.className=`m-cell val show-cell ${cls}`},delayMs)}
+}
+
+function renderSlide2(step){
+  const layout=document.getElementById('s2-layout');
+  if(step>=0)layout.classList.add('show');
+
+  for(let i=0;i<=4;i++){const s=document.getElementById('s2-step-'+i);if(s)s.classList.remove('active')}
+
+  const view0=document.getElementById('mv-0'),view1=document.getElementById('mv-1'),view2=document.getElementById('mv-2');
+  const comm0=document.getElementById('comment-v0'),comm1=document.getElementById('comment-v1'),comm2=document.getElementById('mv-comment');
+
+  const formulaParts=['gf-attn','gf-soft','gf-open','gf-close','gf-v','gf-q','gf-dot','gf-k'].map(id=>document.getElementById(id));
+  const fFrac=document.getElementById('gf-frac-wrap');
+
+  if(step<4){
+    for(let r=1;r<=4;r++)for(let c=1;c<=5;c++){const cell=document.getElementById(`c-${r}-${c}`);if(cell){cell.className='m-cell val';cell.innerHTML=''}}
+    document.getElementById('q-tag-1').classList.remove('hl-active');
+  }
+
+  formulaParts.forEach(el=>{el.classList.remove('active','hl-q','hl-k','hl-v','hl-op')});
+  fFrac.classList.remove('active','active-top','active-bot');
+
+  if(step===0){
+    document.getElementById('s2-step-0').classList.add('active');
+    view0.classList.add('active');view1.classList.remove('active');view2.classList.remove('active');
+    document.getElementById('intro-seq-a').classList.remove('show');
+    document.getElementById('intro-seq-b').classList.remove('show');
+    comm0.style.opacity='0';
+  }
+
+  if(step===1){
+    document.getElementById('s2-step-0').classList.add('active');
+    view0.classList.add('active');view1.classList.remove('active');view2.classList.remove('active');
+    document.getElementById('intro-seq-a').classList.add('show');
+    document.getElementById('intro-seq-b').classList.remove('show');
+    comm0.innerHTML='引入序列 A（"它好可爱"）：作为本次注意力计算中，发起检索的源头 (Query)。';
+    comm0.style.opacity='1';
+  }
+
+  if(step===2){
+    document.getElementById('s2-step-0').classList.add('active');
+    view0.classList.add('active');view1.classList.remove('active');view2.classList.remove('active');
+    document.getElementById('intro-seq-a').classList.add('show');
+    document.getElementById('intro-seq-b').classList.add('show');
+    comm0.innerHTML='引入序列 B（"有一只小猫"）：作为本次注意力计算中，被检索的目标知识库 (Key & Value)。';
+    comm0.style.opacity='1';
+  }
+
+  if(step===3){
+    document.getElementById('s2-step-1').classList.add('active');
+    view0.classList.remove('active');view1.classList.add('active');view2.classList.remove('active');
+    document.getElementById('proj-q').classList.add('show');
+    document.getElementById('proj-kv').classList.add('show');
+    document.getElementById('gf-q').classList.add('active','hl-q');
+    document.getElementById('gf-k').classList.add('active','hl-k');
+    document.getElementById('gf-v').classList.add('active','hl-v');
+  }
+
+  if(step>=4){view0.classList.remove('active');view1.classList.remove('active');view2.classList.add('active')}
+
+  if(step===4){
+    document.getElementById('s2-step-2').classList.add('active');
+    fFrac.classList.add('active','active-top');document.getElementById('gf-q').classList.add('active','hl-q');
+    document.getElementById('gf-dot').classList.add('active');document.getElementById('gf-k').classList.add('active','hl-k');
+    document.getElementById('q-tag-1').classList.add('hl-active');
+    comm2.innerHTML=`<code>[<i>Q</i><sub>它</sub>] · [<i>K</i><sub>有</sub> ... <i>K</i><sub>猫</sub>]<sup>T</sup> = [1.2, 0.5, 1.8, 2.0, <span style="color:var(--V);font-weight:bold">12.6</span>]</code><br>点积数值最高，代表 "它" 与 "猫" 的特征在多维空间中极度吻合！`;
+    for(let c=1;c<=5;c++){let val=matrixRawData[0][c-1];let cls="hl-row";if(val>10)cls+=" hl-cross";fillMatrixCell(1,c,val.toFixed(1),cls,c*100)}
+  }
+
+  if(step===5){
+    document.getElementById('s2-step-2').classList.add('active');
+    fFrac.classList.add('active','active-top');document.getElementById('gf-q').classList.add('active','hl-q');
+    document.getElementById('gf-dot').classList.add('active');document.getElementById('gf-k').classList.add('active','hl-k');
+    document.getElementById('q-tag-1').classList.remove('hl-active');
+    comm2.innerHTML='以此类推，完成整个 4×5 的特征得分矩阵运算（Raw Attention Scores）。';
+    for(let r=1;r<=4;r++){for(let c=1;c<=5;c++){let val=matrixRawData[r-1][c-1];let cls="hl-row";if(val>10)cls+=" hl-cross";fillMatrixCell(r,c,val.toFixed(1),cls,(r-1)*150+c*50)}}
+  }
+
+  if(step===6){
+    document.getElementById('s2-step-3').classList.add('active');
+    fFrac.classList.add('active','active-top','active-bot');document.getElementById('gf-q').classList.add('active','hl-q');
+    document.getElementById('gf-dot').classList.add('active');document.getElementById('gf-k').classList.add('active','hl-k');
+    comm2.innerHTML=`公式进度：<code>除以 √d<sub>k</sub></code>。<br>所有得分除以 2（假定 d<sub>k</sub>=4），平滑极端方差，防止随后的 Softmax 发生梯度消失。`;
+    for(let r=1;r<=4;r++){for(let c=1;c<=5;c++){let val=matrixRawData[r-1][c-1]/2;let cls="hl-row";if(val>5)cls+=" hl-cross";const cell=document.getElementById(`c-${r}-${c}`);cell.innerHTML=val.toFixed(1);cell.className=`m-cell val show-cell ${cls}`}}
+  }
+
+  if(step===7){
+    document.getElementById('s2-step-3').classList.add('active');
+    fFrac.classList.add('active','active-top','active-bot');document.getElementById('gf-q').classList.add('active','hl-q');
+    document.getElementById('gf-dot').classList.add('active');document.getElementById('gf-k').classList.add('active','hl-k');
+    document.getElementById('gf-soft').classList.add('active','hl-op');document.getElementById('gf-open').classList.add('active','hl-op');document.getElementById('gf-close').classList.add('active','hl-op');
+    comm2.innerHTML=`公式进度：应用 <code>Softmax 函数</code>。<br>将矩阵的每一行转化为严格的概率分布 <i>α</i>（每行总和为 1.0）。`;
+    const softmaxMatrix=[[0.02,0.03,0.05,0.10,0.80],[0.10,0.50,0.10,0.20,0.10],[0.05,0.10,0.65,0.15,0.05],[0.10,0.15,0.20,0.45,0.10]];
+    for(let r=1;r<=4;r++){for(let c=1;c<=5;c++){let val=softmaxMatrix[r-1][c-1];const cell=document.getElementById(`c-${r}-${c}`);setTimeout(()=>{cell.innerHTML=val.toFixed(2);cell.className=val>.4?'m-cell val show-cell softmax-hl':'m-cell val show-cell'},c*80)}}
+  }
+
+  if(step===8){
+    document.getElementById('s2-step-4').classList.add('active');
+    formulaParts.forEach(el=>{el.classList.add('active')});fFrac.classList.add('active');
+    document.getElementById('gf-soft').classList.remove('hl-op');document.getElementById('gf-open').classList.remove('hl-op');document.getElementById('gf-close').classList.remove('hl-op');
+    document.getElementById('gf-v').classList.add('hl-v');document.getElementById('gf-attn').classList.add('hl-q');
+    comm2.innerHTML=`公式进度：最后 <code>乘以内容库 V</code>。<br><code>Output<sub>它</sub> = 0.02 <i>V</i><sub>有</sub> + ... + <span style="color:var(--V);font-weight:bold">0.80 <i>V</i><sub>猫</sub></span></code><br>依据分配好的概率分布，序列 A 成功重构并吸纳了目标知识！`;
+  }
+}
+
+/* ═══ S3: Self-Attention & Multi-Head ═══ */
+const saData_Base=[
+  [0.60,0.20,0.05,0.05,0.05,0.05],
+  [0.10,0.50,0.20,0.10,0.05,0.05],
+  [0.05,0.15,0.50,0.15,0.05,0.10],
+  [0.05,0.05,0.60,0.20,0.05,0.05],
+  [0.05,0.05,0.10,0.10,0.60,0.10],
+  [0.05,0.05,0.50,0.10,0.10,0.20]
+];
+const saData_H1=[
+  [0.20,0.20,0.20,0.20,0.10,0.10],
+  [0.20,0.20,0.20,0.20,0.10,0.10],
+  [0.10,0.10,0.30,0.30,0.10,0.10],
+  [0.00,0.00,0.90,0.10,0.00,0.00],
+  [0.20,0.20,0.20,0.20,0.10,0.10],
+  [0.20,0.20,0.20,0.20,0.10,0.10]
+];
+const saData_H2=[
+  [0.20,0.20,0.20,0.20,0.10,0.10],
+  [0.05,0.15,0.70,0.05,0.05,0.00],
+  [0.10,0.10,0.30,0.30,0.10,0.10],
+  [0.20,0.20,0.20,0.20,0.10,0.10],
+  [0.20,0.20,0.20,0.20,0.10,0.10],
+  [0.20,0.20,0.20,0.20,0.10,0.10]
+];
+const saData_H3=[
+  [0.20,0.20,0.20,0.20,0.10,0.10],
+  [0.20,0.20,0.20,0.20,0.10,0.10],
+  [0.10,0.10,0.30,0.30,0.10,0.10],
+  [0.20,0.20,0.20,0.20,0.10,0.10],
+  [0.20,0.20,0.20,0.20,0.10,0.10],
+  [0.00,0.00,0.85,0.00,0.10,0.05]
+];
+
+function fillSaMatrix(dataMatrix,hlRow=-1,hlCol=-1,colorClass=''){
+  for(let r=0;r<6;r++){for(let c=0;c<6;c++){
+    let val=dataMatrix[r][c];let cell=document.getElementById(`sa-${r}-${c}`);if(!cell)continue;
+    setTimeout(()=>{
+      cell.className='sa-cell val show-cell';cell.style.background='';
+      cell.innerHTML=val.toFixed(2);
+      if(r===hlRow&&c===hlCol){cell.classList.add('hl',colorClass)}
+      else if(val>.4){cell.style.background=`rgba(15,23,42,${val*.2})`}
+      else{cell.style.background='#f8fafc'}
+    },((r*6)+c)*10);
+  }}
+}
+
+function renderSlide3(step){
+  const layout=document.getElementById('s3-layout');
+  if(step>=0)layout.classList.add('show');
+
+  const saMatrixWrap=document.getElementById('sa-matrix');
+  const mh1=document.getElementById('mh-1'),mh2=document.getElementById('mh-2'),mh3=document.getElementById('mh-3');
+  const formulaBanner=document.getElementById('mh-formula-banner');
+  const rHeaders=[0,1,2,3,4,5].map(i=>document.getElementById(`sa-r-${i}`));
+
+  if(step<1){
+    for(let r=0;r<6;r++)for(let c=0;c<6;c++){const cell=document.getElementById(`sa-${r}-${c}`);if(cell){cell.innerHTML='';cell.className='sa-cell val';cell.style.background=''}}
+    rHeaders.forEach(el=>{if(el){el.style.color='var(--muted)';el.style.fontWeight='bold'}});
+  }
+
+  const clearFocus=()=>{mh1.classList.remove('focus');mh2.classList.remove('focus');mh3.classList.remove('focus');rHeaders.forEach(el=>{if(el){el.style.color='var(--muted)';el.style.fontWeight='bold'}})};
+
+  if(step===0){
+    saMatrixWrap.classList.remove('show');
+    mh1.classList.remove('show');mh2.classList.remove('show');mh3.classList.remove('show');
+    formulaBanner.classList.remove('show');
+  }
+
+  if(step===1){
+    saMatrixWrap.classList.add('show');
+    mh1.classList.remove('show');mh2.classList.remove('show');mh3.classList.remove('show');
+    formulaBanner.classList.remove('show');clearFocus();
+    fillSaMatrix(saData_Base);
+  }
+
+  if(step===2){
+    saMatrixWrap.classList.add('show');
+    setTimeout(()=>mh1.classList.add('show'),100);
+    setTimeout(()=>mh2.classList.add('show'),300);
+    setTimeout(()=>mh3.classList.add('show'),500);
+    formulaBanner.classList.remove('show');clearFocus();
+    fillSaMatrix(saData_Base);
+  }
+
+  if(step===3){
+    clearFocus();mh1.classList.add('focus');
+    if(rHeaders[3]){rHeaders[3].style.color='var(--Q)';rHeaders[3].style.fontWeight='900'}
+    fillSaMatrix(saData_H1,3,2,'hl-color-1');formulaBanner.classList.remove('show');
+  }
+
+  if(step===4){
+    clearFocus();mh2.classList.add('focus');
+    if(rHeaders[1]){rHeaders[1].style.color='var(--K)';rHeaders[1].style.fontWeight='900'}
+    fillSaMatrix(saData_H2,1,2,'hl-color-2');formulaBanner.classList.remove('show');
+  }
+
+  if(step===5){
+    clearFocus();mh3.classList.add('focus');
+    if(rHeaders[5]){rHeaders[5].style.color='var(--V)';rHeaders[5].style.fontWeight='900'}
+    fillSaMatrix(saData_H3,5,2,'hl-color-3');formulaBanner.classList.remove('show');
+  }
+
+  if(step===6){
+    clearFocus();fillSaMatrix(saData_Base);
+    setTimeout(()=>formulaBanner.classList.add('show'),300);
+  }
+}
+
+/* ═══ Init ═══ */
+window.addEventListener('load',()=>{
+  if(window.MathJax&&MathJax.typesetPromise)MathJax.typesetPromise().catch(()=>{});
+  updatePresentation();
+});
+</script>
+</body>
+</html>
