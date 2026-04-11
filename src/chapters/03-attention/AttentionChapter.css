@@ -17,7 +17,7 @@
 .a-amb-grid{position:absolute;inset:0;z-index:0;pointer-events:none;background-image:radial-gradient(rgba(15,23,42,.04)1.5px,transparent 1.5px);background-size:clamp(20px,3vw,40px) clamp(20px,3vw,40px);mask-image:linear-gradient(to bottom,rgba(0,0,0,.6)0%,transparent 80%);-webkit-mask-image:linear-gradient(to bottom,rgba(0,0,0,.6)0%,transparent 80%)}
 
 .a-deck{position:absolute;inset:0;z-index:1}
-.a-slide{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .7s var(--ease),transform .7s var(--ease);transform:scale(.98) translateY(15px);overflow-y:auto;overflow-x:hidden}
+.a-slide{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .7s var(--ease),transform .7s var(--ease);transform:scale(.98) translateY(15px);overflow:hidden}
 .a-slide.a-active{opacity:1;pointer-events:auto;transform:none}
 .a-slide.a-out{opacity:0;transform:scale(1.01) translateY(-15px)}
 
@@ -123,11 +123,11 @@
 
 /* ═══ SLIDE 2 ═══ */
 #a-s2{padding:0;position:relative}
-/* 左：步骤导航 | 右：公式 + 推演区；第 2 行标题与公式顶对齐 */
+/* 左：步骤导航 | 右：公式 + 推演区；底部固定说明栏区域 */
 .a-s2-layout{
   display:grid;
   grid-template-columns:minmax(200px,clamp(220px,26vw,460px)) minmax(0,1fr);
-  grid-template-rows:auto auto minmax(0,1fr);
+  grid-template-rows:auto auto minmax(0,1fr) clamp(80px,14vh,160px);
   width:100%;height:100%;min-height:0;
   padding:clamp(20px,4vh,56px) clamp(20px,3vw,48px);
   column-gap:clamp(20px,3.5vw,48px);
@@ -154,6 +154,10 @@
 .a-s2-g-stage{
   grid-column:2;grid-row:3;min-height:0;min-width:0;display:flex;flex-direction:column;overflow:hidden;
 }
+/* 底部说明栏：固定在右侧第4行（不跨越左侧导航栏） */
+.a-s2-derive-foot{
+  grid-column:2;grid-row:4;
+}
 /* 公式：宽度随内容，不拉伸占满一行，字号不变 */
 .a-s2-formula{
   width:max-content;max-width:100%;
@@ -173,7 +177,7 @@
 .a-s2-stage{
   flex:1;
   position:relative;
-  min-height:min(72vh,900px);
+  min-height:0;
   display:flex;flex-direction:column;align-items:stretch;
   overflow:hidden;
 }
@@ -225,10 +229,12 @@
   align-items:stretch;
 }
 .a-s2-embed-stage{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:clamp(12px,3vh,40px);width:100%;height:100%;
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:clamp(12px,3vh,40px);width:100%;
   padding:clamp(8px,2vh,24px) clamp(8px,2vw,24px);
   box-sizing:border-box;
+  min-height:0;
+  overflow:hidden;
 }
 /* 序列声明 step0：双输入 + 形状 */
 .a-s2-ab-declare{
@@ -510,12 +516,12 @@
   display:flex;flex-direction:column;gap:clamp(5px,.8vh,8px);align-items:center;
 }
 
-/* 底部说明条：主区 flex 撑满，脚注贴底；与主区间距由 embed-stage gap 控制 */
+/* ═══ 统一说明栏区域：固定在右侧第4行（不跨越左侧导航栏） ═══ */
 .a-s2-derive-foot{
-  flex:0 0 auto;width:100%;max-width:none;min-width:0;align-self:stretch;margin-top:auto;
+  grid-column:2;grid-row:4;
+  width:100%;max-width:none;min-width:0;
   position:relative;
-  padding:clamp(14px,2vh,18px) clamp(14px,2vw,20px) clamp(12px,2vh,20px) clamp(18px,2.2vw,22px);
-  display:flex;flex-direction:column;gap:clamp(6px,1vh,10px);
+  display:flex;flex-direction:column;
   border-radius:12px;
   background:linear-gradient(180deg,rgba(255,255,255,.96) 0%,rgba(248,250,252,.9) 100%);
   border:1px solid rgba(15,23,42,.07);
@@ -536,28 +542,19 @@
 .a-s2-derive-foot-text{
   margin:0;font-size:clamp(.68rem,1vw,.95rem);line-height:1.55;color:#475569;font-weight:500;
 }
-/* 脚注：公式靠上，文字说明下沉以吃满全屏高度 */
 .a-s2-derive-foot--proj,
 .a-s2-derive-foot--dot{
-  flex:0 0 auto;
-  min-height:clamp(120px,24vh,300px);
   display:flex;
   flex-direction:column;
-  justify-content:flex-start;
 }
 .a-s2-derive-foot-core{
   flex:0 0 auto;
 }
 .a-s2-derive-foot-narrative{
-  flex:1 1 auto;
-  margin-top:auto;
-  padding-top:clamp(28px,5.5vh,80px);
-  padding-bottom:clamp(10px,2vh,28px);
+  flex:0 0 auto;
   display:flex;
   flex-direction:column;
-  gap:clamp(10px,1.5vh,16px);
-  justify-content:flex-end;
-  min-height:clamp(72px,14vh,200px);
+  gap:clamp(8px,1.2vh,12px);
 }
 .a-s2-derive-foot-narrative .a-s2-derive-foot-text:last-child{margin-bottom:0}
 
@@ -565,18 +562,19 @@
 .a-mviz{
   min-width:0;
   border-radius:16px;
-  padding:clamp(10px,1.4vh,16px) clamp(10px,1.4vw,14px);
+  padding:clamp(12px,1.5vh,20px) clamp(12px,1.5vw,18px);
   background:linear-gradient(165deg,rgba(255,255,255,.96) 0%,rgba(241,245,255,.88) 55%,rgba(248,250,252,.94) 100%);
   border:1px solid rgba(124,58,237,.12);
   box-shadow:0 10px 32px rgba(15,23,42,.06),inset 0 1px 0 rgba(255,255,255,.9);
   display:flex;
   flex-direction:column;
-  gap:clamp(8px,1.2vh,12px);
+  gap:clamp(10px,1.5vh,16px);
   overflow:auto;
-  max-height:100%;
+  height:100%;
+  box-sizing:border-box;
 }
 .a-mviz--proj{justify-content:flex-start}
-.a-mviz--mat{justify-content:flex-start}
+.a-mviz--mat{justify-content:center;align-items:center}
 .a-mviz-cap{
   font-family:var(--mono);
   font-size:clamp(.55rem,.68vw,.68rem);
@@ -632,26 +630,26 @@
 .a-mviz-mat-lbl{
   font-family:'Times New Roman',Georgia,serif;
   font-style:italic;
-  font-size:clamp(.62rem,.85vw,.78rem);
+  font-size:clamp(1rem,1.4vw,1.3rem);
   font-weight:700;
   color:var(--ink);
   line-height:1;
 }
 .a-mviz-dim{
   font-family:var(--mono);
-  font-size:clamp(.5rem,.62vw,.6rem);
+  font-size:clamp(.78rem,1vw,1rem);
   color:var(--muted);
   font-weight:600;
 }
-.a-mviz-grid{display:grid;gap:2px}
-.a-mviz-grid--4x3{grid-template-columns:repeat(3,clamp(5px,.65vw,8px));grid-template-rows:repeat(4,clamp(5px,.65vw,8px))}
-.a-mviz-grid--5x3{grid-template-columns:repeat(3,clamp(5px,.65vw,8px));grid-template-rows:repeat(5,clamp(5px,.65vw,8px))}
-.a-mviz-grid--3x3{grid-template-columns:repeat(3,clamp(6px,.75vw,9px));grid-template-rows:repeat(3,clamp(6px,.75vw,9px))}
-.a-mviz-grid--4x2{grid-template-columns:repeat(2,clamp(5px,.65vw,8px));grid-template-rows:repeat(4,clamp(5px,.65vw,8px))}
-.a-mviz-grid--2x5{grid-template-columns:repeat(5,clamp(5px,.65vw,8px));grid-template-rows:repeat(2,clamp(5px,.65vw,8px))}
-.a-mviz-grid--4x5{grid-template-columns:repeat(5,clamp(4px,.55vw,7px));grid-template-rows:repeat(4,clamp(4px,.55vw,7px))}
-.a-mviz-grid--5x2{grid-template-columns:repeat(2,clamp(5px,.65vw,8px));grid-template-rows:repeat(5,clamp(5px,.65vw,8px))}
-.a-mviz-cell{display:block;border-radius:2px}
+.a-mviz-grid{display:grid;gap:3px}
+.a-mviz-grid--4x3{grid-template-columns:repeat(3,clamp(12px,1.5vw,18px));grid-template-rows:repeat(4,clamp(12px,1.5vw,18px))}
+.a-mviz-grid--5x3{grid-template-columns:repeat(3,clamp(12px,1.5vw,18px));grid-template-rows:repeat(5,clamp(12px,1.5vw,18px))}
+.a-mviz-grid--3x3{grid-template-columns:repeat(3,clamp(14px,1.8vw,20px));grid-template-rows:repeat(3,clamp(14px,1.8vw,20px))}
+.a-mviz-grid--4x2{grid-template-columns:repeat(2,clamp(14px,1.8vw,20px));grid-template-rows:repeat(4,clamp(14px,1.8vw,20px))}
+.a-mviz-grid--2x5{grid-template-columns:repeat(5,clamp(14px,1.8vw,20px));grid-template-rows:repeat(2,clamp(14px,1.8vw,20px))}
+.a-mviz-grid--4x5{grid-template-columns:repeat(5,clamp(14px,1.8vw,20px));grid-template-rows:repeat(4,clamp(14px,1.8vw,20px))}
+.a-mviz-grid--5x2{grid-template-columns:repeat(2,clamp(14px,1.8vw,20px));grid-template-rows:repeat(5,clamp(14px,1.8vw,20px))}
+.a-mviz-cell{display:block;border-radius:3px}
 .a-mviz-cell--qa{background:rgba(2,132,199,.22)}
 .a-mviz-cell--kb{background:rgba(5,150,105,.2)}
 .a-mviz-cell--w{background:rgba(100,116,139,.14)}
@@ -667,14 +665,14 @@
 .a-mviz-cell--res{background:rgba(168,85,247,.2);border:1px dashed rgba(168,85,247,.4)}
 .a-mviz-mat--o{border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.05)}
 .a-mviz-times,.a-mviz-eq,.a-mviz-plus{
-  font-size:clamp(.95rem,1.5vw,1.25rem);
+  font-size:clamp(1.4rem,2vw,1.8rem);
   font-weight:800;
   color:#94a3b8;
   line-height:1;
-  padding:0 1px;
+  padding:0 4px;
   align-self:center;
 }
-.a-mviz-times--lg{font-size:clamp(1.05rem,1.7vw,1.45rem)}
+.a-mviz-times--lg{font-size:clamp(1.6rem,2.4vw,2.2rem)}
 .a-mviz-sep{
   font-size:clamp(1rem,1.5vw,1.2rem);
   color:rgba(5,150,105,.35);
@@ -707,7 +705,9 @@
   display:flex;
   flex-direction:column;
   width:100%;
-  min-height:clamp(120px,20vh,220px);
+  flex:1;
+  min-height:0;
+  justify-content:center;
 }
 .a-mviz-flow-single > *{width:100%}
 
@@ -749,42 +749,70 @@
 }
 .a-mviz-calc-note{
   font-family:var(--mono);
-  font-size:clamp(.55rem,.7vw,.68rem);
+  font-size:clamp(.9rem,1.1vw,1.1rem);
   color:var(--muted);
   text-align:center;
 }
 .a-mviz-stage-card{
   border-radius:12px;
   border:1px solid rgba(15,23,42,.08);
-  padding:clamp(8px,1.2vh,12px) clamp(8px,1.1vw,12px);
+  padding:clamp(10px,1.5vh,16px) clamp(10px,1.2vw,14px);
   background:rgba(255,255,255,.58);
   transition:border-color .45s ease,background .45s ease;
+  width:100%;
+  box-sizing:border-box;
 }
 .a-mviz-stage-card--on{
   background:rgba(255,255,255,.88);
   box-shadow:0 6px 18px rgba(2,132,199,.08);
   border-color:rgba(2,132,199,.35);
 }
+/* step6 两栏布局 */
+.a-mviz-step6-cols{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:clamp(24px,4vw,60px);
+  align-items:start;
+}
+.a-mviz-step6-col{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:clamp(10px,1.5vw,20px);
+  padding:clamp(12px,2vw,24px) clamp(8px,1.5vw,20px);
+  background:rgba(255,255,255,.45);
+  border-radius:12px;
+  border:1px solid rgba(16,185,129,.12);
+}
+.a-mviz-step6-col-label{
+  font-family:var(--mono);
+  font-size:clamp(.85rem,1.1vw,1.05rem);
+  font-weight:700;
+  color:var(--muted);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
 .a-mviz-stage-h{
   font-family:var(--mono);
-  font-size:clamp(.58rem,.75vw,.72rem);
+  font-size:clamp(.85rem,1.1vw,1.1rem);
   font-weight:800;
   letter-spacing:.06em;
   color:var(--muted);
-  margin-bottom:6px;
+  margin-bottom:clamp(6px,1vh,10px);
+  text-align:center;
 }
 .a-mviz-mini-mul,.a-mviz-scale-row,.a-mviz-softmax-row{
   display:flex;
   flex-wrap:wrap;
   align-items:flex-end;
   justify-content:center;
-  gap:clamp(4px,.7vw,8px);
+  gap:clamp(8px,1.2vw,16px);
 }
-.a-mviz-mat--tiny{padding:clamp(4px,.6vw,6px) clamp(5px,.75vw,8px)}
+.a-mviz-mat--tiny{padding:clamp(8px,1vw,12px) clamp(10px,1.2vw,16px)}
 .a-mviz-mat--score{border-color:rgba(2,132,199,.25)}
 .a-mviz-mat--alpha{border-color:rgba(225,29,72,.22)}
 .a-mviz-div-op{
-  font-size:clamp(1.1rem,1.8vw,1.5rem);
+  font-size:clamp(1.6rem,2.5vw,2.2rem);
   font-weight:900;
   color:#64748b;
   align-self:center;
@@ -816,9 +844,10 @@
 
 /* Slide2：投影步 矩阵乘法 X × W → Q/K/V */
 .a-s2-proj-stage{
-  display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;
-  gap:clamp(10px,1.5vh,16px);width:100%;flex:1;min-height:0;align-self:stretch;
-  padding:0 4px;box-sizing:border-box;
+  flex:1;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;
+  gap:clamp(10px,1.5vh,16px);width:100%;
+  padding:0 clamp(4px,1vw,8px);box-sizing:border-box;
+  min-height:0;overflow:hidden;
 }
 /* 投影步：左示意图 | 右详细算式（不改变整页左右栏比例） */
 .a-s2-proj-split{
@@ -984,14 +1013,21 @@
   padding:clamp(4px,1vh,8px) 0 clamp(6px,1.2vh,12px);
   box-sizing:border-box;
 }
-/* 矩阵推演：左 Q·Kᵀ→… 图解 | 右数值表 */
+/* 矩阵推演：左右自适应平分 */
 .a-s2-dot-split{
   display:grid;
-  grid-template-columns:minmax(0,0.92fr) minmax(0,1.08fr);
-  gap:clamp(10px,1.8vw,22px);
+  grid-template-columns:1fr 1fr;
+  gap:clamp(12px,2vw,28px);
   width:100%;
   flex:1;
   min-height:0;
+  align-items:center;
+}
+/* 加权输出步：上下排列 */
+.a-s2-dot-split--vertical{
+  grid-template-columns:1fr;
+  grid-template-rows:1fr 1fr;
+  gap:clamp(8px,1.5vh,16px);
   align-items:stretch;
 }
 .a-s2-dot-detail{
@@ -1001,6 +1037,98 @@
   align-items:center;
   justify-content:center;
   min-height:0;
+}
+/* 加权输出步：详情区也改为上下 */
+.a-s2-dot-detail--vertical{
+  width:100%;
+}
+.a-s2-step6-detail{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
+.a-s2-step6-formula{
+  background:linear-gradient(165deg,rgba(255,255,255,.97) 0%,rgba(241,245,255,.88) 100%);
+  border:1px solid rgba(16,185,129,.25);
+  border-radius:16px;
+  padding:clamp(14px,2.5vh,28px) clamp(16px,2.5vw,32px);
+  box-shadow:0 8px 24px rgba(16,185,129,.08);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(12px,2vh,20px);
+}
+.a-s2-step6-eq{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:clamp(8px,1.5vw,16px);
+  font-family:'Times New Roman',Georgia,serif;
+  font-size:clamp(1.2rem,2.5vw,2rem);
+  font-weight:700;
+}
+.a-s2-step6-label{color:var(--ink)}
+.a-s2-step6-op{color:var(--muted);font-weight:800}
+.a-s2-step6-desc{
+  text-align:center;
+  font-size:clamp(.8rem,1.3vw,1.15rem);
+  color:#475569;
+  line-height:1.6;
+  padding:clamp(10px,1.5vh,16px);
+  background:rgba(241,245,249,.5);
+  border-radius:10px;
+  border:1px solid rgba(15,23,42,.06);
+}
+.a-s2-step6-res{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:clamp(16px,2.5vw,30px);
+  padding-top:clamp(8px,1.5vh,12px);
+  border-top:1px dashed rgba(15,23,42,.1);
+}
+.a-s2-step6-res-mat{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  background:#fff;
+  border:2px solid rgba(16,185,129,.3);
+  border-radius:10px;
+  padding:clamp(8px,1.2vw,12px) clamp(10px,1.5vw,16px);
+  box-shadow:0 4px 12px rgba(16,185,129,.1);
+}
+.a-s2-step6-res-grid{
+  display:grid;
+  grid-template-columns:repeat(4,clamp(10px,1.3vw,16px));
+  grid-template-rows:repeat(2,clamp(10px,1.3vw,16px));
+  gap:2px;
+}
+.a-s2-step6-res-cell{
+  background:rgba(16,185,129,.25);
+  border-radius:2px;
+}
+.a-s2-step6-res-label{
+  font-family:var(--mono);
+  font-size:clamp(.62rem,.8vw,.78rem);
+  color:var(--muted);
+  font-weight:600;
+}
+.a-s2-step6-res-arrow{
+  font-size:clamp(1.2rem,2vw,1.6rem);
+  color:var(--a3);
+  font-weight:800;
+}
+.a-s2-step6-res-next{
+  font-family:var(--mono);
+  font-size:clamp(.72rem,1vw,.95rem);
+  color:var(--muted);
+  font-weight:600;
+  padding:clamp(6px,1vh,10px) clamp(10px,1.5vw,16px);
+  background:rgba(16,185,129,.08);
+  border:1px solid rgba(16,185,129,.2);
+  border-radius:10px;
 }
 .a-s2-dot-main{
   flex:1;min-height:0;display:flex;align-items:center;justify-content:center;width:100%;
@@ -1118,13 +1246,16 @@
   .a-s2-g-formula{grid-column:1;grid-row:1;border:none}
   .a-s2-g-steps{grid-column:1;grid-row:2;border-right:none;padding-right:0;margin-right:0;margin-top:0}
   .a-s2-g-stage{grid-column:1;grid-row:3;min-height:min(58vh,560px)}
-  .a-s2-proj-split,.a-s2-dot-split{grid-template-columns:1fr}
-  .a-mviz{max-height:none}
+  /* 全屏模式：保持左右均等分配 */
+  .a-s2-dot-split{grid-template-columns:1fr 1fr;gap:clamp(16px,2.5vw,32px)}
+  .a-s2-dot-detail{min-height:0}
+  .a-mviz{max-height:none;height:100%}
   .a-s2-steps{flex-direction:row;flex-wrap:wrap;margin-top:0}
   .a-s2-steps::before{display:none}
   .a-s2-step{padding:6px 12px}
   .a-s2-step::before{display:none}
   .a-s2-derive-aside:not(.a-s2-derive-foot){max-width:none;min-width:0}
+  .a-s2-derive-foot{min-height:clamp(70px,12vh,140px)}
   .a-s2-ab-declare{grid-template-columns:1fr}
   .a-s2-tensorize-grid{grid-template-columns:1fr}
   .a-s3-grid{grid-template-columns:1fr}
