@@ -9,6 +9,9 @@ const PATCH_COUNT = 9;
 const VS_SIZE = 7;
 const MODEL_ID = 'onnx-community/dinov3-vits16-pretrain-lvd1689m-ONNX';
 const EXAMPLE_IMAGE_URL = 'https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/cats.png';
+
+// 统一步进常量 - 页面2,3,4共享
+const V2_STEP_BASE = 1;     // step=1 显示矩阵, step=2 显示结果, step=3 显示说明
 const SEMANTIC_MASK = [
   0, 0, 1, 1, 1, 0, 0,
   0, 1, 0, 0, 0, 1, 0,
@@ -58,6 +61,7 @@ export default function VitChapter({
   onPageChange,
 }: ChapterComponentProps) {
   const [page, setPage] = useState(() => clamp(requestedPageIndex, 0, PAGE_COUNT - 1));
+  const [step, setStep] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [patchStage, setPatchStage] = useState<'initial' | 'sliced' | 'flattened' | 'positioned'>('initial');
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
@@ -90,32 +94,73 @@ export default function VitChapter({
     const target = clamp(requestedPageIndex, 0, PAGE_COUNT - 1);
     setDirection(target >= pageRef.current ? 1 : -1);
     setPage(target);
+    // 进入页面2,3,4时显示左侧矩阵/工具栏，其他页面step=0
+    if (target === 2 || target === 3 || target === 4) {
+      setStep(1);
+    } else {
+      setStep(0);
+    }
   }, [requestedPageIndex]);
 
   useEffect(() => {
     onPageChange?.(page);
   }, [onPageChange, page]);
 
+  // 所有分步页面的步骤数统一
+  const PAGE_STEP_COUNT = 4; // step 0-3: 公式→左侧矩阵→右侧结果→说明
+
   const goToPage = useCallback((next: number) => {
     const clamped = clamp(next, 0, PAGE_COUNT - 1);
     setDirection(clamped >= pageRef.current ? 1 : -1);
     setPage(clamped);
+    // 页面2,3,4进入时显示step=1（左侧矩阵/工具栏），其他页面step=0
+    if (clamped === 2 || clamped === 3 || clamped === 4) {
+      setStep(1);
+    } else {
+      setStep(0);
+    }
   }, []);
+
+  // 步进逻辑 - 页面2,3,4使用统一的4步逻辑
+  const advanceStep = useCallback(() => {
+    if (page === 2 || page === 3 || page === 4) {
+      setStep(s => Math.min(s + 1, PAGE_STEP_COUNT - 1));
+    }
+  }, [page]);
+
+  const retreatStep = useCallback(() => {
+    if (page === 2 || page === 3 || page === 4) {
+      setStep(s => Math.max(s - 1, 0));
+    }
+  }, [page]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'ArrowRight' || event.key === ' ') {
-        event.preventDefault();
-        goToPage(pageRef.current + 1);
-      }
-      if (event.key === 'ArrowLeft') {
-        event.preventDefault();
-        goToPage(pageRef.current - 1);
+      if (page === 2 || page === 3 || page === 4) {
+        // Page 2,3,4 使用步进逻辑
+        if (event.key === 'ArrowRight' || event.key === ' ') {
+          event.preventDefault();
+          advanceStep();
+        }
+        if (event.key === 'ArrowLeft') {
+          event.preventDefault();
+          retreatStep();
+        }
+      } else {
+        // 其他页面使用页面切换逻辑
+        if (event.key === 'ArrowRight' || event.key === ' ') {
+          event.preventDefault();
+          goToPage(pageRef.current + 1);
+        }
+        if (event.key === 'ArrowLeft') {
+          event.preventDefault();
+          goToPage(pageRef.current - 1);
+        }
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [goToPage]);
+  }, [page, advanceStep, retreatStep, goToPage]);
 
   useEffect(() => {
     if (page !== 4 || initStartedRef.current) {
@@ -510,38 +555,164 @@ export default function VitChapter({
 
             {page === 2 ? (
               <div className="vit-slide">
-                <div className="vit-two-col">
-                  <div className="vit-col">
-                    <div className="vit-eyebrow">Unified Architecture · 03</div>
-                    <h2 className="vit-section-title">万物同源的 <span className="vit-gradient-green">Q / K / V</span></h2>
-                    <div className="vit-rule" />
-                    <p className="vit-body">
-                      图片变成 patch 序列后，后续流程就和语言模型处理文本几乎一样。每个 patch 同样会映射成 Q、K、V 三种角色。
-                    </p>
-                    <div className="vit-note" style={{ marginTop: 18 }}>
-                      Q 像提问者，K 像身份标签，V 携带真实信息。于是遥远位置的 patch 可以立刻建立联系。
+                <div className="vit-center">
+                  <div className="vit-eyebrow">Unified Architecture · 03</div>
+                  <h2 className="vit-section-title">万物同源的 <span className="vit-gradient-green">Q / K / V</span></h2>
+                  <div className="vit-rule" />
+
+                  {/* Q/K/V 投影区域 - 先公式后结果 */}
+                  <div className="vit-qkv-area">
+                    {/* 公式区域 */}
+                    <motion.div
+                      className="vit-qkv-formula"
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4 }}
+                    >
+                      <p className="vit-body" style={{ textAlign: 'center', maxWidth: 820 }}>
+                        图片变成 patch 序列后，每个 patch 同样会映射成 Q、K、V 三种角色。
+                      </p>
+                    </motion.div>
+
+                    {/* 矩阵运算区域 - 先左图后右结果 */}
+                    <div className="vit-qkv-matrix-area">
+                      {/* 左侧：矩阵运算示意图 */}
+                      <motion.div
+                        className="vit-qkv-figure"
+                        initial={{ opacity: 0, x: -20, scale: 0.92 }}
+                        animate={{ opacity: step >= V2_STEP_BASE ? 1 : 0, x: step >= V2_STEP_BASE ? 0 : -20, scale: step >= V2_STEP_BASE ? 1 : 0.92 }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <div className="vit-qkv-mini-viz">
+                          <div className="vit-qkv-mini-header">
+                            {step === V2_STEP_BASE && 'Patch → Q/K/V 投影'}
+                            {step === V2_STEP_BASE + 1 && 'Query 特征提取'}
+                            {step === V2_STEP_BASE + 2 && 'Key 特征提取'}
+                          </div>
+                          <div className="vit-qkv-mini-flow">
+                            {/* 输入 Patch */}
+                            <motion.div
+                              className="vit-qkv-patch-box"
+                              animate={{ scale: [1, 1.05, 1] }}
+                              transition={{ repeat: Infinity, duration: 1.5 }}
+                            >
+                              <div className="vit-qkv-patch-label">X</div>
+                              <div className="vit-qkv-patch-grid">
+                                {Array.from({ length: 9 }).map((_, i) => (
+                                  <span key={i} className="vit-qkv-cell" />
+                                ))}
+                              </div>
+                            </motion.div>
+
+                            {/* 运算符 */}
+                            <motion.span
+                              className="vit-qkv-op"
+                              animate={{ scale: [1, 1.2, 1], opacity: [0.6, 1, 0.6] }}
+                              transition={{ repeat: Infinity, duration: 1.2 }}
+                            >×</motion.span>
+
+                            {/* 权重矩阵 */}
+                            <motion.div
+                              className="vit-qkv-wmat-box"
+                              animate={{ opacity: [0.6, 1, 0.6] }}
+                              transition={{ repeat: Infinity, duration: 1.3 }}
+                            >
+                              <div className="vit-qkv-wmat-label">W</div>
+                              <div className="vit-qkv-wmat-grid">
+                                {Array.from({ length: 9 }).map((_, i) => (
+                                  <span key={i} className="vit-qkv-cell vit-qkv-cell--w" />
+                                ))}
+                              </div>
+                            </motion.div>
+
+                            {/* 等号 */}
+                            <span className="vit-qkv-eq">=</span>
+
+                            {/* 结果 */}
+                            <motion.div
+                              className="vit-qkv-res-box"
+                              animate={{ scale: step >= V2_STEP_BASE + 1 ? [1, 1.08, 1] : 1 }}
+                              transition={{ repeat: Infinity, duration: 1.4 }}
+                            >
+                              <div
+                                className="vit-qkv-res-label"
+                                style={{
+                                  color: step === V2_STEP_BASE + 1 ? 'var(--Q)' :
+                                    step === V2_STEP_BASE + 2 ? 'var(--K)' :
+                                      step === V2_STEP_BASE + 3 ? 'var(--V)' : 'var(--ink)'
+                                }}
+                              >
+                                {step === V2_STEP_BASE ? '?' :
+                                  step === V2_STEP_BASE + 1 ? 'Q' :
+                                    step === V2_STEP_BASE + 2 ? 'K' : 'V'}
+                              </div>
+                              <div className="vit-qkv-res-grid">
+                                {Array.from({ length: 9 }).map((_, i) => (
+                                  <span
+                                    key={i}
+                                    className="vit-qkv-cell vit-qkv-cell--res"
+                                    style={{
+                                      background: step === V2_STEP_BASE + 1 ? 'rgba(2,132,199,.4)' :
+                                        step === V2_STEP_BASE + 2 ? 'rgba(5,150,105,.4)' :
+                                          step === V2_STEP_BASE + 3 ? 'rgba(225,29,72,.4)' : 'rgba(100,116,139,.2)'
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                            </motion.div>
+                          </div>
+                        </div>
+                      </motion.div>
+
+                      {/* 右侧：结果说明 */}
+                      <motion.div
+                        className="vit-qkv-result"
+                        initial={{ opacity: 0, x: 18, scale: 0.95, filter: 'blur(4px)' }}
+                        animate={{ opacity: step >= V2_STEP_BASE + 1 ? 1 : 0, x: step >= V2_STEP_BASE + 1 ? 0 : 18, scale: step >= V2_STEP_BASE + 1 ? 1 : 0.95, filter: step >= V2_STEP_BASE + 1 ? 'blur(0px)' : 'blur(4px)' }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <div className="vit-qkv-result-card">
+                          <div className="vit-qkv-result-title">投影结果</div>
+                          <div className="vit-qkv-result-items">
+                            <div
+                              className={`vit-qkv-result-item ${step >= V2_STEP_BASE + 1 ? 'vit-qkv-result-item--active' : ''}`}
+                              style={{ borderLeftColor: step >= V2_STEP_BASE + 1 ? 'var(--Q)' : undefined }}
+                            >
+                              <div className="vit-qkv-result-label" style={{ color: 'var(--Q)' }}>Query (Q)</div>
+                              <div className="vit-qkv-result-desc">「我要找什么信息？」</div>
+                            </div>
+                            <div
+                              className={`vit-qkv-result-item ${step >= V2_STEP_BASE + 2 ? 'vit-qkv-result-item--active' : ''}`}
+                              style={{ borderLeftColor: step >= V2_STEP_BASE + 2 ? 'var(--K)' : undefined }}
+                            >
+                              <div className="vit-qkv-result-label" style={{ color: 'var(--K)' }}>Key (K)</div>
+                              <div className="vit-qkv-result-desc">「我有什么特征？」</div>
+                            </div>
+                            <div
+                              className={`vit-qkv-result-item ${step >= V2_STEP_BASE + 3 ? 'vit-qkv-result-item--active' : ''}`}
+                              style={{ borderLeftColor: step >= V2_STEP_BASE + 3 ? 'var(--V)' : undefined }}
+                            >
+                              <div className="vit-qkv-result-label" style={{ color: 'var(--V)' }}>Value (V)</div>
+                              <div className="vit-qkv-result-desc">「我能提供的内容。」</div>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
                     </div>
-                  </div>
-                  <div className="vit-col-right">
-                    <div className="vit-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        {[1, 2, 3].map((item) => (
-                          <div key={item} style={{ width: 40, height: 40, borderRadius: 8, background: ['#cbd5e1', '#94a3b8', '#64748b'][item - 1], color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 700 }}>{item}</div>
-                        ))}
-                      </div>
-                      <div style={{ fontSize: '1.4rem', color: '#64748b' }}>↓</div>
-                      <div style={{ fontSize: '1.1rem', color: '#059669', fontWeight: 700 }}>送入 Transformer</div>
-                      <div style={{ fontSize: '1.4rem', color: '#64748b' }}>↓</div>
-                      <div style={{ display: 'flex', gap: 12 }}>
-                        {[
-                          ['Q', '#0284c7'],
-                          ['K', '#059669'],
-                          ['V', '#7c3aed'],
-                        ].map(([label, color]) => (
-                          <div key={label} style={{ padding: '10px 18px', borderRadius: 8, background: `${color}1a`, border: `2px solid ${color}4d`, color, fontWeight: 800, fontSize: '1.2rem' }}>{label}</div>
-                        ))}
-                      </div>
-                    </div>
+
+                    {/* 说明文字 */}
+                    <motion.div
+                      className="vit-qkv-desc"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: step >= V2_STEP_BASE ? 1 : 0 }}
+                      transition={{ duration: 0.4 }}
+                    >
+                      {step < V2_STEP_BASE && 'Q 像提问者，K 像身份标签，V 携带真实信息。于是遥远位置的 patch 可以立刻建立联系。'}
+                      {step === V2_STEP_BASE && 'Patch 经线性投影得到 Query 向量，用于查询相关信息。'}
+                      {step === V2_STEP_BASE + 1 && 'Query 用于衡量与 Key 的相关性。'}
+                      {step === V2_STEP_BASE + 2 && 'Key 用于表示每个 patch 的特征标记。'}
+                      {step === V2_STEP_BASE + 3 && 'Value 携带实际语义信息，经注意力加权后输出。'}
+                    </motion.div>
                   </div>
                 </div>
               </div>
@@ -555,47 +726,137 @@ export default function VitChapter({
                     <span className="vit-gradient">近视眼</span> vs <span className="vit-gradient">上帝视角</span>
                   </h2>
                   <div className="vit-rule" />
-                  <p className="vit-body" style={{ textAlign: 'center', maxWidth: 860 }}>
-                    将鼠标移到网格上。CNN 只能看到局部邻居，而 ViT 从一开始就能跨越全图找相关区域。
-                  </p>
-                  <div className="vit-vs-wrap">
-                    <div className="vit-vs-box">
-                      <div className="vit-vs-title" style={{ color: '#ef4444' }}>传统 CNN：局部感受野</div>
-                      <div className="vit-vs-grid">
-                        {Array.from({ length: VS_SIZE * VS_SIZE }, (_, index) => (
-                          <div
-                            key={`cnn-${index}`}
-                            className={[
-                              'vit-vs-cell',
-                              hoverIndex === index ? 'is-cnn-focus' : '',
-                              hoverIndex !== index && cnnActiveSet.has(index) ? 'is-cnn-neighbor' : '',
-                            ].join(' ')}
-                            onMouseEnter={() => setHoverIndex(index)}
-                            onMouseLeave={() => setHoverIndex(null)}
-                          />
-                        ))}
+
+                  {/* CNN vs ViT 区域 - 先公式后结果 */}
+                  <div className="vit-vs-area">
+                    {/* CNN 区域 */}
+                    <div className="vit-vs-col">
+                      {/* 标题 */}
+                      <motion.div
+                        className="vit-vs-col-title"
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4 }}
+                        style={{ color: '#ef4444' }}
+                      >
+                        传统 CNN：局部感受野
+                      </motion.div>
+
+                      {/* 矩阵区域 - 先左图后右结果 */}
+                      <div className="vit-vs-col-figure">
+                        {/* 左侧：CNN 感受野示意图 */}
+                        <motion.div
+                          initial={{ opacity: 0, x: -20, scale: 0.92 }}
+                          animate={{ opacity: step >= 1 ? 1 : 0, x: step >= 1 ? 0 : -20, scale: step >= 1 ? 1 : 0.92 }}
+                          transition={{ duration: 0.5 }}
+                        >
+                          <div className="vit-vs-figure-box">
+                            <div className="vit-vs-figure-header">3×3 局部窗口</div>
+                            <div className="vit-vs-figure-grid">
+                              {Array.from({ length: 9 }).map((_, i) => (
+                                <motion.span
+                                  key={i}
+                                  className={`vit-vs-figure-cell ${i === 4 ? 'vit-vs-figure-cell--center' : 'vit-vs-figure-cell--neighbor'}`}
+                                  animate={step >= 1 && i === 4 ? { scale: [1, 1.1, 1] } : {}}
+                                  transition={{ repeat: Infinity, duration: 1.2 }}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        </motion.div>
                       </div>
-                      <div className="vit-note" style={{ marginTop: 18, textAlign: 'center', background: 'rgba(239,68,68,.05)', borderColor: 'rgba(239,68,68,.2)' }}>
+
+                      {/* 右侧：CNN 结果 */}
+                      <motion.div
+                        className="vit-vs-col-grid"
+                        initial={{ opacity: 0, x: 18, scale: 0.95, filter: 'blur(4px)' }}
+                        animate={{ opacity: step >= 2 ? 1 : 0, x: step >= 2 ? 0 : 18, scale: step >= 2 ? 1 : 0.95, filter: step >= 2 ? 'blur(0px)' : 'blur(4px)' }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <div className="vit-vs-grid">
+                          {Array.from({ length: VS_SIZE * VS_SIZE }, (_, index) => (
+                            <div
+                              key={`cnn-${index}`}
+                              className={[
+                                'vit-vs-cell',
+                                step >= 2 && hoverIndex === index ? 'is-cnn-focus' : '',
+                                step >= 2 && hoverIndex !== index && cnnActiveSet.has(index) ? 'is-cnn-neighbor' : '',
+                              ].join(' ')}
+                              onMouseEnter={() => step >= 2 && setHoverIndex(index)}
+                              onMouseLeave={() => step >= 2 && setHoverIndex(null)}
+                            />
+                          ))}
+                        </div>
+                      </motion.div>
+
+                      {/* 说明文字 */}
+                      <div className="vit-note" style={{ marginTop: 18, textAlign: 'center', background: step >= 3 ? 'rgba(239,68,68,.05)' : 'transparent', borderColor: step >= 3 ? 'rgba(239,68,68,.2)' : 'transparent' }}>
                         只能看到相邻 3×3 邻居，必须叠很多层才能逐步扩大视野。
                       </div>
                     </div>
-                    <div className="vit-vs-box">
-                      <div className="vit-vs-title" style={{ color: '#0284c7' }}>ViT：全局注意力</div>
-                      <div className="vit-vs-grid">
-                        {Array.from({ length: VS_SIZE * VS_SIZE }, (_, index) => (
-                          <div
-                            key={`vit-${index}`}
-                            className={[
-                              'vit-vs-cell',
-                              hoverIndex === index ? 'is-vit-focus' : '',
-                              hoverIndex !== index && vitRelatedSet.has(index) ? 'is-vit-related' : '',
-                            ].join(' ')}
-                            onMouseEnter={() => setHoverIndex(index)}
-                            onMouseLeave={() => setHoverIndex(null)}
-                          />
-                        ))}
+
+                    {/* ViT 区域 */}
+                    <div className="vit-vs-col">
+                      {/* 标题 */}
+                      <motion.div
+                        className="vit-vs-col-title"
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4 }}
+                        style={{ color: '#0284c7' }}
+                      >
+                        ViT：全局注意力
+                      </motion.div>
+
+                      {/* 矩阵区域 - 先左图后右结果 */}
+                      <div className="vit-vs-col-figure">
+                        {/* 左侧：ViT 全局注意力示意图 */}
+                        <motion.div
+                          initial={{ opacity: 0, x: -20, scale: 0.92 }}
+                          animate={{ opacity: step >= 1 ? 1 : 0, x: step >= 1 ? 0 : -20, scale: step >= 1 ? 1 : 0.92 }}
+                          transition={{ duration: 0.5 }}
+                        >
+                          <div className="vit-vs-figure-box vit-vs-figure-box--vit">
+                            <div className="vit-vs-figure-header">全局自注意</div>
+                            <div className="vit-vs-figure-grid vit-vs-figure-grid--full">
+                              {Array.from({ length: 9 }).map((_, i) => (
+                                <motion.span
+                                  key={i}
+                                  className={`vit-vs-figure-cell vit-vs-figure-cell--vit ${i === 4 ? 'vit-vs-figure-cell--center' : ''}`}
+                                  animate={step >= 1 && i === 4 ? { scale: [1, 1.1, 1] } : step >= 1 ? { opacity: [0.3, 0.7, 0.3] } : {}}
+                                  transition={{ repeat: Infinity, duration: 1.5, delay: i * 0.1 }}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        </motion.div>
                       </div>
-                      <div className="vit-note" style={{ marginTop: 18, textAlign: 'center' }}>
+
+                      {/* 右侧：ViT 结果 */}
+                      <motion.div
+                        className="vit-vs-col-grid"
+                        initial={{ opacity: 0, x: 18, scale: 0.95, filter: 'blur(4px)' }}
+                        animate={{ opacity: step >= 2 ? 1 : 0, x: step >= 2 ? 0 : 18, scale: step >= 2 ? 1 : 0.95, filter: step >= 2 ? 'blur(0px)' : 'blur(4px)' }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <div className="vit-vs-grid">
+                          {Array.from({ length: VS_SIZE * VS_SIZE }, (_, index) => (
+                            <div
+                              key={`vit-${index}`}
+                              className={[
+                                'vit-vs-cell',
+                                step >= 2 && hoverIndex === index ? 'is-vit-focus' : '',
+                                step >= 2 && hoverIndex !== index && vitRelatedSet.has(index) ? 'is-vit-related' : '',
+                              ].join(' ')}
+                              onMouseEnter={() => step >= 2 && setHoverIndex(index)}
+                              onMouseLeave={() => step >= 2 && setHoverIndex(null)}
+                            />
+                          ))}
+                        </div>
+                      </motion.div>
+
+                      {/* 说明文字 */}
+                      <div className="vit-note" style={{ marginTop: 18, textAlign: 'center', opacity: step >= 3 ? 1 : 0 }}>
                         无视物理距离，直接点亮全图中具有相同语义的区域。
                       </div>
                     </div>
@@ -612,67 +873,98 @@ export default function VitChapter({
                     <span className="vit-gradient">DINOv3</span>：真正在浏览器本地运行的 ViT
                   </h2>
                   <div className="vit-rule" />
-                  <p className="vit-body" style={{ textAlign: 'center', maxWidth: 860 }}>
+                  <motion.p
+                    className="vit-body"
+                    style={{ textAlign: 'center', maxWidth: 860 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.4 }}
+                  >
                     理论不如实践。下面直接在 React 组件里驱动 Transformers.js，对图片做本地推理并渲染注意力热图。
-                  </p>
+                  </motion.p>
+
+                  {/* 渐进式展示区域 - 先左侧工具栏，后右侧上传区域 */}
                   <div className="vit-dino-ui" style={{ marginTop: 20 }}>
-                    <div className="vit-dino-toolbar">
-                      <div className="vit-dino-actions">
-                        <button type="button" className="vit-nav-btn" onClick={() => void handleExample()} disabled={!isModelReady || isModelLoading}>加载示例图片</button>
-                        <button type="button" className="vit-nav-btn" onClick={() => fileInputRef.current?.click()} disabled={!isModelReady || isModelLoading}>本地上传图</button>
-                        <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={(event) => { void handleFileChange(event); }} />
-                      </div>
-                      <div className="vit-dino-status">{isModelLoading ? '⏳' : isModelReady ? '✅' : '⚙️'} {status}</div>
-                      <div className="vit-dino-toggle">
-                        <span>纯热力图</span>
-                        <label className="vit-switch">
-                          <input type="checkbox" checked={isOverlayMode} onChange={(event) => setIsOverlayMode(event.target.checked)} />
-                          <span className="vit-switch-track" />
-                        </label>
-                        <span>原图叠加</span>
-                      </div>
-                    </div>
-                    <div className="vit-dino-body">
-                      <div
-                        ref={dropzoneRef}
-                        className={[
-                          'vit-dropzone',
-                          hasImage ? 'is-loaded' : '',
-                          dragOver ? 'is-dragover' : '',
-                        ].join(' ')}
-                        onClick={() => fileInputRef.current?.click()}
-                        onDragOver={(event) => {
-                          event.preventDefault();
-                          setDragOver(true);
-                        }}
-                        onDragLeave={(event) => {
-                          event.preventDefault();
-                          setDragOver(false);
-                        }}
-                        onDrop={(event) => { void handleDrop(event); }}
+                    <div className="vit-dino-layout">
+                      {/* 左侧：工具栏区域 - step >= 1 显示 */}
+                      <motion.div
+                        className="vit-dino-toolbar"
+                        initial={{ opacity: 0, x: -20, scale: 0.92 }}
+                        animate={{ opacity: step >= 1 ? 1 : 0, x: step >= 1 ? 0 : -20, scale: step >= 1 ? 1 : 0.92 }}
+                        transition={{ duration: 0.5 }}
                       >
-                        {!hasImage ? (
-                          <div className="vit-placeholder">
-                            <div className="vit-placeholder-icon">🖼️</div>
-                            <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', marginBottom: 6 }}>点击上传或拖拽图片到这里</div>
-                            <div style={{ marginBottom: 12 }}>(支持 PNG、JPG 等格式)</div>
-                            <div style={{ fontSize: '0.82rem', padding: '6px 12px', background: 'rgba(3,105,161,0.08)', color: '#0284c7', borderRadius: 6, display: 'inline-block' }}>
-                              所有推理均在本地完成，不上云端
+                        <div className="vit-dino-actions">
+                          <button type="button" className="vit-nav-btn" onClick={() => void handleExample()} disabled={!isModelReady || isModelLoading}>加载示例图片</button>
+                          <button type="button" className="vit-nav-btn" onClick={() => fileInputRef.current?.click()} disabled={!isModelReady || isModelLoading}>本地上传图</button>
+                          <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={(event) => { void handleFileChange(event); }} />
+                        </div>
+                        <div className="vit-dino-status">{isModelLoading ? '⏳' : isModelReady ? '✅' : '⚙️'} {status}</div>
+                        <div className="vit-dino-toggle">
+                          <span>纯热力图</span>
+                          <label className="vit-switch">
+                            <input type="checkbox" checked={isOverlayMode} onChange={(event) => setIsOverlayMode(event.target.checked)} />
+                            <span className="vit-switch-track" />
+                          </label>
+                          <span>原图叠加</span>
+                        </div>
+                      </motion.div>
+
+                      {/* 右侧：上传区域 - step >= 2 显示 */}
+                      <motion.div
+                        className="vit-dino-body"
+                        initial={{ opacity: 0, x: 18, scale: 0.95, filter: 'blur(4px)' }}
+                        animate={{ opacity: step >= 2 ? 1 : 0, x: step >= 2 ? 0 : 18, scale: step >= 2 ? 1 : 0.95, filter: step >= 2 ? 'blur(0px)' : 'blur(4px)' }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <div
+                          ref={dropzoneRef}
+                          className={[
+                            'vit-dropzone',
+                            hasImage ? 'is-loaded' : '',
+                            dragOver ? 'is-dragover' : '',
+                          ].join(' ')}
+                          onClick={() => fileInputRef.current?.click()}
+                          onDragOver={(event) => {
+                            event.preventDefault();
+                            setDragOver(true);
+                          }}
+                          onDragLeave={(event) => {
+                            event.preventDefault();
+                            setDragOver(false);
+                          }}
+                          onDrop={(event) => { void handleDrop(event); }}
+                        >
+                          {!hasImage ? (
+                            <div className="vit-placeholder">
+                              <div className="vit-placeholder-icon">🖼️</div>
+                              <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', marginBottom: 6 }}>点击上传或拖拽图片到这里</div>
+                              <div style={{ marginBottom: 12 }}>(支持 PNG、JPG 等格式)</div>
+                              <div style={{ fontSize: '0.82rem', padding: '6px 12px', background: 'rgba(3,105,161,0.08)', color: '#0284c7', borderRadius: 6, display: 'inline-block' }}>
+                                所有推理均在本地完成，不上云端
+                              </div>
                             </div>
-                          </div>
-                        ) : null}
-                        <canvas
-                          ref={canvasRef}
-                          className="vit-canvas"
-                          style={{ display: hasImage ? 'block' : 'none' }}
-                          onMouseMove={handleCanvasMove}
-                          onMouseLeave={clearHighlights}
-                        />
-                      </div>
+                          ) : null}
+                          <canvas
+                            ref={canvasRef}
+                            className="vit-canvas"
+                            style={{ display: hasImage ? 'block' : 'none' }}
+                            onMouseMove={handleCanvasMove}
+                            onMouseLeave={clearHighlights}
+                          />
+                        </div>
+                      </motion.div>
                     </div>
-                  </div>
-                  <div className="vit-note" style={{ marginTop: 16, width: 'min(860px, 100%)', textAlign: 'center' }}>
-                    上传图片后，把鼠标移到不同 patch 上，观察模型如何点亮同一物体或相同语义区域。
+
+                    {/* 说明文字 - step >= 3 显示 */}
+                    <motion.div
+                      className="vit-note"
+                      style={{ marginTop: 16, width: 'min(860px, 100%)', textAlign: 'center' }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: step >= 3 ? 1 : 0 }}
+                      transition={{ duration: 0.4 }}
+                    >
+                      上传图片后，把鼠标移到不同 patch 上，观察模型如何点亮同一物体或相同语义区域。
+                    </motion.div>
                   </div>
                 </div>
               </div>
