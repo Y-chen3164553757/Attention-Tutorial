@@ -368,8 +368,11 @@ export default function Slide2({ step }: Slide2Props) {
               </motion.div>
             ) : step >= S2_MATRIX_BASE + 3 ? (
               <motion.div className='a-s2-foot-single' initial={{ opacity:0, x:-14, filter:'blur(4px)' }} animate={{ opacity:1, x:0, filter:'blur(0px)' }} transition={{ duration:0.5, ease:'easeOut' }}>
-                <span className='a-s2-foot-line-dot' style={{ background:'rgba(124,58,237,.5)' }}/>
-                <span className='a-s2-derive-foot-text'>加权求和得到 <strong>O</strong>——每个词经 Attention 后的<strong>新向量表示</strong>，携带了目标侧最相关的语义信息。</span>
+                <div className='a-s2-foot-line'>
+                  <span className='a-s2-foot-line-dot' style={{ background:'rgba(124,58,237,.5)' }}/>
+                  <span className='a-s2-derive-foot-text'>加权求和得到 <strong>O</strong>——每个词经 Attention 后的<strong>新向量表示</strong>，携带了目标侧最相关的语义信息。</span>
+                </div>
+                <span className='a-s2-derive-foot-formula'>O<sub>它</sub> = 0.02·V<sub>有</sub> + 0.03·V<sub>一</sub> + 0.05·V<sub>只</sub> + 0.10·V<sub>小</sub> + <strong style={{color:'#dc2626'}}>0.80·V<sub>猫</sub></strong></span>
               </motion.div>
             ) : (
               <AnimatePresence mode='wait'>
@@ -413,8 +416,11 @@ export default function Slide2({ step }: Slide2Props) {
                   )}
                   {step === S2_MATRIX_BASE + 3 && (
                     <>
-                      <span className='a-s2-foot-line-dot' style={{ background:'rgba(124,58,237,.5)' }}/>
-                      <span className='a-s2-derive-foot-text'>加权求和得到 <strong>O</strong>——每个词经 Attention 后的<strong>新向量表示</strong>，携带了目标侧最相关的语义信息，可作为<strong>下一层 Transformer</strong> 的输入。</span>
+                      <div className='a-s2-foot-line'>
+                        <span className='a-s2-foot-line-dot' style={{ background:'rgba(124,58,237,.5)' }}/>
+                        <span className='a-s2-derive-foot-text'>加权求和得到 <strong>O</strong>——每个词经 Attention 后的<strong>新向量表示</strong>，携带了目标侧最相关的语义信息，可作为<strong>下一层 Transformer</strong> 的输入。</span>
+                      </div>
+                      <span className='a-s2-derive-foot-formula'>O<sub>它</sub> = 0.02·V<sub>有</sub> + 0.03·V<sub>一</sub> + 0.05·V<sub>只</sub> + 0.10·V<sub>小</sub> + <strong style={{color:'#dc2626'}}>0.80·V<sub>猫</sub></strong></span>
                     </>
                   )}
                 </motion.div>
