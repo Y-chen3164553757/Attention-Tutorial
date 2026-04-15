@@ -34,7 +34,7 @@ export default function Slide1({ step }: Slide1Props) {
           <div className='a-tensor-box a-highlight a-hl-dark' style={{ fontFamily: "'Times New Roman',serif", fontStyle: 'italic', fontSize: 'clamp(1rem,1.5vw,1.8rem)' }}>
             <span className='a-tensor-label'>Final Tensor</span>X ∈ ℝ⁵ˣᵈ
           </div>
-          <div className="a-s1-detail" style={{marginTop:'10px', fontSize:'0.85rem', color:'var(--desc)'}}>引入位置编码信号保留人类语言中语法先后构成的时序图谱。</div>
+          <div className="a-s1-detail" style={{marginTop:'10px', fontSize:'0.85rem', color:'var(--desc)'}}>改为引入位置编码信号，为并行的注意力机制注入绝对或相对的语序特征。</div>
         </div>
       </div>
     </div>

@@ -141,6 +141,9 @@
 #a-s0.a-moved .a-s0-content{opacity:1;pointer-events:auto}
 
 .a-paper-card{background:#fff;border-radius:clamp(14px,1.5vw,20px);padding:clamp(24px,3vw,50px) clamp(24px,3vw,60px);box-shadow:0 40px 80px rgba(15,23,42,.04),0 0 0 1px rgba(15,23,42,.02)}
+.a-paper-header{display:flex;align-items:center;margin-bottom:clamp(16px,2.5vh,24px)}
+.a-paper-deepseek-logo{width:clamp(56px,7vw,72px);height:clamp(56px,7vw,72px);border-radius:10px;object-fit:contain;transition:transform .4s var(--spring);animation:logo-pulse 2.5s ease-in-out infinite alternate}
+@keyframes logo-pulse{0%{transform:scale(1);filter:drop-shadow(0 2px 8px rgba(2,132,199,.2))}100%{transform:scale(1.08);filter:drop-shadow(0 4px 12px rgba(2,132,199,.4))}}
 .a-paper-body{font-size:clamp(.85rem,1.2vw,1.45rem);line-height:2.2;color:#334155;text-align:justify;margin-bottom:clamp(16px,2vh,30px)}
 .a-paper-q-body{font-size:clamp(.9rem,1.3vw,1.55rem);color:var(--ink);line-height:1.8;font-weight:600}
 

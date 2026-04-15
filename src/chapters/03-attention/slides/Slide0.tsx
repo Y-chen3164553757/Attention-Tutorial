@@ -14,6 +14,13 @@ export default function Slide0({ step }: Slide0Props) {
       <div className={`a-s0-content ${step > 0 ? 'a-show' : ''}`}>
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <div className='a-paper-card'>
+            <div className='a-paper-header'>
+              <img
+                src="https://maas-log-prod.cn-wlcb.ufileos.com/anthropic/67c3335e-4edb-482c-863a-e4138b8bb7df/67e7d5ff4cf32dba2ac0264c6081780c.png?UCloudPublicKey=TOKEN_e15ba47a-d098-4fbd-9afc-a0dcf0e4e621&Expires=1776247375&Signature=ev9LB4MbBQHpKVhyJwQZU2K0MOg="
+                alt="DeepSeek"
+                className='a-paper-deepseek-logo'
+              />
+            </div>
             <div className='a-paper-body'>
               "2024年，深度求索发布了新一代大语言模型 DeepSeek-V3。为突破长上下文推理的内存瓶颈，
               <span className={`a-hl-base ${step === 2 || step >= 6 ? 'a-hl-k-active' : ''}`}>该模型全面采用了
