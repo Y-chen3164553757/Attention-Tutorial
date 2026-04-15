@@ -51,8 +51,6 @@ export function useAttentionSteps(props: ChapterComponentProps): UseAttentionSte
       if (step === S2_MATRIX_BASE + 1) return 'Scaled logits / √d_k';
       if (step === S2_MATRIX_BASE + 2) return 'Softmax → probability α';
       if (step === S2_MATRIX_BASE + 3) return 'Attention Weighted Output (α·V)';
-    } else if (page === 3) {
-      return 'Self-Attention / Multi-Head Paradigm';
     }
     return 'Attention Mechanism';
   }, [page, step]);

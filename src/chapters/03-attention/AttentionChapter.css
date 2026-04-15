@@ -12,6 +12,74 @@
 
 
 
+/* 网格与氛围光渐变背景 (与 OriginChapter 统一) */
+.tl-root {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background: #f8fafc;
+  color: #0f172a;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.attention-grid-bg {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(15, 23, 42, 0.05) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
+  background-size: 30px 30px;
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 中心渐变效果 */
+.ambient-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 700px;
+  height: 700px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(3, 105, 161, 0.4) 0%, rgba(59, 130, 246, 0.3) 30%, rgba(124, 58, 237, 0.2) 60%, transparent 80%);
+  filter: blur(30px);
+  z-index: 0;
+  pointer-events: none;
+  animation: pulse-glow 3s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-glow {
+  0% { opacity: 0.85; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1.25); }
+}
+
+/* 角落渐变效果 */
+.ambient-glow-corner {
+  position: absolute;
+  width: 45vw;
+  height: 45vh;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 0;
+}
+
+#glow-nlp {
+  top: -5%;
+  left: -5%;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.8) 0%, rgba(2, 132, 199, 0.5) 40%, transparent 70%);
+}
+
+#glow-cv {
+  bottom: -5%;
+  right: -5%;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.8) 0%, rgba(124, 58, 237, 0.5) 40%, transparent 70%);
+}
+
 .a-attention-root { width:100%;height:100%;position:relative;background:#fafcff;overflow:hidden;font-size:1rem }
 .a-amb{position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(circle at 70% 60%,rgba(124,58,237,.06)0%,transparent 60%),radial-gradient(circle at 30% 40%,rgba(2,132,199,.06)0%,transparent 60%),radial-gradient(circle at 50% 100%,rgba(5,150,105,.04)0%,transparent 50%);filter:blur(60px)}
 .a-amb-grid{position:absolute;inset:0;z-index:0;pointer-events:none;background-image:radial-gradient(rgba(15,23,42,.04)1.5px,transparent 1.5px);background-size:clamp(20px,3vw,40px) clamp(20px,3vw,40px);mask-image:linear-gradient(to bottom,rgba(0,0,0,.6)0%,transparent 80%);-webkit-mask-image:linear-gradient(to bottom,rgba(0,0,0,.6)0%,transparent 80%)}

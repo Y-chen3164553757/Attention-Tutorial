@@ -624,8 +624,9 @@ export default function OriginChapter({
   return (
     <div className="tl-root">
       <div className="attention-grid-bg" />
-      <div className="ambient-glow" id="glow-nlp"></div>
-      <div className="ambient-glow" id="glow-cv"></div>
+      <div className="ambient-glow"></div>
+      <div className="ambient-glow-corner" id="glow-nlp"></div>
+      <div className="ambient-glow-corner" id="glow-cv"></div>
 
       {timelineData.map((evt, i) => {
         const isActive = i === step;

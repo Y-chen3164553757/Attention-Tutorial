@@ -2,7 +2,6 @@ import type { ComponentType } from 'react';
 import { KaitiChapter } from './01-kaiti';
 import { OriginChapter } from './02-origin';
 import { AttentionChapter } from './03-attention';
-import { VitChapter } from './04-vit';
 
 export interface ChapterComponentProps {
   showHints: boolean;
@@ -40,7 +39,7 @@ export const chapters: ChapterRecord[] = [
     subtitle: 'AI Capability Demo · 开题演示',
     range: '0:00 - 0:30',
     duration: '0:30',
-    summary: '演示对话与图像生成两个片段，提出“这些能力从何而来”的开题问题。',
+    summary: '演示对话与图像生成两个片段，提出"这些能力从何而来"的开题问题。',
     badge: '当前已实现',
     implemented: true,
     pages: [
@@ -81,89 +80,7 @@ export const chapters: ChapterRecord[] = [
       { id: '03-01', title: '什么是 Attention？', note: '认知直觉与 QKV 概念', implemented: true },
       { id: '03-02', title: '驶入矩阵前', note: '文本张量化与位置编码', implemented: true },
       { id: '03-03', title: '运算推演', note: '跨域注意力计算过程', implemented: true },
-      { id: '03-04', title: '大一统基石', note: '自注意力与多头拆分', implemented: true },
     ],
     component: AttentionChapter,
   },
-  {
-    id: '04',
-    order: 4,
-    title: 'ViT 视觉变换器',
-    subtitle: 'Patch · Q/K/V · CNN vs ViT · DINOv3',
-    range: '3:30 - 4:45',
-    duration: '1:15',
-    summary: '从全局视野出发，拆解图片 Patch 切分、Q/K/V 统一架构、CNN 局部感受野 vs ViT 全局注意力，并演示 DINOv3 本地推理热力图。',
-    badge: '已实现',
-    implemented: true,
-    pages: [
-      { id: '04-01', title: 'AI 的全局视野', note: '概念引入', implemented: true },
-      { id: '04-02', title: '切分图片为 Patch', note: 'Image Serialization', implemented: true },
-      { id: '04-03', title: '万物同源的 Q/K/V', note: 'Unified Architecture', implemented: true },
-      { id: '04-04', title: '近视眼 vs 上帝视角', note: 'CNN vs ViT', implemented: true },
-      { id: '04-05', title: 'DINOv3 本地演示', note: 'Live WebML Demo', implemented: true },
-    ],
-    component: VitChapter,
-  },
-  {
-    id: '05',
-    order: 5,
-    title: '迁移到图像',
-    subtitle: 'ViT 与 patch token',
-    range: '4:45 - 6:00',
-    duration: '1:15',
-    summary: '把图像切成 patch，对比 CNN 局部感受野与 ViT 全局 token 的区别。',
-    badge: 'patch = token',
-    implemented: false,
-    pages: [
-      { id: '05-01', title: 'Patch 切分', note: '图像离散化' },
-      { id: '05-02', title: 'ViT 编码', note: '视觉 token 建模' },
-      { id: '05-03', title: '与 CNN 对比', note: '局部与全局' },
-    ],
-  },
-  {
-    id: '06',
-    order: 6,
-    title: '前沿技术',
-    subtitle: '多模态 + Attention 变体',
-    range: '6:00 - 7:45',
-    duration: '1:45',
-    summary: '覆盖文本、图像、视频统一 token 空间，以及 Cross-Attention、稀疏注意力等扩展。',
-    badge: '万物皆 token',
-    implemented: false,
-    pages: [
-      { id: '06-01', title: '多模态统一', note: '跨模态 token 空间' },
-      { id: '06-02', title: 'Cross-Attention', note: '信息对齐机制' },
-      { id: '06-03', title: '注意力变体', note: '稀疏与高效化' },
-    ],
-  },
-  {
-    id: '07',
-    order: 7,
-    title: '未来展望',
-    subtitle: 'Attention 的边界与挑战',
-    range: '7:45 - 9:30',
-    duration: '1:45',
-    summary: '从 Mamba、SSM 到具身智能，讨论 Attention 是否仍是通往 AGI 的基础。',
-    implemented: false,
-    pages: [
-      { id: '07-01', title: '现有瓶颈', note: '长度与成本问题' },
-      { id: '07-02', title: '替代路线', note: 'Mamba / SSM' },
-      { id: '07-03', title: '未来判断', note: 'Attention 的位置' },
-    ],
-  },
-  {
-    id: '08',
-    order: 8,
-    title: '收尾',
-    subtitle: '回扣开题',
-    range: '9:30 - 10:00',
-    duration: '0:30',
-    summary: '回到开头的两个生成演示，完成“现在你知道背后是什么了”的闭环。',
-    implemented: false,
-    pages: [
-      { id: '08-01', title: '回扣开题', note: '重看生成能力' },
-      { id: '08-02', title: '总结收束', note: '完成闭环' },
-    ],
-  },
 ];
-

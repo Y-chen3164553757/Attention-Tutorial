@@ -9,7 +9,6 @@ import { useAttentionSteps } from './hooks/useAttentionSteps';
 import Slide0 from './slides/Slide0';
 import Slide1 from './slides/Slide1';
 import Slide2 from './slides/Slide2';
-import Slide3 from './slides/Slide3';
 
 export default function AttentionChapter(props: ChapterComponentProps) {
   const { page, step, advance, retreat, getWatermarkText } = useAttentionSteps(props);
@@ -89,8 +88,9 @@ export default function AttentionChapter(props: ChapterComponentProps) {
   return (
     <div className="tl-root">
       <div className="attention-grid-bg" />
-      <div className="ambient-glow" id="glow-nlp"></div>
-      <div className="ambient-glow" id="glow-cv"></div>
+      <div className="ambient-glow"></div>
+      <div className="ambient-glow-corner" id="glow-nlp"></div>
+      <div className="ambient-glow-corner" id="glow-cv"></div>
       <canvas ref={canvasRef} className="tl-canvas" />
 
       <div className='a-s1-watermark' style={{ opacity: (page === 1 || page === 2 || page === 3) ? 0.06 : 0, position: 'fixed' }}>
@@ -114,7 +114,6 @@ export default function AttentionChapter(props: ChapterComponentProps) {
             {page===0 && <Slide0 step={step}/>}
             {page===1 && <Slide1 step={step}/>}
             {page===2 && <Slide2 step={step} />}
-            {page===3 && <Slide3 step={step}/>}
           </motion.div>
         </AnimatePresence>
       </div>
