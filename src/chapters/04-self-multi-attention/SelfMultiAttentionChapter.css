@@ -1,0 +1,924 @@
+:root {
+  --sma-c-q: #0ea5e9;
+  --sma-c-q-light: #e0f2fe;
+  --sma-c-q-border: #7dd3fc;
+  --sma-c-k: #10b981;
+  --sma-c-k-light: #d1fae5;
+  --sma-c-k-border: #6ee7b7;
+  --sma-c-v: #f43f5e;
+  --sma-c-v-light: #ffe4e6;
+  --sma-c-v-border: #fda4af;
+  --sma-c-score: #f59e0b;
+  --sma-c-score-light: #fef3c7;
+  --sma-c-score-border: #fcd34d;
+  --sma-c-out: #8b5cf6;
+  --sma-c-out-light: #ede9fe;
+  --sma-c-out-border: #c4b5fd;
+
+  --sma-shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
+  --sma-shadow-md: 0 8px 24px rgba(15, 23, 42, 0.06);
+  --sma-shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.08);
+  --sma-glass-bg: rgba(255, 255, 255, 0.85);
+  --sma-glass-border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.sma-slide-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px 100px 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.sma-header-area {
+  text-align: center;
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sma-eyebrow {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sma-c-q);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  background: var(--sma-c-q-light);
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 8px;
+}
+
+.sma-main-title {
+  font-size: 36px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: transparent;
+  background: linear-gradient(135deg, #0f172a, #334155);
+  -webkit-background-clip: text;
+  background-clip: text;
+  margin-bottom: 0;
+}
+
+.sma-formula-card {
+  background: var(--sma-glass-bg);
+  backdrop-filter: blur(16px);
+  border: var(--sma-glass-border);
+  border-radius: 16px;
+  box-shadow: var(--sma-shadow-md);
+  padding: 12px 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  transition: transform 0.3s;
+}
+
+.sma-formula-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sma-shadow-lg);
+}
+
+.sma-formula-badge {
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: #333333;
+  border: 1px solid #e2e8f0;
+}
+
+.sma-formula-content {
+  font-size: 18px;
+  color: #0f172a;
+}
+
+.sma-formula-inline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #0f172a;
+}
+
+.sma-formula-small {
+  font-size: 14px;
+}
+
+.sma-calc-board {
+  background: var(--sma-glass-bg);
+  backdrop-filter: blur(20px);
+  border: var(--sma-glass-border);
+  border-radius: 20px;
+  box-shadow: var(--sma-shadow-lg);
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.sma-params-board {
+  max-width: 800px;
+}
+
+.sma-single-row {
+  padding: 20px 24px;
+}
+
+.sma-section-divider {
+  width: 100%;
+  position: relative;
+  margin: 4px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sma-section-divider::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #cbd5e1, transparent);
+  z-index: -1;
+}
+
+.sma-section-title {
+  background: #f8fafc;
+  padding: 4px 16px;
+  border-radius: 20px;
+  font-weight: 700;
+  color: #333333;
+  font-size: 12px;
+  border: 1px solid #e2e8f0;
+  letter-spacing: 1px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.sma-step-view {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+}
+
+.sma-flow-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+.sma-flow-single {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding: 8px 0;
+}
+
+.sma-op {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 18px;
+  font-weight: bold;
+  color: #333333;
+  flex-shrink: 0;
+}
+
+.sma-op-mult {
+  font-size: 20px;
+}
+
+.sma-text-node {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 8px 16px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  box-shadow: var(--sma-shadow-sm);
+  flex-shrink: 0;
+}
+
+.sma-input-text {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.sma-chinese-text {
+  letter-spacing: 4px;
+  font-size: 16px;
+}
+
+.sma-weight-node {
+  min-width: 120px;
+}
+
+.sma-weight-title {
+  font-size: 14px;
+  font-style: italic;
+}
+
+.sma-score-node {
+  border-color: var(--sma-c-score-border);
+  background: var(--sma-c-score-light);
+}
+
+.sma-score-node .sma-node-title {
+  font-size: 16px;
+  color: var(--sma-c-score);
+}
+
+.sma-softmax-node {
+  border-color: #c4b5fd;
+  background: #faf5ff;
+}
+
+.sma-softmax-node .sma-node-title {
+  color: #8b5cf6;
+}
+
+.sma-node-title {
+  font-weight: 800;
+  font-size: 14px;
+  color: #333333;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sma-node-desc {
+  font-size: 10px;
+  color: #333333;
+}
+
+.sma-tensor-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.sma-tensor-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid;
+  background: #ffffff;
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), var(--sma-shadow-sm);
+  transition: transform 0.2s;
+}
+
+.sma-tensor-card-square {
+  width: 80px;
+  justify-content: space-around;
+}
+
+.sma-tensor-col {
+  width: 14px;
+  height: 22px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 100%);
+}
+
+.sma-tensor-col-square {
+  width: 18px;
+  height: 18px;
+}
+
+.sma-tensor-label {
+  font-size: 14px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sma-tensor-dim {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 10px;
+  color: #333333;
+  background: #f1f5f9;
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-weight: normal;
+}
+
+.sma-label-q { color: var(--sma-c-q); }
+.sma-label-k { color: var(--sma-c-k); }
+.sma-label-v { color: var(--sma-c-v); }
+.sma-label-score { color: var(--sma-c-score); }
+.sma-label-out { color: var(--sma-c-out); }
+.sma-label-x { color: #333333; }
+.sma-label-layer { color: var(--sma-c-k); }
+
+.sma-t-x .sma-tensor-card {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+}
+
+.sma-t-x .sma-tensor-col {
+  background-color: #333333;
+}
+
+.sma-t-q .sma-tensor-card {
+  border-color: var(--sma-c-q-border);
+  background: var(--sma-c-q-light);
+}
+
+.sma-t-q .sma-tensor-col {
+  background-color: var(--sma-c-q);
+}
+
+.sma-t-q .sma-tensor-label {
+  color: var(--sma-c-q);
+}
+
+.sma-t-k .sma-tensor-card {
+  border-color: var(--sma-c-k-border);
+  background: var(--sma-c-k-light);
+}
+
+.sma-t-k .sma-tensor-col {
+  background-color: var(--sma-c-k);
+}
+
+.sma-t-k .sma-tensor-label {
+  color: var(--sma-c-k);
+}
+
+.sma-t-v .sma-tensor-card {
+  border-color: var(--sma-c-v-border);
+  background: var(--sma-c-v-light);
+}
+
+.sma-t-v .sma-tensor-col {
+  background-color: var(--sma-c-v);
+}
+
+.sma-t-v .sma-tensor-label {
+  color: var(--sma-c-v);
+}
+
+.sma-t-score .sma-tensor-card {
+  border-color: var(--sma-c-score-border);
+  background: var(--sma-c-score-light);
+}
+
+.sma-t-score .sma-tensor-col {
+  background-color: var(--sma-c-score);
+}
+
+.sma-t-score .sma-tensor-label {
+  color: var(--sma-c-score);
+}
+
+.sma-t-out .sma-tensor-card {
+  border-color: var(--sma-c-out-border);
+  background: var(--sma-c-out-light);
+}
+
+.sma-t-out .sma-tensor-col {
+  background-color: var(--sma-c-out);
+}
+
+.sma-t-out .sma-tensor-label {
+  color: var(--sma-c-out);
+}
+
+.sma-t-out-final .sma-tensor-card {
+  border-width: 2px;
+  border-color: var(--sma-c-out);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.2), inset 0 2px 4px rgba(255,255,255,0.8);
+}
+
+.sma-t-layer-out .sma-tensor-card {
+  border-color: var(--sma-c-k-border);
+  background: var(--sma-c-k-light);
+}
+
+.sma-t-layer-out .sma-tensor-col {
+  background-color: var(--sma-c-k);
+}
+
+.sma-math-latex {
+  font-size: 16px !important;
+}
+
+/* 参数网格 */
+.sma-param-grid {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.sma-param-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 20px;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: var(--sma-shadow-sm);
+  min-width: 80px;
+}
+
+.sma-param-icon {
+  font-size: 20px;
+}
+
+.sma-param-name {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 11px;
+  color: #333333;
+}
+
+.sma-param-val {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.sma-param-layers .sma-param-val { color: var(--sma-c-q); }
+.sma-param-heads .sma-param-val { color: var(--sma-c-k); }
+.sma-param-d .sma-param-val { color: var(--sma-c-v); }
+.sma-param-dk .sma-param-val { color: var(--sma-c-score); }
+
+/* 第四章根容器 */
+.sma-root .a-deck {
+  padding-top: 0;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.sma-root .a-deck > div {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* 动画渐显布局样式 */
+.sma-slide-animated {
+  padding: 20px 40px 80px 40px;
+  gap: 20px;
+  height: 100%;
+  justify-content: flex-start;
+}
+
+.sma-header-large {
+  margin-bottom: 12px;
+}
+
+.sma-title-large {
+  font-size: 52px;
+  margin: 0;
+  background: linear-gradient(135deg, #0f172a 0%, #334155 50%, #475569 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.sma-row-container {
+  width: 100%;
+}
+
+.sma-board-mini {
+  background: var(--sma-glass-bg);
+  backdrop-filter: blur(16px);
+  border: var(--sma-glass-border);
+  border-radius: 20px;
+  box-shadow: var(--sma-shadow-md);
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+/* 参数行样式 */
+.sma-param-row {
+  display: flex;
+  gap: 28px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.sma-board-with-note {
+  flex-direction: row;
+  align-items: stretch;
+  padding: 20px 28px;
+  gap: 24px;
+}
+
+.sma-board-note {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  min-width: 200px;
+}
+
+.sma-note-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 16px;
+}
+
+.sma-gpt-letters {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.sma-gpt-letters span {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 36px;
+  font-weight: 900;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+}
+
+.sma-gpt-g {
+  background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+}
+
+.sma-gpt-p {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.sma-gpt-t {
+  background: linear-gradient(135deg, #f43f5e 0%, #fb7185 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3);
+}
+
+.sma-note-desc {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.sma-board-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.sma-param-mini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 28px;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.05);
+}
+
+.sma-param-mini .sma-param-val {
+  font-size: 36px;
+  font-weight: 800;
+}
+
+.sma-param-mini .sma-param-label {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 13px;
+  color: #333333;
+  margin-top: 4px;
+}
+
+.sma-param-layers .sma-param-val { color: var(--sma-c-q); }
+.sma-param-heads .sma-param-val { color: var(--sma-c-k); }
+.sma-param-d .sma-param-val { color: var(--sma-c-v); }
+
+/* 公式样式 */
+.sma-formula-mini {
+  font-size: 18px;
+  color: #333333;
+}
+
+.sma-formula-center {
+  text-align: center;
+}
+
+/* 流程样式 */
+.sma-flow-mini {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sma-flow-offset {
+  margin-top: -4px;
+}
+
+/* 张量化箭头样式 */
+.sma-arrow-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-radius: 10px;
+  border: 1px solid #f59e0b;
+}
+
+.sma-arrow-line {
+  font-size: 24px;
+  color: #d97706;
+}
+
+.sma-arrow-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #92400e;
+}
+
+/* QKV 矩阵区域 */
+.sma-qkv-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  padding: 12px 20px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.sma-qkv-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 左右分栏布局 */
+.sma-board-split {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px 32px;
+}
+
+.sma-split-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 40px;
+}
+
+.sma-split-left {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sma-split-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.sma-qkv-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sma-qkv-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background: #f1f5f9;
+  border-radius: 8px;
+}
+
+/* 矩阵形状信息 */
+.sma-tensor-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.sma-tensor-label {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.sma-tensor-shape {
+  font-size: 11px;
+  color: #333333;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+.sma-matrix-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.sma-op-mini {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 20px;
+  font-weight: bold;
+  color: #333333;
+  flex-shrink: 0;
+}
+
+.sma-node-mini {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.sma-node-text {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.sma-text-chinese {
+  letter-spacing: 4px;
+  color: #333333;
+}
+
+.sma-node-matrix {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+.sma-node-scale {
+  background: var(--sma-c-score-light);
+  border: 1px solid var(--sma-c-score-border);
+  color: var(--sma-c-score);
+  font-size: 16px;
+}
+
+.sma-node-softmax {
+  background: #faf5ff;
+  border: 1px solid #c4b5fd;
+  color: #8b5cf6;
+}
+
+/* 张量样式 */
+.sma-tensor-mini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.sma-tensor-box {
+  display: flex;
+  gap: 4px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 2px solid;
+  background: #ffffff;
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.8);
+}
+
+.sma-tensor-square {
+  padding: 10px;
+  flex-wrap: wrap;
+  width: 70px;
+  justify-content: space-around;
+}
+
+.sma-tensor-cell {
+  width: 18px;
+  height: 28px;
+  border-radius: 3px;
+}
+
+.sma-tensor-label {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.sma-tensor-shape {
+  font-size: 11px;
+  color: #333333;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+.sma-matrix-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.sma-matrix-shape {
+  font-size: 10px;
+  color: #333333;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+/* 张量颜色 */
+.sma-t-x .sma-tensor-box { border-color: #cbd5e1; background: #f1f5f9; }
+.sma-t-x .sma-tensor-cell { background-color: #94a3b8; }
+
+.sma-t-q .sma-tensor-box { border-color: var(--sma-c-q-border); background: var(--sma-c-q-light); }
+.sma-t-q .sma-tensor-cell { background-color: var(--sma-c-q); }
+.sma-t-q .sma-tensor-label { color: var(--sma-c-q); }
+
+.sma-t-k .sma-tensor-box { border-color: var(--sma-c-k-border); background: var(--sma-c-k-light); }
+.sma-t-k .sma-tensor-cell { background-color: var(--sma-c-k); }
+.sma-t-k .sma-tensor-label { color: var(--sma-c-k); }
+
+.sma-t-v .sma-tensor-box { border-color: var(--sma-c-v-border); background: var(--sma-c-v-light); }
+.sma-t-v .sma-tensor-cell { background-color: var(--sma-c-v); }
+.sma-t-v .sma-tensor-label { color: var(--sma-c-v); }
+
+.sma-t-score .sma-tensor-box { border-color: var(--sma-c-score-border); background: var(--sma-c-score-light); }
+.sma-t-score .sma-tensor-cell { background-color: var(--sma-c-score); }
+.sma-t-score .sma-tensor-label { color: var(--sma-c-score); }
+
+.sma-t-out .sma-tensor-box { border-color: var(--sma-c-out-border); background: var(--sma-c-out-light); box-shadow: 0 0 16px rgba(139, 92, 246, 0.2); }
+.sma-t-out .sma-tensor-cell { background-color: var(--sma-c-out); }
+.sma-t-out .sma-tensor-label { color: var(--sma-c-out); }
+
+/* 第四章页面头部 */
+.sma-page-header {
+  width: 100%;
+  text-align: center;
+  padding: 12px 20px 0 20px;
+  z-index: 2;
+  position: relative;
+}
+
+.sma-header-badge {
+  display: inline-block;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--sma-c-q);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--sma-c-q-light);
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 6px;
+}
+
+.sma-page-title {
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: transparent;
+  background: linear-gradient(135deg, #0f172a, #334155);
+  -webkit-background-clip: text;
+  background-clip: text;
+  margin: 0;
+}

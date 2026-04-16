@@ -2,6 +2,7 @@ import type { ComponentType } from 'react';
 import { KaitiChapter } from './01-kaiti';
 import { OriginChapter } from './02-origin';
 import { AttentionChapter } from './03-attention';
+import { SelfMultiAttentionChapter } from './04-self-multi-attention';
 
 export interface ChapterComponentProps {
   showHints: boolean;
@@ -82,5 +83,20 @@ export const chapters: ChapterRecord[] = [
       { id: '03-03', title: '运算推演', note: '跨域注意力计算过程', implemented: true },
     ],
     component: AttentionChapter,
+  },
+  {
+    id: '04',
+    order: 4,
+    title: '自注意力机制',
+    subtitle: 'Self-Attention · QKV 生成与相似度计算',
+    range: '3:30 - 5:30',
+    duration: '2:00',
+    summary: '深入解析自注意力机制中输入如何生成 Q/K/V 矩阵。',
+    badge: '当前已实现',
+    implemented: true,
+    pages: [
+      { id: '04-01', title: '自注意力机制', note: 'QKV 生成与相似度计算', implemented: true },
+    ],
+    component: SelfMultiAttentionChapter,
   },
 ];
