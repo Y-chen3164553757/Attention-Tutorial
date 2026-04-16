@@ -92,7 +92,7 @@ export default function Slide0({ step }: Slide0Props) {
                     <span className="sma-arrow-line">→</span>
                     <span className="sma-arrow-label">张量化</span>
                   </motion.div>
-                  <motion.div className="sma-tensor-mini sma-t-x" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: 0.2 }}>
+                  <motion.div className="sma-tensor-mini sma-t-x sma-tensor-vertical" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: 0.2 }}>
                     <div className="sma-tensor-box">
                       <div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div>
                     </div>
@@ -175,7 +175,7 @@ export default function Slide0({ step }: Slide0Props) {
             <motion.div className="sma-formula-mini sma-formula-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 0.1 }}>
               <Latex>{`$ \\text{Self-Attention} = \\text{softmax}\\left( \\frac{QK^T}{\\sqrt{d_k}} \\right) V $`}</Latex>
             </motion.div>
-            <div className="sma-flow-mini">
+            <div className="sma-flow-mini sma-flow-vertical">
               <motion.div className="sma-tensor-mini sma-t-q" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.15 }}>
                 <div className="sma-tensor-box"><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div></div>
                 <div className="sma-tensor-info">
