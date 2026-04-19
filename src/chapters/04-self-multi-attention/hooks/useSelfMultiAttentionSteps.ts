@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { ChapterComponentProps } from '../../catalog';
 
-export const PAGE_COUNT = 1;
-export const STEPS = [4] as const;
+export const PAGE_COUNT = 2;
+export const STEPS = [4, 5] as const;
 
 export interface UseSelfMultiAttentionStepsReturn {
   page: number;

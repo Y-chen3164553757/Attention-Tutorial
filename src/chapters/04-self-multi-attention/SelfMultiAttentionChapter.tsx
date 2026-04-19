@@ -2,7 +2,7 @@ import { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { ChapterComponentProps } from '../catalog';
 import { useSelfMultiAttentionSteps } from './hooks/useSelfMultiAttentionSteps';
-import { Slide0 } from './slides';
+import { Slide0, Slide1 } from './slides';
 import './SelfMultiAttentionChapter.css';
 
 export default function SelfMultiAttentionChapter(props: ChapterComponentProps) {
@@ -88,10 +88,11 @@ export default function SelfMultiAttentionChapter(props: ChapterComponentProps) 
       <div className="ambient-glow-corner" id="glow-cv"></div>
       <canvas ref={canvasRef} className="tl-canvas" />
 
-      <div className='a-s1-watermark' style={{ opacity: page === 0 ? 0.06 : 0, position: 'fixed' }}>
+      <div className='a-s1-watermark' style={{ opacity: (page === 0 || page === 1) ? 0.06 : 0, position: 'fixed' }}>
         <span style={{ background: 'linear-gradient(to right, rgba(15,23,42,0.06), rgba(15,23,42,0.03))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', color: 'transparent' }}>{getWatermarkText()}</span>
       </div>
 
+      {/* 自注意力机制标题 - 仅第1页显示 */}
       <div className="sma-page-header" style={{ opacity: page === 0 ? 1 : 0 }}>
         <div className="sma-header-badge">Self-Attention Mechanism</div>
         <h1 className="sma-page-title">自注意力机制</h1>
@@ -107,7 +108,8 @@ export default function SelfMultiAttentionChapter(props: ChapterComponentProps) 
             transition={{duration:0.8, ease: [0.4, 0, 0.2, 1]}}
             style={{width:'100%',height:'100%',position:'absolute'}}
           >
-            {page===0 && <Slide0 step={step}/>}
+            {page===0 && <Slide0 step={step} />}
+            {page===1 && <Slide1 step={step} />}
           </motion.div>
         </AnimatePresence>
       </div>

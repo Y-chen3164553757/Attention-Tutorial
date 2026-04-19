@@ -91,11 +91,12 @@ export const chapters: ChapterRecord[] = [
     subtitle: 'Self-Attention · QKV 生成与相似度计算',
     range: '3:30 - 5:30',
     duration: '2:00',
-    summary: '深入解析自注意力机制中输入如何生成 Q/K/V 矩阵。',
+    summary: '深入解析自注意力机制中输入如何生成 Q/K/V 矩阵，以及多头注意力的并行计算原理。',
     badge: '当前已实现',
     implemented: true,
     pages: [
       { id: '04-01', title: '自注意力机制', note: 'QKV 生成与相似度计算', implemented: true },
+      { id: '04-02', title: '多头注意力机制', note: '12 个头的并行计算', implemented: true },
     ],
     component: SelfMultiAttentionChapter,
   },

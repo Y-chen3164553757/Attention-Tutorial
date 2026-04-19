@@ -7,13 +7,13 @@ interface Slide0Props {
 
 export default function Slide0({ step }: Slide0Props) {
   const showTitle = step >= 0;
-  const showRow1 = step >= 1;
-  const showRow2 = step >= 2;
-  const showRow3 = step >= 3;
+  const showParams = step >= 1;
+  const showQKV = step >= 2;
+  const showCompute = step >= 3;
 
   return (
     <div className="sma-slide-container sma-slide-animated">
-      {/* 第一步：标题 */}
+      {/* 标题区域 */}
       {showTitle && (
         <motion.div
           className="sma-header-area sma-header-large"
@@ -27,135 +27,136 @@ export default function Slide0({ step }: Slide0Props) {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
-            自注意力机制
+            <span className="sma-title-row">
+              <span>自注意力机制</span>
+              <span className="sma-title-en">Self-Attention</span>
+            </span>
           </motion.h1>
         </motion.div>
       )}
 
-      {/* 第二步：参数配置 */}
-      {showRow1 && (
+      {/* 1. 模型参数 */}
+      {showParams && (
         <motion.div
-          className="sma-row-container"
+          className="mha-split-content"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+          transition={{ duration: 0.5 }}
         >
-          <div className="sma-board-mini sma-board-with-note">
-            <div className="sma-board-note">
-              <div className="sma-note-title">GPT-2 中文模型</div>
-              <div className="sma-gpt-letters">
-                <motion.span className="sma-gpt-g" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.2 }}>G</motion.span>
-                <motion.span className="sma-gpt-p" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.3 }}>P</motion.span>
-                <motion.span className="sma-gpt-t" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.4 }}>T</motion.span>
-              </div>
-              <div className="sma-note-desc">Generative Pre-trained Transformer</div>
+          <div className="mha-step-card mha-card-purple">
+            <div className="mha-step-header">
+              <div className="mha-step-badge-custom mha-badge-purple">0</div>
+              <h3 className="mha-step-title">模型参数</h3>
+              <span className="mha-step-subtitle">Model Parameters</span>
             </div>
-            <div className="sma-board-content">
-              <div className="sma-param-row">
-                <motion.div className="sma-param-mini sma-param-layers" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: 0.5 }}>
-                  <span className="sma-param-val">12</span>
-                  <span className="sma-param-label">Layers</span>
-                </motion.div>
-                <motion.div className="sma-param-mini sma-param-heads" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: 0.6 }}>
-                  <span className="sma-param-val">12</span>
-                  <span className="sma-param-label">Heads</span>
-                </motion.div>
-                <motion.div className="sma-param-mini sma-param-d" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: 0.7 }}>
-                  <span className="sma-param-val">768</span>
-                  <span className="sma-param-label">d_model</span>
-                </motion.div>
+            
+            <div className="sa-params-compact">
+              <div className="sa-gpt-logo">
+                <span className="sa-gpt-g">G</span>
+                <span className="sa-gpt-p">P</span>
+                <span className="sa-gpt-t">T</span>
               </div>
-              <motion.div className="sma-formula-mini" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 0.8 }}>
-                <Latex>{`$ W^Q, W^K, W^V \\in \\mathbb{R}^{768 \\times 768} $`}</Latex>
-              </motion.div>
+              
+              <div className="sa-params-row">
+                <div className="sa-param-item">
+                  <span className="sa-param-val sa-val-blue">12</span>
+                  <span className="sa-param-label">Layers</span>
+                </div>
+                <div className="sa-param-item">
+                  <span className="sa-param-val sa-val-green">12</span>
+                  <span className="sa-param-label">Heads</span>
+                </div>
+                <div className="sa-param-item">
+                  <span className="sa-param-val sa-val-red">768</span>
+                  <span className="sa-param-label">d_model</span>
+                </div>
+              </div>
+              
+              <div className="sa-formula">
+                <Latex>{`$W^Q, W^K, W^V \\in \\mathbb{R}^{768 \\times 768}$`}</Latex>
+              </div>
             </div>
           </div>
         </motion.div>
       )}
 
-      {/* 第三步：QKV 生成 */}
-      {showRow2 && (
+      {/* 2. QKV生成 */}
+      {showQKV && (
         <motion.div
-          className="sma-row-container"
+          className="mha-split-content"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+          transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <div className="sma-board-mini sma-board-split">
-            <div className="sma-split-center">
-              <div className="sma-split-left">
-                <motion.div className="sma-flow-mini" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.1 }}>
-                  <div className="sma-node-mini sma-node-text">
-                    <span className="sma-text-chinese">小 猫 好 可 爱</span>
+          <div className="mha-step-card mha-card-blue">
+            <div className="mha-step-header">
+              <div className="mha-step-badge-custom mha-badge-blue">1</div>
+              <h3 className="mha-step-title">QKV 生成</h3>
+              <span className="mha-step-subtitle">QKV Generation</span>
+            </div>
+            
+            <div className="sa-qkv-flow">
+              {/* 输入 */}
+              <div className="sa-input-block">
+                <div className="sa-text-row">小 猫 好 可 爱</div>
+                <div className="sa-tensor-mini">
+                  <div className="sa-tensor-box">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="sa-tensor-row"></div>
+                    ))}
                   </div>
-                  <motion.div className="sma-arrow-box" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3, delay: 0.15 }}>
-                    <span className="sma-arrow-line">→</span>
-                    <span className="sma-arrow-label">张量化</span>
-                  </motion.div>
-                  <motion.div className="sma-tensor-mini sma-t-x sma-tensor-vertical" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: 0.2 }}>
-                    <div className="sma-tensor-box">
-                      <div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div>
-                    </div>
-                    <div className="sma-tensor-info">
-                      <span className="sma-tensor-label">X</span>
-                      <span className="sma-tensor-shape">(5, 768)</span>
-                    </div>
-                  </motion.div>
-                </motion.div>
+                  <span className="sa-tensor-label">X (5, 768)</span>
+                </div>
               </div>
-              <div className="sma-split-right">
-                <div className="sma-qkv-grid">
-                  <motion.div className="sma-qkv-item" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.3 }}>
-                    <motion.span className="sma-op-mini" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.35 }}>×</motion.span>
-                    <motion.div className="sma-node-mini sma-node-matrix" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: 0.4 }}>
-                      <div className="sma-matrix-info">
-                        <Latex>{`$W^Q$`}</Latex>
-                        <span className="sma-matrix-shape">(768, 768)</span>
-                      </div>
-                    </motion.div>
-                    <motion.span className="sma-op-mini" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.45 }}>=</motion.span>
-                    <motion.div className="sma-tensor-mini sma-t-q" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: 0.5 }}>
-                      <div className="sma-tensor-box"><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div></div>
-                      <div className="sma-tensor-info">
-                        <span className="sma-tensor-label">Q</span>
-                        <span className="sma-tensor-shape">(5, 768)</span>
-                      </div>
-                    </motion.div>
-                  </motion.div>
-                  <motion.div className="sma-qkv-item" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.55 }}>
-                    <motion.span className="sma-op-mini" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.6 }}>×</motion.span>
-                    <motion.div className="sma-node-mini sma-node-matrix" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: 0.65 }}>
-                      <div className="sma-matrix-info">
-                        <Latex>{`$W^K$`}</Latex>
-                        <span className="sma-matrix-shape">(768, 768)</span>
-                      </div>
-                    </motion.div>
-                    <motion.span className="sma-op-mini" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.7 }}>=</motion.span>
-                    <motion.div className="sma-tensor-mini sma-t-k" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: 0.75 }}>
-                      <div className="sma-tensor-box"><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div></div>
-                      <div className="sma-tensor-info">
-                        <span className="sma-tensor-label">K</span>
-                        <span className="sma-tensor-shape">(5, 768)</span>
-                      </div>
-                    </motion.div>
-                  </motion.div>
-                  <motion.div className="sma-qkv-item" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.8 }}>
-                    <motion.span className="sma-op-mini" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.85 }}>×</motion.span>
-                    <motion.div className="sma-node-mini sma-node-matrix" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: 0.9 }}>
-                      <div className="sma-matrix-info">
-                        <Latex>{`$W^V$`}</Latex>
-                        <span className="sma-matrix-shape">(768, 768)</span>
-                      </div>
-                    </motion.div>
-                    <motion.span className="sma-op-mini" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.95 }}>=</motion.span>
-                    <motion.div className="sma-tensor-mini sma-t-v" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: 1.0 }}>
-                      <div className="sma-tensor-box"><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div></div>
-                      <div className="sma-tensor-info">
-                        <span className="sma-tensor-label">V</span>
-                        <span className="sma-tensor-shape">(5, 768)</span>
-                      </div>
-                    </motion.div>
-                  </motion.div>
+
+              {/* 三个运算 */}
+              <div className="sa-qkv-ops">
+                {/* Q */}
+                <div className="sa-op-item">
+                  <div className="sa-op-formula">
+                    <span className="sa-op-symbol">×</span>
+                    <div className="sa-weight-box">
+                      <Latex>{`$W^Q$`}</Latex>
+                      <span className="sa-weight-shape">(768, 768)</span>
+                    </div>
+                    <span className="sa-op-symbol">=</span>
+                  </div>
+                  <div className="sa-result-box sa-result-q">
+                    <span className="sa-result-letter">Q</span>
+                    <span className="sa-result-shape">(5, 768)</span>
+                  </div>
+                </div>
+
+                {/* K */}
+                <div className="sa-op-item">
+                  <div className="sa-op-formula">
+                    <span className="sa-op-symbol">×</span>
+                    <div className="sa-weight-box">
+                      <Latex>{`$W^K$`}</Latex>
+                      <span className="sa-weight-shape">(768, 768)</span>
+                    </div>
+                    <span className="sa-op-symbol">=</span>
+                  </div>
+                  <div className="sa-result-box sa-result-k">
+                    <span className="sa-result-letter">K</span>
+                    <span className="sa-result-shape">(5, 768)</span>
+                  </div>
+                </div>
+
+                {/* V */}
+                <div className="sa-op-item">
+                  <div className="sa-op-formula">
+                    <span className="sa-op-symbol">×</span>
+                    <div className="sa-weight-box">
+                      <Latex>{`$W^V$`}</Latex>
+                      <span className="sa-weight-shape">(768, 768)</span>
+                    </div>
+                    <span className="sa-op-symbol">=</span>
+                  </div>
+                  <div className="sa-result-box sa-result-v">
+                    <span className="sa-result-letter">V</span>
+                    <span className="sa-result-shape">(5, 768)</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -163,66 +164,104 @@ export default function Slide0({ step }: Slide0Props) {
         </motion.div>
       )}
 
-      {/* 第四步：矩阵运算 */}
-      {showRow3 && (
+      {/* 3. 注意力计算 */}
+      {showCompute && (
         <motion.div
-          className="sma-row-container"
+          className="mha-split-content"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+          transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <div className="sma-board-mini">
-            <motion.div className="sma-formula-mini sma-formula-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 0.1 }}>
-              <Latex>{`$ \\text{Self-Attention} = \\text{softmax}\\left( \\frac{QK^T}{\\sqrt{d_k}} \\right) V $`}</Latex>
-            </motion.div>
-            <div className="sma-flow-mini sma-flow-vertical">
-              <motion.div className="sma-tensor-mini sma-t-q" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.15 }}>
-                <div className="sma-tensor-box"><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div></div>
-                <div className="sma-tensor-info">
-                  <span className="sma-tensor-label">Q</span>
-                  <span className="sma-tensor-shape">(5, 768)</span>
+          <div className="mha-step-card mha-card-green">
+            <div className="mha-step-header">
+              <div className="mha-step-badge-custom mha-badge-green">2</div>
+              <h3 className="mha-step-title">注意力计算</h3>
+              <span className="mha-step-subtitle">Attention Compute</span>
+            </div>
+            
+            <div className="sa-attention-flow">
+              {/* 公式 */}
+              <div className="sa-formula-box">
+                <Latex>{`$\\text{Attention} = \\text{softmax}\\left(\\frac{QK^T}{\\sqrt{d_k}}\\right)V$`}</Latex>
+              </div>
+              
+              {/* 计算流程 */}
+              <div className="sa-compute-flow">
+                {/* Q */}
+                <div className="sa-tensor-display sa-tensor-q">
+                  <div className="sa-tensor-cell-box">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="sa-cell"></div>
+                    ))}
+                  </div>
+                  <span className="sa-tensor-name">Q</span>
+                  <span className="sa-tensor-dim">(5, 768)</span>
                 </div>
-              </motion.div>
-              <motion.span className="sma-op-mini" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.2 }}>×</motion.span>
-              <motion.div className="sma-tensor-mini sma-t-k" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: 0.25 }}>
-                <div className="sma-tensor-box sma-tensor-square"><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div></div>
-                <div className="sma-tensor-info">
-                  <span className="sma-tensor-label">K^T</span>
-                  <span className="sma-tensor-shape">(768, 5)</span>
+
+                <span className="sa-flow-op">×</span>
+
+                {/* K^T */}
+                <div className="sa-tensor-display sa-tensor-k">
+                  <div className="sa-tensor-cell-box sa-cells-square">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="sa-cell"></div>
+                    ))}
+                  </div>
+                  <span className="sa-tensor-name">K<sup>T</sup></span>
+                  <span className="sa-tensor-dim">(768, 5)</span>
                 </div>
-              </motion.div>
-              <motion.span className="sma-op-mini" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.3 }}>=</motion.span>
-              <motion.div className="sma-tensor-mini sma-t-score" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: 0.35 }}>
-                <div className="sma-tensor-box sma-tensor-square"><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div></div>
-                <div className="sma-tensor-info">
-                  <span className="sma-tensor-label">Score</span>
-                  <span className="sma-tensor-shape">(5, 5)</span>
+
+                <span className="sa-flow-op">=</span>
+
+                {/* Score */}
+                <div className="sa-tensor-display sa-tensor-score">
+                  <div className="sa-tensor-cell-box sa-cells-square">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="sa-cell"></div>
+                    ))}
+                  </div>
+                  <span className="sa-tensor-name">Score</span>
+                  <span className="sa-tensor-dim">(5, 5)</span>
                 </div>
-              </motion.div>
-              <motion.span className="sma-op-mini" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.4 }}>→</motion.span>
-              <motion.div className="sma-node-mini sma-node-scale" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 0.45 }}>
-                <Latex>{`$\\div\\sqrt{768}$`}</Latex>
-              </motion.div>
-              <motion.span className="sma-op-mini" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.5 }}>→</motion.span>
-              <motion.div className="sma-node-mini sma-node-softmax" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 0.55 }}>
-                <span>Softmax</span>
-              </motion.div>
-              <motion.span className="sma-op-mini" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.6 }}>×</motion.span>
-              <motion.div className="sma-tensor-mini sma-t-v" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: 0.65 }}>
-                <div className="sma-tensor-box"><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div></div>
-                <div className="sma-tensor-info">
-                  <span className="sma-tensor-label">V</span>
-                  <span className="sma-tensor-shape">(5, 768)</span>
+
+                <span className="sa-flow-op">→</span>
+
+                {/* Scale */}
+                <div className="sa-op-badge sa-scale-badge">
+                  <Latex>{`$\\div\\sqrt{768}$`}</Latex>
                 </div>
-              </motion.div>
-              <motion.span className="sma-op-mini" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.7 }}>=</motion.span>
-              <motion.div className="sma-tensor-mini sma-t-out" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: 0.75 }}>
-                <div className="sma-tensor-box"><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div><div className="sma-tensor-cell"></div></div>
-                <div className="sma-tensor-info">
-                  <span className="sma-tensor-label">Output</span>
-                  <span className="sma-tensor-shape">(5, 768)</span>
+
+                <span className="sa-flow-op">→</span>
+
+                {/* Softmax */}
+                <div className="sa-op-badge sa-softmax-badge">Softmax</div>
+
+                <span className="sa-flow-op">×</span>
+
+                {/* V */}
+                <div className="sa-tensor-display sa-tensor-v">
+                  <div className="sa-tensor-cell-box">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="sa-cell"></div>
+                    ))}
+                  </div>
+                  <span className="sa-tensor-name">V</span>
+                  <span className="sa-tensor-dim">(5, 768)</span>
                 </div>
-              </motion.div>
+
+                <span className="sa-flow-op">=</span>
+
+                {/* Output */}
+                <div className="sa-tensor-display sa-tensor-out">
+                  <div className="sa-tensor-cell-box">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="sa-cell"></div>
+                    ))}
+                  </div>
+                  <span className="sa-tensor-name">Output</span>
+                  <span className="sa-tensor-dim">(5, 768)</span>
+                </div>
+              </div>
             </div>
           </div>
         </motion.div>
