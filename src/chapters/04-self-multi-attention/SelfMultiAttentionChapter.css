@@ -2092,11 +2092,12 @@
 .mha-split-content {
   width: 100%;
   max-width: 1200px;
-  margin-top: 20px;
+  margin-top: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 16px;
+  padding-bottom: 120px;
 }
 
 /* 步骤介绍区域 */
@@ -3270,6 +3271,733 @@
   font-size: 11px;
   color: #94a3b8;
   font-weight: 600;
+}
+
+/* ==================== 多头注意力步骤 0-2 放大美化样式 ==================== */
+
+/* 放大版步骤卡片 */
+.mha-step-card-lg {
+  width: 100%;
+  max-width: 1000px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.97) 0%, rgba(248, 250, 252, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 20px;
+  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.1);
+  padding: 20px 28px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+/* 卡片顶部渐变条 */
+.mha-step-card-lg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: 20px 20px 0 0;
+}
+
+.mha-card-lg-purple::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+.mha-card-lg-blue::before { background: linear-gradient(90deg, #0ea5e9, #38bdf8); }
+.mha-card-lg-green::before { background: linear-gradient(90deg, #10b981, #34d399); }
+
+/* 放大版步骤头部 */
+.mha-step-header-lg {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.mha-step-badge-lg {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffffff;
+  padding: 6px 16px;
+  border-radius: 20px;
+}
+
+.mha-badge-lg-purple { background: linear-gradient(135deg, #8b5cf6, #a78bfa); }
+.mha-badge-lg-blue { background: linear-gradient(135deg, #0ea5e9, #38bdf8); }
+.mha-badge-lg-green { background: linear-gradient(135deg, #10b981, #34d399); }
+
+.mha-step-title-lg {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.mha-step-subtitle-lg {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 12px;
+  color: #94a3b8;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-left: auto;
+}
+
+/* 放大版维度拆分 */
+.mha-dim-split-lg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 12px 0;
+  flex-wrap: wrap;
+}
+
+.mha-dim-bar-lg {
+  background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+  color: #ffffff;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 24px;
+  font-weight: 800;
+  padding: 12px 28px;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.35);
+}
+
+.mha-dim-eq-lg { font-size: 28px; font-weight: bold; color: #8b5cf6; }
+
+.mha-dim-formula-lg {
+  background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+  border: 2px solid #c4b5fd;
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #7c3aed;
+}
+
+.mha-dim-arrow-lg { font-size: 28px; font-weight: bold; color: #8b5cf6; }
+
+.mha-heads-lg { display: flex; align-items: center; gap: 8px; }
+
+.mha-head-chunk-lg { display: flex; gap: 5px; }
+
+.mha-head-dot-lg {
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, #c4b5fd, #a78bfa);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(139, 92, 246, 0.3);
+}
+
+.mha-ellipsis-lg { font-size: 22px; color: #94a3b8; font-weight: bold; margin: 0 4px; }
+
+/* 放大版QKV生成 */
+.mha-qkv-gen-lg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 14px 0;
+  flex-wrap: wrap;
+}
+
+.mha-input-lg { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+
+.mha-input-text-lg { font-size: 18px; font-weight: 600; color: #0f172a; letter-spacing: 4px; }
+
+.mha-tensor-box-lg {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 14px;
+  background: #f1f5f9;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.mha-tensor-row-lg { width: 56px; height: 5px; background: linear-gradient(90deg, #94a3b8, #cbd5e1); border-radius: 2px; }
+
+.mha-tensor-label-lg { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 12px; color: #64748b; margin-top: 4px; }
+
+.mha-op-lg { font-size: 28px; font-weight: bold; color: #0ea5e9; }
+
+.mha-weight-lg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 2px solid #f59e0b;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #92400e;
+}
+
+.mha-weight-shape-lg { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 11px; }
+
+.mha-eq-lg { font-size: 28px; font-weight: bold; color: #0ea5e9; }
+
+.mha-qkv-result-lg { display: flex; gap: 12px; }
+
+.mha-qkv-single-lg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 2px solid;
+  min-width: 80px;
+}
+
+.mha-qkv-single-lg.mha-qkv-lg-q { background: var(--sma-c-q-light); border-color: var(--sma-c-q); }
+.mha-qkv-single-lg.mha-qkv-lg-k { background: var(--sma-c-k-light); border-color: var(--sma-c-k); }
+.mha-qkv-single-lg.mha-qkv-lg-v { background: var(--sma-c-v-light); border-color: var(--sma-c-v); }
+
+.mha-qkv-letter-lg { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 26px; font-weight: 800; }
+.mha-qkv-lg-q .mha-qkv-letter-lg { color: var(--sma-c-q); }
+.mha-qkv-lg-k .mha-qkv-letter-lg { color: var(--sma-c-k); }
+.mha-qkv-lg-v .mha-qkv-letter-lg { color: var(--sma-c-v); }
+
+.mha-qkv-label-lg { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* 放大版多头拆分 */
+.mha-split-lg {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  padding: 14px 0;
+  flex-wrap: wrap;
+}
+
+.mha-split-unit-lg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 14px;
+  border: 1px solid #f1f5f9;
+  min-width: 130px;
+}
+
+.mha-source-lg {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 24px;
+  font-weight: 800;
+  border: 2px solid;
+}
+
+.mha-source-lg.mha-source-lg-q { background: var(--sma-c-q-light); color: var(--sma-c-q); border-color: var(--sma-c-q); }
+.mha-source-lg.mha-source-lg-k { background: var(--sma-c-k-light); color: var(--sma-c-k); border-color: var(--sma-c-k); }
+.mha-source-lg.mha-source-lg-v { background: var(--sma-c-v-light); color: var(--sma-c-v); border-color: var(--sma-c-v); }
+
+.mha-source-dim-lg { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 12px; color: #64748b; }
+
+.mha-op-tag-lg {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: #7c3aed;
+  padding: 5px 12px;
+  background: #ede9fe;
+  border: 1px solid #c4b5fd;
+  border-radius: 12px;
+}
+
+.mha-split-chips-lg { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: center; }
+
+.mha-chip-lg {
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.mha-chip-lg.mha-chip-lg-q { background: linear-gradient(135deg, var(--sma-c-q), var(--sma-c-q-border)); }
+.mha-chip-lg.mha-chip-lg-k { background: linear-gradient(135deg, var(--sma-c-k), var(--sma-c-k-border)); }
+.mha-chip-lg.mha-chip-lg-v { background: linear-gradient(135deg, var(--sma-c-v), var(--sma-c-v-border)); }
+
+.mha-chip-ellipsis-lg { font-size: 16px; color: #94a3b8; font-weight: bold; padding: 0 2px; }
+
+/* 拆分后形状说明 */
+.mha-split-shape-label {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 4px;
+  padding: 4px 10px;
+  background: #f1f5f9;
+  border-radius: 8px;
+}
+
+/* ==================== 多头并行计算详细版样式 ==================== */
+
+/* 橙色徽章 */
+.mha-badge-lg-orange {
+  background: linear-gradient(135deg, #f97316, #fb923c);
+}
+
+/* 详细版并行计算容器 */
+.mha-parallel-detailed {
+  width: 100%;
+  max-width: 1100px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.97) 0%, rgba(248, 250, 252, 0.95) 100%);
+  border-radius: 20px;
+  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.1);
+  padding: 20px 28px;
+  position: relative;
+  overflow: hidden;
+}
+
+.mha-parallel-detailed::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #f97316, #fb923c, #fdba74);
+  border-radius: 20px 20px 0 0;
+}
+
+/* 头部 */
+.mha-parallel-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* 整体公式 */
+.mha-parallel-main-formula {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.mha-formula-box {
+  display: inline-block;
+  background: linear-gradient(135deg, #fff7ed, #ffedd5);
+  border: 2px solid #fb923c;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-size: 18px;
+  color: #0f172a;
+}
+
+.mha-formula-note {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 8px;
+}
+
+/* 计算流程 */
+.mha-compute-flow {
+  display: flex;
+  gap: 24px;
+}
+
+/* 左侧：各头计算 */
+.mha-heads-section {
+  flex: 1;
+  min-width: 0;
+}
+
+.mha-heads-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.mha-heads-grid-detailed {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 单个Head计算单元 */
+.mha-head-compute-detailed {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.mha-head-h0 { border-left: 3px solid #0ea5e9; }
+.mha-head-h1 { border-left: 3px solid #10b981; }
+.mha-head-h2 { border-left: 3px solid #8b5cf6; }
+.mha-head-h11 { border-left: 3px solid #f43f5e; }
+
+.mha-head-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.mha-head-badge {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+.mha-head-h0 .mha-head-badge { background: linear-gradient(135deg, #0ea5e9, #38bdf8); }
+.mha-head-h1 .mha-head-badge { background: linear-gradient(135deg, #10b981, #34d399); }
+.mha-head-h2 .mha-head-badge { background: linear-gradient(135deg, #8b5cf6, #a78bfa); }
+.mha-head-h11 .mha-head-badge { background: linear-gradient(135deg, #f43f5e, #fb7185); }
+
+.mha-head-dim-label {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 10px;
+  color: #64748b;
+}
+
+/* 计算流程 - 单行显示，禁止换行 */
+.mha-head-calc-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.mha-calc-step {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.mha-calc-mat {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid;
+  flex-shrink: 0;
+}
+
+.mha-mat-q { background: var(--sma-c-q-light); border-color: var(--sma-c-q); color: var(--sma-c-q); }
+.mha-mat-k { background: var(--sma-c-k-light); border-color: var(--sma-c-k); color: var(--sma-c-k); }
+.mha-mat-v { background: var(--sma-c-v-light); border-color: var(--sma-c-v); color: var(--sma-c-v); }
+.mha-mat-softmax { background: var(--sma-c-score-light); border-color: var(--sma-c-score); color: var(--sma-c-score); }
+.mha-mat-out { background: var(--sma-c-out-light); border-color: var(--sma-c-out); color: var(--sma-c-out); }
+
+.mha-calc-op { font-size: 12px; font-weight: bold; color: #64748b; flex-shrink: 0; }
+.mha-calc-arrow { font-size: 10px; color: #94a3b8; flex-shrink: 0; }
+.mha-calc-label { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 9px; color: #f59e0b; padding: 2px 4px; background: #fef3c7; border-radius: 3px; flex-shrink: 0; }
+.mha-calc-op-text { font-size: 9px; color: #f59e0b; flex-shrink: 0; }
+
+.mha-calc-result {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 9px;
+  flex-shrink: 0;
+}
+
+.mha-result-score { background: var(--sma-c-score-light); border: 1px solid var(--sma-c-score); color: var(--sma-c-score); }
+.mha-result-softmax { background: var(--sma-c-score-light); border: 1px solid var(--sma-c-score); color: var(--sma-c-score); }
+
+.mha-score-grid {
+  display: flex;
+  gap: 1px;
+}
+
+.mha-score-grid span {
+  width: 4px;
+  height: 4px;
+  background: var(--sma-c-score);
+  border-radius: 1px;
+  opacity: 0.6;
+}
+
+.mha-softmax-grid {
+  display: flex;
+  gap: 1px;
+}
+
+.mha-softmax-grid span {
+  width: 4px;
+  height: 4px;
+  background: var(--sma-c-score);
+  border-radius: 1px;
+}
+
+.mha-calc-op-badge {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 6px;
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+  border: 1px solid #22c55e;
+  border-radius: 4px;
+  color: #16a34a;
+  flex-shrink: 0;
+}
+
+/* 省略号 */
+.mha-head-ellipsis-detailed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.mha-ellipsis-note {
+  font-size: 11px;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+/* 右侧：拼接和输出 */
+.mha-concat-section {
+  flex: 0 0 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 拼接流程 */
+.mha-concat-flow {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.mha-concat-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 10px;
+}
+
+.mha-concat-visual {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.mha-concat-inputs {
+  display: flex;
+  gap: 4px;
+}
+
+.mha-concat-block {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 6px 8px;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.mha-concat-o0 { background: rgba(14, 165, 233, 0.15); color: #0ea5e9; border: 1px solid #0ea5e9; }
+.mha-concat-o1 { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid #10b981; }
+.mha-concat-o2 { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; border: 1px solid #8b5cf6; }
+.mha-concat-dots { color: #94a3b8; padding: 6px 4px; }
+.mha-concat-o11 { background: rgba(244, 63, 94, 0.15); color: #f43f5e; border: 1px solid #f43f5e; }
+
+.mha-concat-arrow { font-size: 16px; color: #f97316; font-weight: bold; }
+
+.mha-concat-output {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.mha-concat-matrix {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  background: #fef3c7;
+  border: 2px solid #f59e0b;
+  border-radius: 6px;
+}
+
+.mha-matrix-row {
+  display: flex;
+  gap: 2px;
+}
+
+.mha-matrix-row span {
+  width: 8px;
+  height: 8px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  border-radius: 2px;
+}
+
+.mha-matrix-shape {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 10px;
+  color: #92400e;
+}
+
+.mha-concat-dim-note {
+  margin-top: 8px;
+  text-align: center;
+}
+
+.mha-dim-tag {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 11px;
+  color: #7c3aed;
+  padding: 4px 10px;
+  background: #ede9fe;
+  border-radius: 12px;
+}
+
+/* WO 输出投影 */
+.mha-wo-flow {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.mha-wo-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 10px;
+}
+
+.mha-wo-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.mha-wo-matrix {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.mha-wo-shape {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 10px;
+  color: #92400e;
+}
+
+.mha-wo-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 6px);
+  grid-template-rows: repeat(8, 4px);
+  gap: 1px;
+  padding: 6px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 2px solid #f59e0b;
+  border-radius: 6px;
+}
+
+.mha-wo-grid::before {
+  content: '';
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(245, 158, 11, 0.3) 0px,
+    rgba(245, 158, 11, 0.3) 5px,
+    transparent 5px,
+    transparent 6px
+  );
+}
+
+.mha-wo-op { font-size: 24px; font-weight: bold; color: #f97316; }
+
+.mha-wo-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.mha-wo-output-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #ffedd5, #fed7aa);
+  border: 2px solid #f97316;
+  border-radius: 8px;
+}
+
+.mha-wo-output-label {
+  font-size: 9px;
+  color: #9a3412;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mha-wo-output-mat {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 14px;
+  font-weight: 800;
+  color: #c2410c;
+}
+
+.mha-wo-shape-label {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 11px;
+  color: #92400e;
+}
+
+/* 并行总结 */
+.mha-parallel-summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #fff7ed, #ffedd5);
+  border: 1px solid #fdba74;
+  border-radius: 10px;
+  font-size: 12px;
+  color: #0f172a;
+}
+
+.mha-summary-icon {
+  font-size: 16px;
 }
 
 /* ==================== 紧凑版样式 - 节省空间 ==================== */
