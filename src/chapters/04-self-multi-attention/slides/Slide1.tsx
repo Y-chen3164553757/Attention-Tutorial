@@ -11,6 +11,9 @@ export default function Slide1({ step }: Slide1Props) {
   const showQKVGen = step >= 2;
   const showMultiSplit = step >= 3;
   const showParallelCompute = step >= 4;
+  const showConcat = step >= 5;
+  const showProjection = step >= 6;
+  const showResidual = step >= 7;
 
   // step 4 时显示多头并行计算
   const showParallel = step >= 4;
@@ -305,230 +308,247 @@ export default function Slide1({ step }: Slide1Props) {
                 {/* 头部 */}
                 <div className="mha-parallel-header">
                   <div className="mha-step-badge-lg mha-badge-lg-orange">3</div>
-                  <h3 className="mha-step-title-lg">多头并行计算</h3>
+                  <h3 className="mha-step-title-lg">多头注意力机制</h3>
                   <span className="mha-step-subtitle-lg">Multi-Head Attention · 12 Heads</span>
                 </div>
 
-                {/* 主体布局：左侧运算 + 右侧拼接输出 */}
+                {/* 主体布局：左侧公式 + 右侧各步骤 */}
                 <div className="mha-allinone-body">
-                  {/* 左侧：各Head运算 */}
+                  {/* 左侧：多头注意力公式 */}
                   <div className="mha-allinone-left">
                     <div className="mha-formula-card">
-                      <div className="mha-formula-title">单头注意力公式</div>
-                      <div className="mha-formula-inline">
-                        <span className="mha-formula-head">headᵢ</span>
-                        <span className="mha-formula-eq">=</span>
-                        <span className="mha-formula-attn">Attention(Qᵢ, Kᵢ, Vᵢ)</span>
+                      <div className="mha-formula-title">多头注意力公式</div>
+                      <div className="mha-mha-formula">
+                        <div className="mha-formula-main">
+                          <span className="mha-formula-key">MultiHead</span>
+                          <span className="mha-formula-eq-sym">=</span>
+                          <span className="mha-formula-concat">Concat</span>
+                          <span className="mha-formula-paren">(</span>
+                          <span className="mha-formula-head-list">head₁, head₂, ..., head₁₂</span>
+                          <span className="mha-formula-paren">)</span>
+                          <span className="mha-formula-wo">· Wᴼ</span>
+                        </div>
+                        <div className="mha-formula-detail">
+                          <span className="mha-formula-where">其中</span>
+                          <span className="mha-formula-head-i">headᵢ</span>
+                          <span className="mha-formula-eq-sym">=</span>
+                          <span className="mha-formula-attn-fn">Attention</span>
+                          <span className="mha-formula-paren">(</span>
+                          <span className="mha-formula-qkv">Qᵢ, Kᵢ, Vᵢ</span>
+                          <span className="mha-formula-paren">)</span>
+                        </div>
                       </div>
-                      <div className="mha-formula-inline mha-formula-inline-detail">
-                        <span className="mha-formula-eq">=</span>
-                        <span className="mha-formula-softmax">softmax</span>
-                        <span>(</span>
-                        <span className="mha-formula-frac-top">Qᵢ · Kᵢᵀ</span>
-                        <span className="mha-formula-frac-sep">/</span>
-                        <span className="mha-formula-frac-bot">√d_k</span>
-                        <span>)</span>
-                        <span className="mha-formula-v">· Vᵢ</span>
-                      </div>
-                      <div className="mha-formula-dim">d_k = d_model / h = 768 / 12 = 64</div>
                     </div>
 
-                    {/* 所有Head的单行运算 */}
-                    <div className="mha-allheads-title">各头并行计算 (12 × Attention)</div>
-                    <div className="mha-allheads-list">
-                      <motion.div className="mha-allhead-row" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: 0.05 }}>
-                        <span className="mha-allhead-badge mha-allhead-badge-0">Head₀</span>
-                        <span className="mha-allhead-calc">
-                          <span className="mha-allhead-mat mha-allhead-mat-q">Q₀</span>
-                          <span className="mha-allhead-shape">(5,64)</span>
-                          <span className="mha-allhead-op">×</span>
-                          <span className="mha-allhead-mat mha-allhead-mat-k">K₀ᵀ</span>
-                          <span className="mha-allhead-shape">(64,5)</span>
-                          <span className="mha-allhead-arrow">→</span>
-                          <span className="mha-allhead-mat mha-allhead-mat-score">Score</span>
-                          <span className="mha-allhead-shape">(5,5)</span>
-                          <span className="mha-allhead-arrow">→</span>
-                          <span className="mha-allhead-op-tag">÷√64</span>
-                          <span className="mha-allhead-arrow">→</span>
-                          <span className="mha-allhead-op-tag mha-allhead-softmax">Softmax</span>
-                          <span className="mha-allhead-arrow">→</span>
-                          <span className="mha-allhead-mat mha-allhead-mat-alpha">α</span>
-                          <span className="mha-allhead-shape">(5,5)</span>
-                          <span className="mha-allhead-arrow">→</span>
-                          <span className="mha-allhead-op">×</span>
-                          <span className="mha-allhead-mat mha-allhead-mat-v">V₀</span>
-                          <span className="mha-allhead-shape">(5,64)</span>
-                          <span className="mha-allhead-eq">=</span>
-                          <span className="mha-allhead-mat mha-allhead-mat-o">O₀</span>
-                          <span className="mha-allhead-shape">(5,64)</span>
-                        </span>
-                      </motion.div>
+                    {/* 并行计算可视化 - 始终显示 */}
+                    {showParallelCompute && (
+                      <motion.div
+                        className="mha-parallel-compute-area"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4 }}
+                      >
+                        <div className="mha-allheads-title">各头并行计算 (12 × Attention)</div>
+                        <div className="mha-allheads-list">
+                          <motion.div className="mha-allhead-row" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: 0.05 }}>
+                            <span className="mha-allhead-badge mha-allhead-badge-0">Head₀</span>
+                            <span className="mha-allhead-calc">
+                              <span className="mha-allhead-mat mha-allhead-mat-q">Q₀</span>
+                              <span className="mha-allhead-shape">(5,64)</span>
+                              <span className="mha-allhead-op">×</span>
+                              <span className="mha-allhead-mat mha-allhead-mat-k">K₀ᵀ</span>
+                              <span className="mha-allhead-shape">(64,5)</span>
+                              <span className="mha-allhead-arrow">→</span>
+                              <span className="mha-allhead-op-tag">÷√64</span>
+                              <span className="mha-allhead-arrow">→</span>
+                              <span className="mha-allhead-op-tag mha-allhead-softmax">Softmax</span>
+                              <span className="mha-allhead-arrow">→</span>
+                              <span className="mha-allhead-op">×</span>
+                              <span className="mha-allhead-mat mha-allhead-mat-v">V₀</span>
+                              <span className="mha-allhead-shape">(5,64)</span>
+                              <span className="mha-allhead-eq">=</span>
+                              <span className="mha-allhead-mat mha-allhead-mat-o">O₀</span>
+                              <span className="mha-allhead-shape">(5,64)</span>
+                            </span>
+                          </motion.div>
 
-                      <motion.div className="mha-allhead-row" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: 0.08 }}>
-                        <span className="mha-allhead-badge mha-allhead-badge-1">Head₁</span>
-                        <span className="mha-allhead-calc">
-                          <span className="mha-allhead-mat mha-allhead-mat-q">Q₁</span>
-                          <span className="mha-allhead-shape">(5,64)</span>
-                          <span className="mha-allhead-op">×</span>
-                          <span className="mha-allhead-mat mha-allhead-mat-k">K₁ᵀ</span>
-                          <span className="mha-allhead-shape">(64,5)</span>
-                          <span className="mha-allhead-arrow">→</span>
-                          <span className="mha-allhead-mat mha-allhead-mat-score">Score</span>
-                          <span className="mha-allhead-shape">(5,5)</span>
-                          <span className="mha-allhead-arrow">→</span>
-                          <span className="mha-allhead-op-tag">÷√64</span>
-                          <span className="mha-allhead-arrow">→</span>
-                          <span className="mha-allhead-op-tag mha-allhead-softmax">Softmax</span>
-                          <span className="mha-allhead-arrow">→</span>
-                          <span className="mha-allhead-mat mha-allhead-mat-alpha">α</span>
-                          <span className="mha-allhead-shape">(5,5)</span>
-                          <span className="mha-allhead-arrow">→</span>
-                          <span className="mha-allhead-op">×</span>
-                          <span className="mha-allhead-mat mha-allhead-mat-v">V₁</span>
-                          <span className="mha-allhead-shape">(5,64)</span>
-                          <span className="mha-allhead-eq">=</span>
-                          <span className="mha-allhead-mat mha-allhead-mat-o">O₁</span>
-                          <span className="mha-allhead-shape">(5,64)</span>
-                        </span>
-                      </motion.div>
+                          <motion.div className="mha-allhead-row" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: 0.08 }}>
+                            <span className="mha-allhead-badge mha-allhead-badge-1">Head₁</span>
+                            <span className="mha-allhead-calc">
+                              <span className="mha-allhead-mat mha-allhead-mat-q">Q₁</span>
+                              <span className="mha-allhead-shape">(5,64)</span>
+                              <span className="mha-allhead-op">×</span>
+                              <span className="mha-allhead-mat mha-allhead-mat-k">K₁ᵀ</span>
+                              <span className="mha-allhead-shape">(64,5)</span>
+                              <span className="mha-allhead-arrow">→</span>
+                              <span className="mha-allhead-op-tag">÷√64</span>
+                              <span className="mha-allhead-arrow">→</span>
+                              <span className="mha-allhead-op-tag mha-allhead-softmax">Softmax</span>
+                              <span className="mha-allhead-arrow">→</span>
+                              <span className="mha-allhead-op">×</span>
+                              <span className="mha-allhead-mat mha-allhead-mat-v">V₁</span>
+                              <span className="mha-allhead-shape">(5,64)</span>
+                              <span className="mha-allhead-eq">=</span>
+                              <span className="mha-allhead-mat mha-allhead-mat-o">O₁</span>
+                              <span className="mha-allhead-shape">(5,64)</span>
+                            </span>
+                          </motion.div>
 
-                      <motion.div className="mha-allhead-row" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: 0.11 }}>
-                        <span className="mha-allhead-badge mha-allhead-badge-2">Head₂</span>
-                        <span className="mha-allhead-calc">
-                          <span className="mha-allhead-mat mha-allhead-mat-q">Q₂</span>
-                          <span className="mha-allhead-shape">(5,64)</span>
-                          <span className="mha-allhead-op">×</span>
-                          <span className="mha-allhead-mat mha-allhead-mat-k">K₂ᵀ</span>
-                          <span className="mha-allhead-shape">(64,5)</span>
-                          <span className="mha-allhead-arrow">→</span>
-                          <span className="mha-allhead-mat mha-allhead-mat-score">Score</span>
-                          <span className="mha-allhead-shape">(5,5)</span>
-                          <span className="mha-allhead-arrow">→</span>
-                          <span className="mha-allhead-op-tag">÷√64</span>
-                          <span className="mha-allhead-arrow">→</span>
-                          <span className="mha-allhead-op-tag mha-allhead-softmax">Softmax</span>
-                          <span className="mha-allhead-arrow">→</span>
-                          <span className="mha-allhead-mat mha-allhead-mat-alpha">α</span>
-                          <span className="mha-allhead-shape">(5,5)</span>
-                          <span className="mha-allhead-arrow">→</span>
-                          <span className="mha-allhead-op">×</span>
-                          <span className="mha-allhead-mat mha-allhead-mat-v">V₂</span>
-                          <span className="mha-allhead-shape">(5,64)</span>
-                          <span className="mha-allhead-eq">=</span>
-                          <span className="mha-allhead-mat mha-allhead-mat-o">O₂</span>
-                          <span className="mha-allhead-shape">(5,64)</span>
-                        </span>
-                      </motion.div>
+                          <motion.div className="mha-allhead-row" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: 0.11 }}>
+                            <span className="mha-allhead-badge mha-allhead-badge-2">Head₂</span>
+                            <span className="mha-allhead-calc">
+                              <span className="mha-allhead-mat mha-allhead-mat-q">Q₂</span>
+                              <span className="mha-allhead-shape">(5,64)</span>
+                              <span className="mha-allhead-op">×</span>
+                              <span className="mha-allhead-mat mha-allhead-mat-k">K₂ᵀ</span>
+                              <span className="mha-allhead-shape">(64,5)</span>
+                              <span className="mha-allhead-arrow">→</span>
+                              <span className="mha-allhead-op-tag">÷√64</span>
+                              <span className="mha-allhead-arrow">→</span>
+                              <span className="mha-allhead-op-tag mha-allhead-softmax">Softmax</span>
+                              <span className="mha-allhead-arrow">→</span>
+                              <span className="mha-allhead-op">×</span>
+                              <span className="mha-allhead-mat mha-allhead-mat-v">V₂</span>
+                              <span className="mha-allhead-shape">(5,64)</span>
+                              <span className="mha-allhead-eq">=</span>
+                              <span className="mha-allhead-mat mha-allhead-mat-o">O₂</span>
+                              <span className="mha-allhead-shape">(5,64)</span>
+                            </span>
+                          </motion.div>
 
-                      <motion.div className="mha-allhead-row mha-allhead-ellipsis" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.14 }}>
-                        <span className="mha-allhead-badge mha-allhead-badge-dot">...</span>
-                        <span className="mha-allhead-calc">
-                          <span className="mha-allhead-ellipsis-text">Head₃ ~ Head₁₀ 并行计算中...</span>
-                        </span>
-                      </motion.div>
+                          <motion.div className="mha-allhead-row mha-allhead-ellipsis" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.14 }}>
+                            <span className="mha-allhead-badge mha-allhead-badge-dot">...</span>
+                            <span className="mha-allhead-calc">
+                              <span className="mha-allhead-ellipsis-text">Head₃ ~ Head₁₀ 并行计算中...</span>
+                            </span>
+                          </motion.div>
 
-                      <motion.div className="mha-allhead-row" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: 0.17 }}>
-                        <span className="mha-allhead-badge mha-allhead-badge-11">Head₁₁</span>
-                        <span className="mha-allhead-calc">
-                          <span className="mha-allhead-mat mha-allhead-mat-q">Q₁₁</span>
-                          <span className="mha-allhead-shape">(5,64)</span>
-                          <span className="mha-allhead-op">×</span>
-                          <span className="mha-allhead-mat mha-allhead-mat-k">K₁₁ᵀ</span>
-                          <span className="mha-allhead-shape">(64,5)</span>
-                          <span className="mha-allhead-arrow">→</span>
-                          <span className="mha-allhead-mat mha-allhead-mat-score">Score</span>
-                          <span className="mha-allhead-shape">(5,5)</span>
-                          <span className="mha-allhead-arrow">→</span>
-                          <span className="mha-allhead-op-tag">÷√64</span>
-                          <span className="mha-allhead-arrow">→</span>
-                          <span className="mha-allhead-op-tag mha-allhead-softmax">Softmax</span>
-                          <span className="mha-allhead-arrow">→</span>
-                          <span className="mha-allhead-mat mha-allhead-mat-alpha">α</span>
-                          <span className="mha-allhead-shape">(5,5)</span>
-                          <span className="mha-allhead-arrow">→</span>
-                          <span className="mha-allhead-op">×</span>
-                          <span className="mha-allhead-mat mha-allhead-mat-v">V₁₁</span>
-                          <span className="mha-allhead-shape">(5,64)</span>
-                          <span className="mha-allhead-eq">=</span>
-                          <span className="mha-allhead-mat mha-allhead-mat-o">O₁₁</span>
-                          <span className="mha-allhead-shape">(5,64)</span>
-                        </span>
+                          <motion.div className="mha-allhead-row" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: 0.17 }}>
+                            <span className="mha-allhead-badge mha-allhead-badge-11">Head₁₁</span>
+                            <span className="mha-allhead-calc">
+                              <span className="mha-allhead-mat mha-allhead-mat-q">Q₁₁</span>
+                              <span className="mha-allhead-shape">(5,64)</span>
+                              <span className="mha-allhead-op">×</span>
+                              <span className="mha-allhead-mat mha-allhead-mat-k">K₁₁ᵀ</span>
+                              <span className="mha-allhead-shape">(64,5)</span>
+                              <span className="mha-allhead-arrow">→</span>
+                              <span className="mha-allhead-op-tag">÷√64</span>
+                              <span className="mha-allhead-arrow">→</span>
+                              <span className="mha-allhead-op-tag mha-allhead-softmax">Softmax</span>
+                              <span className="mha-allhead-arrow">→</span>
+                              <span className="mha-allhead-op">×</span>
+                              <span className="mha-allhead-mat mha-allhead-mat-v">V₁₁</span>
+                              <span className="mha-allhead-shape">(5,64)</span>
+                              <span className="mha-allhead-eq">=</span>
+                              <span className="mha-allhead-mat mha-allhead-mat-o">O₁₁</span>
+                              <span className="mha-allhead-shape">(5,64)</span>
+                            </span>
+                          </motion.div>
+                        </div>
                       </motion.div>
-                    </div>
+                    )}
                   </div>
 
-                  {/* 右侧：拼接与输出 */}
+                  {/* 右侧：拼接 → 投影 → 残差 */}
                   <div className="mha-allinone-right">
-                    {/* 拼接 */}
-                    <motion.div className="mha-right-unit mha-right-concat" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.2 }}>
-                      <div className="mha-right-label">步骤1: Concat 拼接</div>
-                      <div className="mha-right-flow">
-                        <div className="mha-concat-blocks">
-                          <span className="mha-cb mha-cb-0">O₀</span>
-                          <span className="mha-cb mha-cb-1">O₁</span>
-                          <span className="mha-cb mha-cb-2">O₂</span>
-                          <span className="mha-cb-dot">...</span>
-                          <span className="mha-cb mha-cb-11">O₁₁</span>
-                        </div>
-                        <span className="mha-right-arrow">→</span>
-                        <div className="mha-concat-result">
-                          <div className="mha-concat-mat-icon"></div>
-                          <div className="mha-concat-shape">(5, 768)</div>
-                        </div>
-                      </div>
-                      <div className="mha-concat-dim-note">12 × 64 = 768 维</div>
-                    </motion.div>
-
-                    {/* 乘 WO */}
-                    <motion.div className="mha-right-unit mha-right-wo" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.25 }}>
-                      <div className="mha-right-label">步骤2: × Wᴼ 输出投影</div>
-                      <div className="mha-right-flow">
-                        <div className="mha-wo-icon">
-                          <div className="mha-wo-grid"></div>
-                          <div className="mha-wo-shape">768 × 768</div>
-                        </div>
-                        <span className="mha-right-arrow">→</span>
-                        <div className="mha-wo-result">
-                          <div className="mha-wo-output-box">
-                            <div className="mha-wo-output-label">MultiHead Output</div>
-                            <div className="mha-wo-output-mat">× Wᴼ</div>
+                    {/* 步骤1: 拼接 */}
+                    {showConcat && (
+                      <motion.div
+                        className="mha-right-unit mha-right-concat"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4 }}
+                      >
+                        <div className="mha-right-label">步骤1: Concat 拼接</div>
+                        <div className="mha-right-flow">
+                          <div className="mha-concat-blocks">
+                            <span className="mha-cb mha-cb-0">O₀</span>
+                            <span className="mha-cb mha-cb-1">O₁</span>
+                            <span className="mha-cb mha-cb-2">O₂</span>
+                            <span className="mha-cb-dot">...</span>
+                            <span className="mha-cb mha-cb-11">O₁₁</span>
                           </div>
-                          <div className="mha-wo-shape">(5, 768)</div>
+                          <span className="mha-right-arrow">→</span>
+                          <div className="mha-concat-result">
+                            <div className="mha-concat-mat-icon"></div>
+                            <div className="mha-concat-shape">(5, 768)</div>
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
+                        <div className="mha-concat-dim-note">12 × 64 = 768 维</div>
+                      </motion.div>
+                    )}
 
-                    {/* 残差与归一化 */}
-                    <motion.div className="mha-right-unit mha-right-unit-final" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.3 }}>
-                      <div className="mha-right-label">步骤3: + 残差 → LayerNorm</div>
-                      <div className="mha-right-flow">
-                        <div className="mha-residual-visual">
-                          <div className="mha-res-input">X</div>
-                          <span className="mha-res-shape">(5,768)</span>
-                          <div className="mha-res-plus">+</div>
-                          <div className="mha-res-attn">MultiHead</div>
-                          <span className="mha-res-shape">(5,768)</span>
+                    {/* 步骤2: 投影 */}
+                    {showProjection && (
+                      <motion.div
+                        className="mha-right-unit mha-right-wo"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4 }}
+                      >
+                        <div className="mha-right-label">步骤2: × Wᴼ 输出投影</div>
+                        <div className="mha-right-flow">
+                          <div className="mha-wo-icon">
+                            <div className="mha-wo-grid"></div>
+                            <div className="mha-wo-shape">768 × 768</div>
+                          </div>
+                          <span className="mha-right-arrow">→</span>
+                          <div className="mha-wo-result">
+                            <div className="mha-wo-output-box">
+                              <div className="mha-wo-output-label">MultiHead Output</div>
+                              <div className="mha-wo-output-mat">× Wᴼ</div>
+                            </div>
+                            <div className="mha-wo-shape">(5, 768)</div>
+                          </div>
                         </div>
-                      </div>
-                      <div className="mha-residual-arrow">↓</div>
-                      <div className="mha-res-result">
-                        <div className="mha-res-label-text">下一层输入</div>
-                        <div className="mha-res-shape">(5, 768)</div>
-                      </div>
-                    </motion.div>
+                      </motion.div>
+                    )}
 
-                    {/* 12层说明 */}
-                    <motion.div className="mha-layers-note" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.35 }}>
-                      <div className="mha-layers-visual">
-                        <div className="mha-layers-stack">
-                          <span className="mha-layer-item">Layer₁</span>
-                          <span className="mha-layer-item">Layer₂</span>
-                          <span className="mha-layer-item mha-layer-highlight">...</span>
-                          <span className="mha-layer-item">Layer₁₂</span>
+                    {/* 步骤3: 残差与归一化 */}
+                    {showResidual && (
+                      <motion.div
+                        className="mha-right-unit mha-right-unit-final"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4 }}
+                      >
+                        <div className="mha-right-label">步骤3: + 残差 → LayerNorm</div>
+                        <div className="mha-right-flow">
+                          <div className="mha-residual-visual">
+                            <div className="mha-res-input">X</div>
+                            <span className="mha-res-shape">(5,768)</span>
+                            <div className="mha-res-plus">+</div>
+                            <div className="mha-res-attn">MultiHead</div>
+                            <span className="mha-res-shape">(5,768)</span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="mha-layers-text">× N = 6 (Decoder)</div>
-                    </motion.div>
+                        <div className="mha-residual-arrow">↓</div>
+                        <div className="mha-res-result">
+                          <div className="mha-res-label-text">下一层输入</div>
+                          <div className="mha-res-shape">(5, 768)</div>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {/* 12层堆叠说明 */}
+                    {showResidual && (
+                      <motion.div
+                        className="mha-layers-note"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: 0.1 }}
+                      >
+                        <div className="mha-layers-text-center">12 层 Transformer Block 堆叠</div>
+                        <div className="mha-layers-visual">
+                          <div className="mha-layers-stack">
+                            <span className="mha-layer-item">Layer₁</span>
+                            <span className="mha-layer-item">Layer₂</span>
+                            <span className="mha-layer-item mha-layer-highlight">...</span>
+                            <span className="mha-layer-item">Layer₁₂</span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
                   </div>
                 </div>
               </div>
