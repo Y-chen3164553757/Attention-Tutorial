@@ -8,7 +8,7 @@
   position: relative;
   width: 100vw;
   height: 100vh;
-  background: #faf8ff;
+  background: #ffffff;
   color: #0f172a;
   overflow: hidden;
 }
@@ -18,26 +18,36 @@
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   z-index: 2;
+  pointer-events: none;
 }
 
 /* ── Stage ── */
 .ch5-stage {
+  position: absolute;
+  inset: 0;
   display: flex;
-  width: 100%;
-  height: 100%;
-  padding: 4vh 5vw;
-  gap: 3vw;
+  opacity: 0;
+  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(30px) scale(0.98);
+  padding: 3vh 5vw;
+}
+.ch5-stage.is-active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
 }
 
 /* ── Left ── */
 .ch5-left {
-  flex: 0 0 48%;
-  max-width: 620px;
+  padding-top: 40px;
+  flex: 0 0 50%;
+  max-width: 700px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  overflow-y: auto;
-  padding-right: 1vw;
+  padding-right: 4vw;
+  height: 100%;
+  overflow: hidden;
 }
 .ch5-left::-webkit-scrollbar { width: 3px; }
 .ch5-left::-webkit-scrollbar-track { background: transparent; }
@@ -46,46 +56,69 @@
 /* Badge */
 .ch5-badge {
   display: inline-block;
-  padding: 5px 14px;
+  padding: 6px 14px;
   border-radius: 9999px;
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-size: 0.85rem;
+  font-weight: 600;
   letter-spacing: 1px;
   color: white;
-  margin-bottom: 1rem;
+  align-self: flex-start;
+  transform: translateY(20px);
+  opacity: 0;
+  transition: 0.6s 0.2s;
 }
 .ch5-bdg-scaling {
   background: linear-gradient(135deg, #7c3aed, #6d28d9);
-  box-shadow: 0 4px 15px rgba(109, 37, 217, 0.35);
+  box-shadow: 0 4px 15px rgba(109,37,217,0.4);
+}
+.ch5-stage.is-active .ch5-badge,
+.ch5-stage.is-active .ch5-title,
+.ch5-stage.is-active .ch5-causal,
+.ch5-stage.is-active .ch5-content,
+.ch5-stage.is-active .ch5-desc,
+.ch5-stage.is-active .ch5-formula {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* Title */
 .ch5-title {
-  font-size: clamp(1.8rem, 3.2vh, 3rem);
+  font-size: clamp(1.5rem, 3.5vh, 3rem);
   font-weight: 900;
   color: #0f172a;
-  margin-bottom: 1.2rem;
+  margin: clamp(0.5rem, 1.5vh, 1.5rem) 0;
   line-height: 1.1;
+  transform: translateY(20px);
+  opacity: 0;
+  transition: 0.6s 0.3s;
 }
 
 /* Causal */
 .ch5-causal {
-  padding: 0.7rem 1.4rem;
+  padding: clamp(0.6rem, 1.2vh, 1rem) 1.5rem;
   border-radius: 12px;
-  margin-bottom: 1.4rem;
-  background: rgba(16,185,129,0.05);
-  border: 1px solid rgba(16,185,129,0.15);
-  border-left: 4px solid #10b981;
+  margin-bottom: clamp(0.6rem, 1.5vh, 2rem);
+  text-align: left;
+  background: white;
+  border: 1px solid rgba(124,58,237,0.15);
+  box-shadow: 0 4px 10px rgba(109,37,217,0.05);
+  transform: translateY(20px);
+  opacity: 0;
+  transition: 0.6s 0.4s;
 }
-.ch5-clbl { font-weight: 700; font-size: 0.88rem; color: #059669; }
+.ch5-clbl { font-weight: 600; font-size: clamp(0.8rem, 1.5vh, 1rem); color: #334155; }
 
 /* Content */
-.ch5-content {
-  font-size: clamp(0.88rem, 1.7vh, 1rem);
-  color: #334155;
-  line-height: 1.85;
-  margin-bottom: 1.4rem;
+.ch5-content, .ch5-desc {
+  font-size: clamp(0.85rem, 1.8vh, 1.15rem);
+  color: #0f172a;
+  line-height: clamp(1.4, 2.5vh, 1.8);
+  margin-bottom: clamp(0.5rem, 1.5vh, 1.5rem);
   white-space: pre-wrap;
+  transform: translateY(20px);
+  opacity: 0;
+  transition: 0.6s 0.5s;
+  padding-right: 10px;
 }
 
 /* Quote card */
@@ -93,39 +126,43 @@
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
-  background: linear-gradient(135deg, #f5f3ff, #ede9fe);
+  background: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(168,85,247,0.05));
   border-radius: 14px;
   padding: 0.9rem 1.2rem;
-  border: 1px solid #ddd6fe;
-  margin-bottom: 1.4rem;
+  border: 1px solid rgba(124,58,237,0.2);
+  margin-bottom: clamp(0.5rem, 1.5vh, 1.5rem);
 }
 .ch5-qc-icon {
   color: #7c3aed;
   flex-shrink: 0;
   margin-top: 2px;
-  opacity: 0.7;
+  opacity: 0.8;
 }
 .ch5-qc-text {
-  font-size: 0.88rem;
-  color: #6d28d9;
+  font-size: clamp(0.85rem, 1.5vh, 0.95rem);
+  color: #5b21b6;
   font-style: italic;
   line-height: 1.6;
 }
 
 /* Formula */
 .ch5-formula {
-  background: linear-gradient(135deg, #f5f3ff, #ede9fe);
-  padding: 0.9rem 1.3rem;
+  background: #f1f5f9;
+  padding: clamp(0.8rem, 2vh, 1.5rem);
   border-radius: 12px;
-  border: 1px solid #ddd6fe;
+  border: 1px solid #e2e8f0;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas;
+  transform: translateY(20px);
+  opacity: 0;
+  transition: 0.6s 0.6s;
+  overflow: hidden;
 }
 .ch5-latex { overflow: hidden; }
 .ch5-f-tag {
-  font-size: 0.7rem;
-  color: #7c3aed;
-  margin-bottom: 0.5rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-bottom: 0.8rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -137,6 +174,14 @@
   align-items: center;
   justify-content: center;
   position: relative;
+  transform: translateX(40px);
+  opacity: 0;
+  transition: 0.8s 0.3s;
+  perspective: 1200px;
+}
+.ch5-stage.is-active .ch5-right {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 /* ── Nav ── */
@@ -144,21 +189,22 @@
   position: absolute;
   top: 28px; left: 36px;
   padding: 9px 18px;
-  background: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.85);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(15,23,42,0.1);
+  border: 1px solid rgba(124,58,237,0.25);
   border-radius: 999px;
   font-weight: 600;
   font-size: 0.88rem;
-  color: #6d28d9;
+  color: #7c3aed;
   z-index: 100;
   cursor: pointer;
   transition: 0.2s;
 }
 .ch5-navbtn:hover {
   background: white;
-  color: #4c1d95;
-  box-shadow: 0 4px 12px rgba(109,37,217,0.12);
+  color: #5b21b6;
+  border-color: rgba(124,58,237,0.5);
+  box-shadow: 0 4px 15px rgba(124,58,237,0.2);
 }
 
 /* ══════════════════════════════════════
@@ -168,8 +214,8 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(109,37,217,0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(109,37,217,0.04) 1px, transparent 1px);
+    linear-gradient(rgba(124,58,237,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124,58,237,0.04) 1px, transparent 1px);
   background-size: 30px 30px;
   pointer-events: none;
   z-index: 0;
@@ -188,7 +234,7 @@
   border-radius: 50%;
   background: radial-gradient(circle, rgba(168,85,247,0.35) 0%, rgba(124,58,237,0.2) 40%, transparent 70%);
   filter: blur(60px);
-  opacity: 0.6;
+  opacity: 0.5;
   animation: pulse-glow 5s ease-in-out infinite alternate;
 }
 .ch5-ambient::after {
@@ -199,12 +245,12 @@
   border-radius: 50%;
   background: radial-gradient(circle, rgba(16,185,129,0.35) 0%, rgba(5,150,105,0.2) 40%, transparent 70%);
   filter: blur(60px);
-  opacity: 0.45;
+  opacity: 0.4;
   animation: pulse-glow 5s ease-in-out infinite alternate-reverse;
 }
 @keyframes pulse-glow {
-  0% { opacity: 0.4; transform: scale(1); }
-  100% { opacity: 0.7; transform: scale(1.15); }
+  0% { opacity: 0.35; transform: scale(1); }
+  100% { opacity: 0.6; transform: scale(1.15); }
 }
 .ch5-canvas {
   position: absolute;
@@ -218,43 +264,42 @@
 .ch5-wm-tl {
   position: absolute; top: 4vh; left: 4vw;
   font-size: clamp(8rem, 18vw, 24rem);
-  font-weight: 900; color: #4c1d95;
-  opacity: 0.035; line-height: 1; letter-spacing: -0.05em;
+  font-weight: 900; color: #7c3aed;
+  opacity: 0.05; line-height: 1; letter-spacing: -0.05em;
   user-select: none; transform: translateY(-2vh) scale(0.95);
   transition: opacity 1.2s ease-out, transform 3s ease-out;
 }
 .ch5-wm-br {
   position: absolute; bottom: 5vh; right: 4vw;
   font-size: clamp(6rem, 15vw, 20rem);
-  font-weight: 900; color: #059669;
-  opacity: 0.03; line-height: 1; letter-spacing: -0.03em;
+  font-weight: 900; color: #10b981;
+  opacity: 0.04; line-height: 1; letter-spacing: -0.03em;
   user-select: none; transform: translateY(2vh) scale(0.95);
   transition: opacity 1.5s ease-out, transform 4s ease-out;
 }
-.ch5-watermark.is-active .ch5-wm-tl { opacity: 0.035; transform: translate(0,0) scale(1); }
-.ch5-watermark.is-active .ch5-wm-br { opacity: 0.03; transform: translate(0,0) scale(1); }
+.ch5-watermark.is-active .ch5-wm-tl { opacity: 0.05; transform: translate(0,0) scale(1); }
+.ch5-watermark.is-active .ch5-wm-br { opacity: 0.04; transform: translate(0,0) scale(1); }
 
 /* ══════════════════════════════════════
    GPT 演进可视化
 ══════════════════════════════════════ */
 .gpt-evo-container {
   width: 100%;
-  height: 100%;
+  max-width: 680px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  padding: 0.5rem 0.25rem;
+  gap: 0.8rem;
+  padding: 0.4rem 0.2rem;
   position: relative;
-  overflow: hidden;
 }
 
 .gpt-evo-watermark {
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  font-size: clamp(5rem, 14vw, 16rem);
+  font-size: clamp(5rem, 15vw, 18rem);
   font-weight: 900;
   color: rgba(124,58,237,0.04);
   letter-spacing: -0.06em;
@@ -267,21 +312,21 @@
 .gpt-evo-header {
   text-align: center;
   width: 100%;
-  max-width: 620px;
-  margin-bottom: 0.5rem;
+  max-width: 680px;
+  margin-bottom: 0.8rem;
 }
 .gpt-evo-header-title {
-  font-size: clamp(1.1rem, 2.2vh, 1.5rem);
+  font-size: clamp(1.3rem, 2.8vh, 1.8rem);
   font-weight: 900;
   color: #1e293b;
   font-family: 'Noto Serif SC', serif;
 }
 .gpt-evo-header-sub {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: #94a3b8;
   font-family: ui-monospace, monospace;
   letter-spacing: 0.08em;
-  margin-top: 0.25rem;
+  margin-top: 0.3rem;
 }
 
 /* 时间轴 */
@@ -289,7 +334,7 @@
   display: flex;
   align-items: center;
   width: 100%;
-  max-width: 560px;
+  max-width: 640px;
   position: relative;
   margin-bottom: 1rem;
 }
@@ -314,7 +359,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   position: relative;
   z-index: 1;
   flex: 1;
@@ -341,36 +386,41 @@
 .gpt-evo-cards {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 0.6rem;
+  gap: 0.8rem;
   width: 100%;
-  max-width: 560px;
+  max-width: 640px;
   position: relative;
   z-index: 2;
   align-items: stretch;
 }
 
-/* 卡片间连接箭头 */
-.gpt-evo-arrows {
-  position: absolute;
-  top: 50%;
-  left: 0; right: 0;
-  transform: translateY(-50%);
+/* 卡片行（包含卡片+箭头） */
+.gpt-evo-cards-row {
   display: flex;
-  justify-content: space-around;
-  padding: 0 calc(25% - 10px);
-  pointer-events: none;
-  z-index: 5;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 640px;
 }
-.gpt-evo-arrow-sep {
+
+.gpt-evo-card-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+/* 卡片间连接箭头 */
+.gpt-evo-arrow-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 0 4px;
 }
 .gpt-evo-arrow-label {
-  font-size: 0.55rem;
+  font-size: 0.6rem;
   font-weight: 800;
-  color: #c4b5fd;
+  color: #000000;
   font-family: ui-monospace, monospace;
 }
 
@@ -379,7 +429,7 @@
   background: var(--bg);
   border: 1.5px solid var(--bd);
   border-radius: 16px;
-  padding: 0.8rem 0.6rem;
+  padding: 0.9rem 0.7rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -396,76 +446,68 @@
   border-color: var(--bd);
 }
 
-/* 神经节点层 */
-.gpt-card-dots {
-  position: absolute;
-  inset: 0;
-  opacity: 0.6;
-  pointer-events: none;
-}
-
 /* Logo */
 .gpt-card-logo {
   width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 32px;
-  margin-bottom: 0.3rem;
+  height: 36px;
+  margin-bottom: 0.35rem;
   position: relative;
   z-index: 1;
 }
 
 /* 标签 */
 .gpt-card-tag {
-  font-size: 0.58rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: var(--c);
   background: rgba(255,255,255,0.75);
-  padding: 2px 7px;
+  padding: 2px 10px;
   border-radius: 9999px;
   letter-spacing: 0.04em;
   border: 1px solid var(--bd);
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.35rem;
   position: relative;
   z-index: 1;
 }
 
 /* 名称 */
 .gpt-card-name {
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   font-weight: 900;
   color: var(--c);
-  margin-bottom: 0.15rem;
+  margin-bottom: 0.18rem;
   position: relative;
   z-index: 1;
 }
 
 /* 参数 */
 .gpt-card-params {
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: #1e293b;
   font-family: ui-monospace, monospace;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.35rem;
   position: relative;
   z-index: 1;
 }
 
 /* 描述 */
 .gpt-card-desc {
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   color: #64748b;
   line-height: 1.4;
   white-space: pre-line;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.4rem;
   position: relative;
   z-index: 1;
 }
 
 /* 年份 */
 .gpt-card-year {
-  font-size: 0.58rem;
+  font-size: 0.65rem;
   color: #94a3b8;
   font-family: ui-monospace, monospace;
   margin-top: auto;
@@ -492,14 +534,14 @@
 .gpt-evo-scale-facts {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.2rem;
   background: rgba(255,255,255,0.85);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(148,163,184,0.15);
-  border-radius: 14px;
-  padding: 0.75rem 1.5rem;
+  border-radius: 16px;
+  padding: 0.9rem 1.5rem;
   width: 100%;
-  max-width: 560px;
+  max-width: 640px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.04);
 }
 .gpt-evo-scale-item {
@@ -510,20 +552,20 @@
   justify-content: center;
 }
 .gpt-evo-scale-num {
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   font-weight: 900;
   font-family: ui-monospace, monospace;
   line-height: 1;
 }
 .gpt-evo-scale-desc {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   color: #64748b;
   line-height: 1.4;
   text-align: left;
 }
 .gpt-evo-scale-divider {
   width: 1px;
-  height: 36px;
+  height: 40px;
   background: rgba(148,163,184,0.2);
   flex-shrink: 0;
 }
@@ -532,27 +574,27 @@
 .gpt-evo-rlhf {
   display: flex;
   align-items: center;
-  gap: 0.9rem;
+  gap: 1rem;
   background: rgba(16,185,129,0.06);
   border: 1px solid rgba(16,185,129,0.2);
   border-radius: 16px;
-  padding: 0.8rem 1.2rem;
+  padding: 0.9rem 1.3rem;
   width: 100%;
-  max-width: 560px;
+  max-width: 640px;
   box-shadow: 0 4px 20px rgba(16,185,129,0.08);
 }
 .gpt-evo-rlhf-icon {
   background: rgba(16,185,129,0.12);
   color: #059669;
-  width: 42px; height: 42px;
-  border-radius: 11px;
+  width: 44px; height: 44px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 .gpt-evo-rlhf-label {
-  font-size: 0.62rem;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -560,7 +602,7 @@
   margin-bottom: 0.15rem;
 }
 .gpt-evo-rlhf-name {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 800;
   color: #065f46;
   margin-bottom: 0.15rem;

@@ -14,54 +14,6 @@ const OpenAILogo = ({ size = 28, color = 'currentColor' }: { size?: number; colo
   </svg>
 );
 
-/* ─── 神经节点图（参数密度递增） ─── */
-const NeuralDots = ({ density, color, glow }: { density: number; color: string; glow: boolean }) => {
-  // 生成伪随机的节点位置
-  const nodes = Array.from({ length: density }, (_, i) => {
-    const seed = i * 9301 + 49297;
-    const px = ((seed % 100) / 100) * 80 + 10; // 10-90%
-    const py = (((seed * 7) % 100) / 100) * 80 + 10;
-    return { x: px, y: py, id: i };
-  });
-  // 连接近邻节点
-  const edges: [number, number][] = [];
-  for (let i = 0; i < nodes.length; i++) {
-    for (let j = i + 1; j < nodes.length; j++) {
-      const dx = nodes[i].x - nodes[j].x;
-      const dy = nodes[i].y - nodes[j].y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 25) edges.push([i, j]);
-    }
-  }
-
-  return (
-    <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"
-      style={{ position: 'absolute', inset: 0 }}>
-      {/* 连接线 */}
-      {edges.map(([a, b], ei) => (
-        <line
-          key={ei}
-          x1={`${nodes[a].x}%`} y1={`${nodes[a].y}%`}
-          x2={`${nodes[b].x}%`} y2={`${nodes[b].y}%`}
-          stroke={color}
-          strokeWidth="0.4"
-          opacity={glow ? 0.5 : 0.2}
-        />
-      ))}
-      {/* 节点 */}
-      {nodes.map((n, ni) => (
-        <circle
-          key={ni}
-          cx={`${n.x}%`} cy={`${n.y}%`}
-          r={glow && ni % 3 === 0 ? 2.5 : 1.8}
-          fill={color}
-          opacity={glow ? 0.9 : 0.6}
-        />
-      ))}
-    </svg>
-  );
-};
-
 /* ─── 单个 GPT 模型卡片 ─── */
 const GPTModelCard = ({
   name, params, year, tag, desc, color, bg, border, glow,
@@ -89,11 +41,6 @@ const GPTModelCard = ({
     transition={{ delay, type: 'spring', stiffness: 200, damping: 20 }}
     whileHover={{ scale: 1.05, y: -4 }}
   >
-    {/* 神经节点层 */}
-    <div className="gpt-card-dots">
-      <NeuralDots density={density} color={color} glow={glow} />
-    </div>
-
     {/* Logo */}
     <div className="gpt-card-logo">{logo}</div>
 
@@ -234,32 +181,29 @@ const GPTEvolutionVisual = () => {
         ))}
       </motion.div>
 
-      {/* 四张模型卡片 */}
-      <div className="gpt-evo-cards">
-        {/* 连接箭头（卡片之间） */}
-        <div className="gpt-evo-arrows">
-          {[0, 1, 2].map(i => (
-            <motion.div
-              key={i}
-              className="gpt-evo-arrow-sep"
-              initial={{ opacity: 0, scaleX: 0 }}
-              animate={{ opacity: 1, scaleX: 1 }}
-              transition={{ delay: 0.5 + i * 0.2, type: 'spring' }}
-            >
-              <svg width="28" height="12" viewBox="0 0 28 12">
-                <line x1="0" y1="6" x2="22" y2="6" stroke="#c4b5fd" strokeWidth="2" strokeLinecap="round"
-                  strokeDasharray={i === 2 ? 'none' : '4,3'} />
-                <polygon points="22,2 28,6 22,10" fill="#c4b5fd" />
-              </svg>
-              <div className="gpt-evo-arrow-label">
-                {i === 0 ? '×14' : i === 1 ? '×117' : '对齐'}
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {models.map((m) => (
-          <GPTModelCard key={m.name} {...m} />
+      {/* 四张模型卡片 + 连接箭头 */}
+      <div className="gpt-evo-cards-row">
+        {models.map((m, idx) => (
+          <div key={m.name} className="gpt-evo-card-wrapper">
+            <GPTModelCard {...m} />
+            {idx < models.length - 1 && (
+              <motion.div
+                className="gpt-evo-arrow-wrapper"
+                initial={{ opacity: 0, scaleX: 0 }}
+                animate={{ opacity: 1, scaleX: 1 }}
+                transition={{ delay: 0.5 + idx * 0.2, type: 'spring' }}
+              >
+                <svg width="28" height="12" viewBox="0 0 28 12">
+                  <line x1="0" y1="6" x2="22" y2="6" stroke="#000000" strokeWidth="2" strokeLinecap="round"
+                    strokeDasharray={idx === 2 ? 'none' : '4,3'} />
+                  <polygon points="22,2 28,6 22,10" fill="#000000" />
+                </svg>
+                <div className="gpt-evo-arrow-label">
+                  {idx === 0 ? '×14' : idx === 1 ? '×117' : '对齐'}
+                </div>
+              </motion.div>
+            )}
+          </div>
         ))}
       </div>
 
@@ -368,6 +312,19 @@ export function Chapter05({ showHints, onRequestChapterNav }: ChapterComponentPr
     };
   }, []);
 
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+      }
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   const evt = scalingData[0];
   const years = evt.year.split('–').map((y) => y.trim());
 
@@ -387,68 +344,37 @@ export function Chapter05({ showHints, onRequestChapterNav }: ChapterComponentPr
         <div className="ch5-stage is-active">
           {/* 左侧文案 */}
           <div className="ch5-left">
-            <motion.div
-              className="ch5-badge ch5-bdg-scaling"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, type: 'spring' }}
-            >
+            <div className="ch5-badge ch5-bdg-scaling">
               {evt.badge} | {evt.year}
-            </motion.div>
+            </div>
 
-            <motion.h2
-              className="ch5-title"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, type: 'spring' }}
-            >
+            <h2 className="ch5-title">
               {evt.title}
-            </motion.h2>
+            </h2>
 
-            <motion.div
-              className="ch5-causal ch5-cs-brk"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, type: 'spring' }}
-            >
+            <div className="ch5-causal ch5-cs-brk">
               <div className="ch5-clbl">{evt.causalLabel}</div>
-            </motion.div>
+            </div>
 
-            <motion.div
-              className="ch5-content"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, type: 'spring' }}
-            >
+            <div className="ch5-content">
               {evt.content}
-            </motion.div>
+            </div>
 
-            <motion.div
-              className="ch5-quote-card"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, type: 'spring' }}
-            >
+            <div className="ch5-quote-card">
               <div className="ch5-qc-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M11.3 8.1C11.7 6.5 13.4 4.3 15.5 4c.7-.1 1.3.4 1.5 1 .2.7-.4 1.3-1 1.5-1.3.2-2.8 1.4-3.2 2.6l-2 .7-2-.7zM5.7 8.1C6.1 6.5 7.8 4.3 9.9 4c.7-.1 1.3.4 1.5 1 .2.7-.4 1.3-1 1.5C9.1 6.7 7.6 7.9 7.2 9.1L5.2 9.8l-2-.7zM21 21c0-3-4-4.4-4-7.5 0-1.8.8-3 1.7-3.8-.8-1.3-1.9-2.4-1.9-4.2C14.8 3.2 12.9 2 10.7 2 8 2 6 3.9 6 6.5c0 2.5 1.5 4.4 3.7 4.9-.4 1-.7 2-.7 3.1C9 17.2 6.5 19.2 3 21l2-1.5C8.8 17.8 11.4 16 12 13H9.5c-1.7 0-3-1.3-3-3s1.3-3 3-3c1.1 0 2 .6 2.5 1.5.3.4.8.7 1.3.7.8 0 1.5-.7 1.5-1.5s-.7-1.5-1.5-1.5c-.1 0-.3 0-.4.1C14.5 4.5 13 3.2 10.7 3.2 7.4 3.2 5 6.1 5 9.5c0 2.1.9 3.9 2.3 5.1C6.5 15.6 6 16.7 6 18c0 4.4 3.6 8 8 8s8-3.6 8-8l-.1-.1z"/>
                 </svg>
               </div>
               <div className="ch5-qc-text">{evt.desc}</div>
-            </motion.div>
+            </div>
 
-            <motion.div
-              className="ch5-formula"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, type: 'spring' }}
-              whileHover={{ scale: 1.02 }}
-            >
+            <div className="ch5-formula">
               {evt.formulaTag && <div className="ch5-f-tag">{evt.formulaTag}</div>}
               <div className="ch5-latex">
                 <Latex>{`$$${evt.formula}$$`}</Latex>
               </div>
-            </motion.div>
+            </div>
           </div>
 
           {/* 右侧可视化 */}
