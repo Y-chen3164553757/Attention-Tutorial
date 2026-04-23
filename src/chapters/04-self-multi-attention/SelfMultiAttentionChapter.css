@@ -3623,13 +3623,17 @@
 /* 一体化主体布局 */
 .mha-allinone-body {
   display: flex;
-  gap: 28px;
+  gap: 20px;
+  align-items: flex-start;
 }
 
-/* 左侧：各Head运算 */
+/* 左侧：公式 + 并行计算 + 层叠 */
 .mha-allinone-left {
-  flex: 1;
+  flex: 1.4;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 /* 公式卡片 */
@@ -3637,16 +3641,16 @@
   background: linear-gradient(135deg, #fffbeb, #fef3c7);
   border: 2px solid #fcd34d;
   border-radius: 16px;
-  padding: 22px 28px;
-  margin-bottom: 20px;
+  padding: 16px 20px;
+  margin-bottom: 0;
   box-shadow: 0 4px 16px rgba(251, 191, 36, 0.15);
 }
 
 .mha-formula-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   color: #92400e;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -3779,11 +3783,11 @@
 
 /* 所有Head标题 */
 .mha-allheads-title {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   color: #0f172a;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
   border-bottom: 1px dashed #e2e8f0;
 }
 
@@ -3891,16 +3895,16 @@
 
 /* 右侧：拼接与输出 */
 .mha-allinone-right {
-  flex: 0 0 280px;
+  flex: 0 0 320px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .mha-right-unit {
   background: rgba(255, 255, 255, 0.95);
-  border-radius: 14px;
-  padding: 16px;
+  border-radius: 12px;
+  padding: 12px;
   border: 1px solid #e2e8f0;
   box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
 }
@@ -3914,10 +3918,10 @@
 }
 
 .mha-right-label {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
   color: #0f172a;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -3934,6 +3938,94 @@
 .mha-right-concat .mha-right-label { color: #0369a1; }
 .mha-right-wo .mha-right-label { color: #b45309; }
 .mha-right-unit-final .mha-right-label { color: #1d4ed8; }
+
+/* 架构列表 - 残差/归一化/FFN 并列展示 */
+.mha-architectures-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mha-arch-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1.5px solid #bfdbfe;
+  transition: all 0.2s ease;
+}
+
+.mha-arch-item:hover {
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateX(2px);
+}
+
+.mha-arch-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.mha-arch-icon-residual {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  border: 1.5px solid #93c5fd;
+}
+
+.mha-arch-icon-ln {
+  background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+  border: 1.5px solid #c4b5fd;
+}
+
+.mha-arch-icon-ffn {
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+  border: 1.5px solid #86efac;
+}
+
+.mha-arch-desc {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.mha-arch-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.mha-arch-formula {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 10px;
+  color: #475569;
+}
+
+.mha-arch-note {
+  font-size: 9px;
+  color: #94a3b8;
+}
+
+.mha-arch-summary {
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: #f0f9ff;
+  border-radius: 6px;
+  border: 1px dashed #7dd3fc;
+  text-align: center;
+}
+
+.mha-arch-summary-text {
+  font-size: 10px;
+  color: #0369a1;
+  font-weight: 600;
+}
 
 .mha-right-flow {
   display: flex;
@@ -4100,13 +4192,12 @@
 .mha-res-label-text { font-size: 11px; color: #1d4ed8; font-weight: 700; }
 .mha-res-shape { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 11px; color: #3b82f6; font-weight: 600; }
 
-/* 12层说明 */
+/* 12层 Transformer Block 堆叠 */
 .mha-layers-note {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 14px;
+  gap: 8px;
+  padding: 14px 16px;
   background: linear-gradient(135deg, #f0fdf4, #dcfce7);
   border: 2px solid #86efac;
   border-radius: 14px;
@@ -4114,31 +4205,37 @@
 }
 
 .mha-layers-text-center {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
   color: #166534;
   text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .mha-layers-visual {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   width: 100%;
 }
 
 .mha-layers-stack {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .mha-layer-item {
   font-family: 'JetBrains Mono', Consolas, monospace;
   font-size: 11px;
   font-weight: 600;
-  padding: 4px 16px;
+  padding: 5px 12px;
   background: #ffffff;
-  border: 1px solid #86efac;
-  border-radius: 6px;
+  border: 1.5px solid #86efac;
+  border-radius: 20px;
   color: #166534;
 }
 
@@ -4146,7 +4243,29 @@
   background: linear-gradient(135deg, #dcfce7, #bbf7d0);
   border-color: #22c55e;
   color: #166534;
+  padding: 5px 10px;
 }
+
+.mha-layers-arch-tags {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.mha-arch-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  border: 1px solid;
+}
+
+.mha-arch-tag-residual { background: #dbeafe; border-color: #93c5fd; color: #1d4ed8; }
+.mha-arch-tag-ln { background: #ede9fe; border-color: #c4b5fd; color: #6d28d9; }
+.mha-arch-tag-ffn { background: #dcfce7; border-color: #86efac; color: #15803d; }
+.mha-arch-tag-mha { background: #ffedd5; border-color: #fdba74; color: #c2410c; }
 
 .mha-layers-text {
   font-size: 13px;

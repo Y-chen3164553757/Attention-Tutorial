@@ -1,0 +1,581 @@
+/* ══════════════════════════════════════════
+   Chapter 05 · 阶段五：规模法则与涌现
+   紫/青/翡翠绿配色 · GPT 三代进化主题
+══════════════════════════════════════════ */
+
+/* ── Root ── */
+.ch5-root {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background: #faf8ff;
+  color: #0f172a;
+  overflow: hidden;
+}
+
+/* ── Viewport ── */
+.ch5-viewport {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 2;
+}
+
+/* ── Stage ── */
+.ch5-stage {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  padding: 4vh 5vw;
+  gap: 3vw;
+}
+
+/* ── Left ── */
+.ch5-left {
+  flex: 0 0 48%;
+  max-width: 620px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow-y: auto;
+  padding-right: 1vw;
+}
+.ch5-left::-webkit-scrollbar { width: 3px; }
+.ch5-left::-webkit-scrollbar-track { background: transparent; }
+.ch5-left::-webkit-scrollbar-thumb { background: rgba(124,58,237,0.2); border-radius: 2px; }
+
+/* Badge */
+.ch5-badge {
+  display: inline-block;
+  padding: 5px 14px;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: white;
+  margin-bottom: 1rem;
+}
+.ch5-bdg-scaling {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  box-shadow: 0 4px 15px rgba(109, 37, 217, 0.35);
+}
+
+/* Title */
+.ch5-title {
+  font-size: clamp(1.8rem, 3.2vh, 3rem);
+  font-weight: 900;
+  color: #0f172a;
+  margin-bottom: 1.2rem;
+  line-height: 1.1;
+}
+
+/* Causal */
+.ch5-causal {
+  padding: 0.7rem 1.4rem;
+  border-radius: 12px;
+  margin-bottom: 1.4rem;
+  background: rgba(16,185,129,0.05);
+  border: 1px solid rgba(16,185,129,0.15);
+  border-left: 4px solid #10b981;
+}
+.ch5-clbl { font-weight: 700; font-size: 0.88rem; color: #059669; }
+
+/* Content */
+.ch5-content {
+  font-size: clamp(0.88rem, 1.7vh, 1rem);
+  color: #334155;
+  line-height: 1.85;
+  margin-bottom: 1.4rem;
+  white-space: pre-wrap;
+}
+
+/* Quote card */
+.ch5-quote-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: linear-gradient(135deg, #f5f3ff, #ede9fe);
+  border-radius: 14px;
+  padding: 0.9rem 1.2rem;
+  border: 1px solid #ddd6fe;
+  margin-bottom: 1.4rem;
+}
+.ch5-qc-icon {
+  color: #7c3aed;
+  flex-shrink: 0;
+  margin-top: 2px;
+  opacity: 0.7;
+}
+.ch5-qc-text {
+  font-size: 0.88rem;
+  color: #6d28d9;
+  font-style: italic;
+  line-height: 1.6;
+}
+
+/* Formula */
+.ch5-formula {
+  background: linear-gradient(135deg, #f5f3ff, #ede9fe);
+  padding: 0.9rem 1.3rem;
+  border-radius: 12px;
+  border: 1px solid #ddd6fe;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas;
+}
+.ch5-latex { overflow: hidden; }
+.ch5-f-tag {
+  font-size: 0.7rem;
+  color: #7c3aed;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ── Right ── */
+.ch5-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* ── Nav ── */
+.ch5-navbtn {
+  position: absolute;
+  top: 28px; left: 36px;
+  padding: 9px 18px;
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(15,23,42,0.1);
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: #6d28d9;
+  z-index: 100;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.ch5-navbtn:hover {
+  background: white;
+  color: #4c1d95;
+  box-shadow: 0 4px 12px rgba(109,37,217,0.12);
+}
+
+/* ══════════════════════════════════════
+   背景层
+══════════════════════════════════════ */
+.ch5-grid-bg {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(109,37,217,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(109,37,217,0.04) 1px, transparent 1px);
+  background-size: 30px 30px;
+  pointer-events: none;
+  z-index: 0;
+}
+.ch5-ambient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.ch5-ambient::before {
+  content: '';
+  position: absolute;
+  top: -25%; left: -15%;
+  width: 70vw; height: 70vh;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(168,85,247,0.35) 0%, rgba(124,58,237,0.2) 40%, transparent 70%);
+  filter: blur(60px);
+  opacity: 0.6;
+  animation: pulse-glow 5s ease-in-out infinite alternate;
+}
+.ch5-ambient::after {
+  content: '';
+  position: absolute;
+  bottom: -20%; right: -10%;
+  width: 55vw; height: 60vh;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(16,185,129,0.35) 0%, rgba(5,150,105,0.2) 40%, transparent 70%);
+  filter: blur(60px);
+  opacity: 0.45;
+  animation: pulse-glow 5s ease-in-out infinite alternate-reverse;
+}
+@keyframes pulse-glow {
+  0% { opacity: 0.4; transform: scale(1); }
+  100% { opacity: 0.7; transform: scale(1.15); }
+}
+.ch5-canvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 水印 */
+.ch5-watermark { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+.ch5-wm-tl {
+  position: absolute; top: 4vh; left: 4vw;
+  font-size: clamp(8rem, 18vw, 24rem);
+  font-weight: 900; color: #4c1d95;
+  opacity: 0.035; line-height: 1; letter-spacing: -0.05em;
+  user-select: none; transform: translateY(-2vh) scale(0.95);
+  transition: opacity 1.2s ease-out, transform 3s ease-out;
+}
+.ch5-wm-br {
+  position: absolute; bottom: 5vh; right: 4vw;
+  font-size: clamp(6rem, 15vw, 20rem);
+  font-weight: 900; color: #059669;
+  opacity: 0.03; line-height: 1; letter-spacing: -0.03em;
+  user-select: none; transform: translateY(2vh) scale(0.95);
+  transition: opacity 1.5s ease-out, transform 4s ease-out;
+}
+.ch5-watermark.is-active .ch5-wm-tl { opacity: 0.035; transform: translate(0,0) scale(1); }
+.ch5-watermark.is-active .ch5-wm-br { opacity: 0.03; transform: translate(0,0) scale(1); }
+
+/* ══════════════════════════════════════
+   GPT 演进可视化
+══════════════════════════════════════ */
+.gpt-evo-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.5rem 0.25rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.gpt-evo-watermark {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(5rem, 14vw, 16rem);
+  font-weight: 900;
+  color: rgba(124,58,237,0.04);
+  letter-spacing: -0.06em;
+  user-select: none;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* 标题区 */
+.gpt-evo-header {
+  text-align: center;
+  width: 100%;
+  max-width: 620px;
+  margin-bottom: 0.5rem;
+}
+.gpt-evo-header-title {
+  font-size: clamp(1.1rem, 2.2vh, 1.5rem);
+  font-weight: 900;
+  color: #1e293b;
+  font-family: 'Noto Serif SC', serif;
+}
+.gpt-evo-header-sub {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  font-family: ui-monospace, monospace;
+  letter-spacing: 0.08em;
+  margin-top: 0.25rem;
+}
+
+/* 时间轴 */
+.gpt-evo-timeline {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 560px;
+  position: relative;
+  margin-bottom: 1rem;
+}
+.gpt-evo-timeline-line {
+  position: absolute;
+  top: 50%;
+  left: 0; right: 0;
+  height: 2px;
+  transform: translateY(-50%);
+  background: rgba(148,163,184,0.15);
+  border-radius: 1px;
+  overflow: hidden;
+}
+.gpt-evo-timeline-progress {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to right, #94a3b8, #818cf8, #a855f7, #10b981);
+  transform-origin: left;
+  border-radius: 1px;
+}
+.gpt-evo-timeline-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+  z-index: 1;
+  flex: 1;
+}
+.gpt-evo-timeline-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid;
+  box-shadow: 0 0 8px;
+}
+.gpt-evo-timeline-node:nth-child(2) .gpt-evo-timeline-dot { border-color: #94a3b8; box-shadow: 0 0 8px rgba(148,163,184,0.5); }
+.gpt-evo-timeline-node:nth-child(3) .gpt-evo-timeline-dot { border-color: #818cf8; box-shadow: 0 0 8px rgba(129,140,248,0.5); }
+.gpt-evo-timeline-node:nth-child(4) .gpt-evo-timeline-dot { border-color: #a855f7; box-shadow: 0 0 10px rgba(168,85,247,0.5); }
+.gpt-evo-timeline-node:nth-child(5) .gpt-evo-timeline-dot { border-color: #10b981; box-shadow: 0 0 10px rgba(16,185,129,0.5); }
+.gpt-evo-timeline-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #94a3b8;
+  font-family: ui-monospace, monospace;
+}
+
+/* 卡片网格 */
+.gpt-evo-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.6rem;
+  width: 100%;
+  max-width: 560px;
+  position: relative;
+  z-index: 2;
+  align-items: stretch;
+}
+
+/* 卡片间连接箭头 */
+.gpt-evo-arrows {
+  position: absolute;
+  top: 50%;
+  left: 0; right: 0;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: space-around;
+  padding: 0 calc(25% - 10px);
+  pointer-events: none;
+  z-index: 5;
+}
+.gpt-evo-arrow-sep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.gpt-evo-arrow-label {
+  font-size: 0.55rem;
+  font-weight: 800;
+  color: #c4b5fd;
+  font-family: ui-monospace, monospace;
+}
+
+/* 单个模型卡片 */
+.gpt-card {
+  background: var(--bg);
+  border: 1.5px solid var(--bd);
+  border-radius: 16px;
+  padding: 0.8rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.3s, border-color 0.3s, background 0.3s;
+}
+.gpt-card:hover {
+  box-shadow: 0 8px 30px var(--glow), 0 4px 15px rgba(0,0,0,0.07);
+}
+.gpt-card.is-highlight {
+  border-color: var(--bd);
+}
+
+/* 神经节点层 */
+.gpt-card-dots {
+  position: absolute;
+  inset: 0;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Logo */
+.gpt-card-logo {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 32px;
+  margin-bottom: 0.3rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* 标签 */
+.gpt-card-tag {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--c);
+  background: rgba(255,255,255,0.75);
+  padding: 2px 7px;
+  border-radius: 9999px;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--bd);
+  margin-bottom: 0.3rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* 名称 */
+.gpt-card-name {
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: var(--c);
+  margin-bottom: 0.15rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* 参数 */
+.gpt-card-params {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #1e293b;
+  font-family: ui-monospace, monospace;
+  margin-bottom: 0.3rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* 描述 */
+.gpt-card-desc {
+  font-size: 0.62rem;
+  color: #64748b;
+  line-height: 1.4;
+  white-space: pre-line;
+  margin-bottom: 0.35rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* 年份 */
+.gpt-card-year {
+  font-size: 0.58rem;
+  color: #94a3b8;
+  font-family: ui-monospace, monospace;
+  margin-top: auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* 脉冲点 */
+.gpt-card-pulse {
+  position: absolute;
+  top: 6px; right: 6px;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--c);
+  z-index: 3;
+  animation: pulse-ring 2s ease-in-out infinite;
+}
+@keyframes pulse-ring {
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 var(--glow); }
+  50% { opacity: 0.7; transform: scale(0.8); box-shadow: 0 0 0 4px transparent; }
+}
+
+/* 参数增长数字 */
+.gpt-evo-scale-facts {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(148,163,184,0.15);
+  border-radius: 14px;
+  padding: 0.75rem 1.5rem;
+  width: 100%;
+  max-width: 560px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+}
+.gpt-evo-scale-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+  justify-content: center;
+}
+.gpt-evo-scale-num {
+  font-size: 1.3rem;
+  font-weight: 900;
+  font-family: ui-monospace, monospace;
+  line-height: 1;
+}
+.gpt-evo-scale-desc {
+  font-size: 0.65rem;
+  color: #64748b;
+  line-height: 1.4;
+  text-align: left;
+}
+.gpt-evo-scale-divider {
+  width: 1px;
+  height: 36px;
+  background: rgba(148,163,184,0.2);
+  flex-shrink: 0;
+}
+
+/* RLHF 对齐卡 */
+.gpt-evo-rlhf {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  background: rgba(16,185,129,0.06);
+  border: 1px solid rgba(16,185,129,0.2);
+  border-radius: 16px;
+  padding: 0.8rem 1.2rem;
+  width: 100%;
+  max-width: 560px;
+  box-shadow: 0 4px 20px rgba(16,185,129,0.08);
+}
+.gpt-evo-rlhf-icon {
+  background: rgba(16,185,129,0.12);
+  color: #059669;
+  width: 42px; height: 42px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.gpt-evo-rlhf-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #059669;
+  margin-bottom: 0.15rem;
+}
+.gpt-evo-rlhf-name {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #065f46;
+  margin-bottom: 0.15rem;
+}
+.gpt-evo-rlhf-eq {
+  font-size: 0.72rem;
+  color: #047857;
+  line-height: 1.5;
+}
+
+/* ── 响应式：小屏纵向 ── */
+@media (max-width: 900px) {
+  .ch5-stage { flex-direction: column; overflow-y: auto; }
+  .ch5-left { flex: none; max-width: 100%; padding-right: 0; height: auto; overflow: visible; }
+  .gpt-evo-cards { grid-template-columns: repeat(2, 1fr); max-width: 100%; }
+  .gpt-evo-arrows { display: none; }
+  .ch5-watermark { display: none; }
+}

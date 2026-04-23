@@ -314,7 +314,7 @@ export default function Slide1({ step }: Slide1Props) {
 
                 {/* 主体布局：左侧公式 + 右侧各步骤 */}
                 <div className="mha-allinone-body">
-                  {/* 左侧：多头注意力公式 */}
+                  {/* 左侧：多头注意力公式 + 并行计算 + 层叠 */}
                   <div className="mha-allinone-left">
                     <div className="mha-formula-card">
                       <div className="mha-formula-title">多头注意力公式</div>
@@ -340,7 +340,7 @@ export default function Slide1({ step }: Slide1Props) {
                       </div>
                     </div>
 
-                    {/* 并行计算可视化 - 始终显示 */}
+                    {/* 并行计算可视化 */}
                     {showParallelCompute && (
                       <motion.div
                         className="mha-parallel-compute-area"
@@ -447,9 +447,35 @@ export default function Slide1({ step }: Slide1Props) {
                         </div>
                       </motion.div>
                     )}
+
+                    {/* 12层 Transformer Block 堆叠 */}
+                    {showResidual && (
+                      <motion.div
+                        className="mha-layers-note"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: 0.1 }}
+                      >
+                        <div className="mha-layers-text-center">12 × Transformer Block 堆叠</div>
+                        <div className="mha-layers-visual">
+                          <div className="mha-layers-stack">
+                            <span className="mha-layer-item">Block₁</span>
+                            <span className="mha-layer-item">Block₂</span>
+                            <span className="mha-layer-item mha-layer-highlight">···</span>
+                            <span className="mha-layer-item">Block₁₂</span>
+                          </div>
+                          <div className="mha-layers-arch-tags">
+                            <span className="mha-arch-tag mha-arch-tag-residual">Residual</span>
+                            <span className="mha-arch-tag mha-arch-tag-ln">LayerNorm</span>
+                            <span className="mha-arch-tag mha-arch-tag-ffn">FFN</span>
+                            <span className="mha-arch-tag mha-arch-tag-mha">MultiHead</span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
                   </div>
 
-                  {/* 右侧：拼接 → 投影 → 残差 */}
+                  {/* 右侧：拼接 → 投影 → 残差/归一化/FFN */}
                   <div className="mha-allinone-right">
                     {/* 步骤1: 拼接 */}
                     {showConcat && (
@@ -504,7 +530,7 @@ export default function Slide1({ step }: Slide1Props) {
                       </motion.div>
                     )}
 
-                    {/* 步骤3: 残差与归一化 */}
+                    {/* 步骤3: 残差连接 + 归一化 + FFN */}
                     {showResidual && (
                       <motion.div
                         className="mha-right-unit mha-right-unit-final"
@@ -512,39 +538,36 @@ export default function Slide1({ step }: Slide1Props) {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.4 }}
                       >
-                        <div className="mha-right-label">步骤3: + 残差 → LayerNorm</div>
-                        <div className="mha-right-flow">
-                          <div className="mha-residual-visual">
-                            <div className="mha-res-input">X</div>
-                            <span className="mha-res-shape">(5,768)</span>
-                            <div className="mha-res-plus">+</div>
-                            <div className="mha-res-attn">MultiHead</div>
-                            <span className="mha-res-shape">(5,768)</span>
+                        <div className="mha-right-label">步骤3: 残差 · 归一化 · FFN</div>
+                        <div className="mha-architectures-list">
+                          <div className="mha-arch-item">
+                            <div className="mha-arch-icon mha-arch-icon-residual"></div>
+                            <div className="mha-arch-desc">
+                              <div className="mha-arch-title">残差连接 Residual</div>
+                              <div className="mha-arch-formula">X + SubLayer(X)</div>
+                              <div className="mha-arch-note">梯度直传，避免深层网络退化</div>
+                            </div>
+                          </div>
+                          <div className="mha-arch-item">
+                            <div className="mha-arch-icon mha-arch-icon-ln"></div>
+                            <div className="mha-arch-desc">
+                              <div className="mha-arch-title">归一化 LayerNorm</div>
+                              <div className="mha-arch-formula">γ · (x - μ)/√(σ²+ε) + β</div>
+                              <div className="mha-arch-note">稳定激活分布，加速收敛</div>
+                            </div>
+                          </div>
+                          <div className="mha-arch-item">
+                            <div className="mha-arch-icon mha-arch-icon-ffn"></div>
+                            <div className="mha-arch-desc">
+                              <div className="mha-arch-title">前馈网络 FFN</div>
+                              <div className="mha-arch-formula">FFN(x) = max(0, xW₁+b₁)W₂+b₂</div>
+                              <div className="mha-arch-note">逐位置非线性变换，768→3072→768</div>
+                            </div>
                           </div>
                         </div>
-                        <div className="mha-residual-arrow">↓</div>
-                        <div className="mha-res-result">
-                          <div className="mha-res-label-text">下一层输入</div>
-                          <div className="mha-res-shape">(5, 768)</div>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {/* 12层堆叠说明 */}
-                    {showResidual && (
-                      <motion.div
-                        className="mha-layers-note"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, delay: 0.1 }}
-                      >
-                        <div className="mha-layers-text-center">12 层 Transformer Block 堆叠</div>
-                        <div className="mha-layers-visual">
-                          <div className="mha-layers-stack">
-                            <span className="mha-layer-item">Layer₁</span>
-                            <span className="mha-layer-item">Layer₂</span>
-                            <span className="mha-layer-item mha-layer-highlight">...</span>
-                            <span className="mha-layer-item">Layer₁₂</span>
+                        <div className="mha-arch-summary">
+                          <div className="mha-arch-summary-text">
+                            三者共同构成 Transformer Block 的基础组件
                           </div>
                         </div>
                       </motion.div>

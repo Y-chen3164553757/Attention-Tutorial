@@ -3,8 +3,7 @@ import { KaitiChapter } from './01-kaiti';
 import { OriginChapter } from './02-origin';
 import { AttentionChapter } from './03-attention';
 import { SelfMultiAttentionChapter } from './04-self-multi-attention';
-
-export interface ChapterComponentProps {
+import { Chapter05 } from './05-scaling/Chapter05';export interface ChapterComponentProps {
   showHints: boolean;
   onRequestChapterNav: () => void;
   requestedPageIndex?: number;
@@ -99,5 +98,20 @@ export const chapters: ChapterRecord[] = [
       { id: '04-02', title: '多头注意力机制', note: '12 个头的并行计算', implemented: true },
     ],
     component: SelfMultiAttentionChapter,
+  },
+  {
+    id: '05',
+    order: 5,
+    title: '规模法则与涌现',
+    subtitle: '阶段五：范式重塑 2018 – 2023',
+    range: '5:30 - 7:30',
+    duration: '2:00',
+    summary: '从 GPT 的诞生到 ChatGPT 的横空出世，讲述纯解码器架构如何通过规模定律与 RLHF 对齐，完成从「智能涌现」到「听话好用」的跨越。',
+    badge: '新增章节',
+    implemented: true,
+    pages: [
+      { id: '05-act', title: '阶段五：规模法则与涌现', note: '阶段五 · 范式重塑', implemented: true },
+    ],
+    component: Chapter05,
   },
 ];
