@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>阶段六：Attention 纪元与底层重构 (2023-2026)</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script>
+window.MathJax={
+  tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]},
+  startup:{typeset:false}
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js"></script>
+<style>
+/* ══════════════════════════════════════
+   极简学术风设计系统 (纯净排版)
+══════════════════════════════════════ */
+:root{
+  --bg: #ffffff;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --a1: #0369a1;   /* 学术蓝 */
+  --a2: #7c3aed;   /* 深邃紫 */
+  --a3: #059669;   /* 极客绿 */
+  --glass: rgba(255,255,255,0.7);
+  --gbor: rgba(15,23,42,0.06);
+  --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --spring: cubic-bezier(0.2, 0.9, 0.3, 1.15); /* 柔和弹簧曲线 */
+  --serif: 'Noto Serif SC', 'Lora', Georgia, serif;
+  --display: 'Lora', 'Georgia', serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  width: 100vw; height: 100vh; overflow: hidden;
+  background-color: var(--bg); color: var(--ink);
+  font-family: var(--serif); font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 典雅背景网格 */
+.amb-grid {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(15,23,42,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15,23,42,0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(circle at center, black 30%, transparent 85%);
+  -webkit-mask-image: radial-gradient(circle at center, black 30%, transparent 85%);
+}
+
+.amb-glow {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, rgba(3,105,161,0.03) 0%, transparent 60%);
+}
+
+/* 顶部标题区 */
+.header {
+  position: absolute; top: 40px; left: 0; width: 100%; text-align: center; z-index: 10;
+  opacity: 0; transform: translateY(-15px); animation: fadeDown 0.8s 0.2s var(--ease) forwards;
+}
+.eyebrow {
+  font-size: 11px; letter-spacing: 0.25em; color: var(--a1);
+  text-transform: uppercase; font-weight: 700; margin-bottom: 14px;
+  font-family: var(--display);
+}
+.display-title {
+  font-family: var(--display); font-size: 2.6rem; font-weight: 700; 
+  letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 12px;
+}
+.grad {
+  background: linear-gradient(135deg, var(--a1) 0%, var(--a2) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.subtitle {
+  font-family: var(--serif); font-size: 1rem; color: var(--muted); 
+  max-width: 650px; margin: 0 auto; line-height: 1.6;
+}
+
+@keyframes fadeDown { to { opacity: 1; transform: none; } }
+
+/* ══════════════════════════════════════
+   核心交互区：网络辐射拓扑
+══════════════════════════════════════ */
+.universe {
+  position: absolute; inset: 0; top: 80px; 
+  z-index: 5; display: flex; align-items: center; justify-content: center;
+}
+
+/* 连线层 */
+#svg-layer {
+  position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;
+}
+.connect-line {
+  stroke: rgba(3, 105, 161, 0.15); stroke-width: 1.5; 
+  stroke-dasharray: 4, 4; transition: stroke 0.4s, stroke-width 0.4s;
+}
+
+/* 中心节点 (极致打磨的玻璃水晶质感) */
+.hub-center {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(0.6);
+  width: 260px; height: 260px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(15,23,42,0.05);
+  border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  box-shadow: 
+    0 20px 40px -10px rgba(3,105,161,0.1), 
+    inset 0 0 0 1px rgba(255,255,255,1),
+    inset 0 0 20px rgba(3,105,161,0.03);
+  z-index: 30; opacity: 0;
+}
+.hub-center.loaded {
+  transform: translate(-50%, -50%) scale(1); opacity: 1;
+  transition: all 1s var(--spring);
+}
+.hub-ring {
+  position: absolute; inset: -15px; border-radius: 50%;
+  border: 1px dashed rgba(3,105,161,0.15); animation: spinSlow 40s linear infinite;
+  pointer-events: none;
+}
+@keyframes spinSlow { 100% { transform: rotate(360deg); } }
+
+.hub-title {
+  font-family: var(--display); font-size: 1.1rem; font-weight: 700; color: var(--ink);
+  letter-spacing: 0.15em; margin-bottom: 8px; color: var(--a1);
+}
+.hub-formula {
+  font-size: 1.25rem; color: var(--ink);
+}
+.hub-formula mjx-container { color: var(--ink) !important; }
+
+/* 卫星节点卡片 (悬浮感排版) */
+.sat-node {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(0.1);
+  opacity: 0;
+  width: 320px;
+  background: var(--glass);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--gbor);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+  z-index: 20;
+  transition: transform 1.2s var(--spring), opacity 1.2s var(--ease), border-color 0.4s, box-shadow 0.4s;
+  cursor: default;
+}
+.sat-node:hover {
+  border-color: rgba(3,105,161,0.2);
+  box-shadow: 0 16px 48px rgba(3,105,161,0.08);
+  z-index: 40;
+}
+
+/* 卡片内部结构 */
+.card-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 12px; }
+.card-icon {
+  font-size: 1.4rem; color: var(--a1); margin-top: 2px;
+  background: rgba(3,105,161,0.06); width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center; border-radius: 8px;
+  flex-shrink: 0; border: 1px solid rgba(3,105,161,0.1);
+}
+.card-title {
+  font-family: var(--display); font-size: 1.15rem; font-weight: 700; color: var(--ink);
+  line-height: 1.3; margin-bottom: 4px;
+}
+.card-subtitle {
+  font-family: var(--mono); font-size: 0.75rem; color: var(--a1); letter-spacing: 0.05em;
+  font-weight: 600;
+}
+.card-desc {
+  font-family: var(--serif); font-size: 0.88rem; color: var(--muted); line-height: 1.6;
+}
+
+/* 数据标签 */
+.card-metric {
+  margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(15,23,42,0.08);
+  font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.metric-val { font-weight: 700; color: var(--ink); }
+
+/* 入场状态类 */
+.sat-node.loaded { opacity: 1; }
+
+</style>
+</head>
+<body>
+
+<div class="amb-glow"></div>
+<div class="amb-grid"></div>
+
+<!-- 顶部文本区 -->
+<div class="header">
+  <div class="eyebrow">ATTENTION ERA: 2023 - 2026</div>
+  <h1 class="display-title">
+    Attention 的<span class="grad">全维度衍生与底层重构</span>
+  </h1>
+  <p class="subtitle">
+    从 2023 年开始，Attention 机制彻底打破了文本序列的边界。<br>
+    它不仅向多模态与系统推理延伸，更在自身架构上实现了极其优雅的显存压缩与效率突围。
+  </p>
+</div>
+
+<!-- 动态扩散交互区 -->
+<div class="universe" id="universe">
+  
+  <svg id="svg-layer"></svg>
+
+  <!-- 中心源点 -->
+  <div class="hub-center" id="hub">
+    <div class="hub-ring"></div>
+    <div class="hub-title">ATTENTION</div>
+    <div class="hub-formula" id="formula">
+      $$ \text{softmax}\!\left(\frac{QK^{\top}}{\sqrt{d_k}}\right)V $$
+    </div>
+  </div>
+
+  <!-- 卫星节点 1: 跨模态 -->
+  <div class="sat-node" data-target-x="-420" data-target-y="-200">
+    <div class="card-header">
+      <div class="card-icon"><i class="fa-solid fa-shapes"></i></div>
+      <div>
+        <div class="card-title">跨模态空间统一</div>
+        <div class="card-subtitle">OMNI-MODAL ATTENTION</div>
+      </div>
+    </div>
+    <div class="card-desc">
+      打破物理模态隔离。将音频波形与视觉 Patch 彻底转化为离散 Token，令自注意力机制能在统一的高维空间中实现原生端到端对齐。
+    </div>
+    <div class="card-metric">
+      <span>突破现象</span><span class="metric-val">极低延迟拟真交互</span>
+    </div>
+  </div>
+
+  <!-- 卫星节点 2: 慢思考 -->
+  <div class="sat-node" data-target-x="420" data-target-y="-200">
+    <div class="card-header">
+      <div class="card-icon"><i class="fa-solid fa-brain"></i></div>
+      <div>
+        <div class="card-title">慢思考推理演进</div>
+        <div class="card-subtitle">SYSTEM 2 / CHAIN OF THOUGHT</div>
+      </div>
+    </div>
+    <div class="card-desc">
+      将 Attention 分配给推理期的超长“隐藏思维链”。结合强化学习，让模型在自我反思与验证中打破“预测下一个词”的快思考瓶颈。
+    </div>
+    <div class="card-metric">
+      <span>突破现象</span><span class="metric-val">数学与代码逻辑飞跃</span>
+    </div>
+  </div>
+
+  <!-- 卫星节点 3: 无限上下文 -->
+  <div class="sat-node" data-target-x="-480" data-target-y="60">
+    <div class="card-header">
+      <div class="card-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+      <div>
+        <div class="card-title">百万级上下文</div>
+        <div class="card-subtitle">LONG-CONTEXT RETRIEVAL</div>
+      </div>
+    </div>
+    <div class="card-desc">
+      RoPE 机制拓展与 Sparse Attention 的结合。模型能够瞬间吞入数百万 Token，在信息汪洋中实现接近 100% 准确率的“大海捞针”。
+    </div>
+    <div class="card-metric">
+      <span>突破现象</span><span class="metric-val">1M+ Token 级全局视野</span>
+    </div>
+  </div>
+
+  <!-- 卫星节点 4: MoE -->
+  <div class="sat-node" data-target-x="480" data-target-y="60">
+    <div class="card-header">
+      <div class="card-icon"><i class="fa-solid fa-network-wired"></i></div>
+      <div>
+        <div class="card-title">稀疏混合专家网络</div>
+        <div class="card-subtitle">MIXTURE OF EXPERTS (MoE)</div>
+      </div>
+    </div>
+    <div class="card-desc">
+      解除算力诅咒。Attention 层计算后，路由网络根据当前语义动态只激活极少部分的“专家”参数，完美兼顾万亿级容量与极致推理效率。
+    </div>
+    <div class="card-metric">
+      <span>突破现象</span><span class="metric-val">极细粒度稀疏激活</span>
+    </div>
+  </div>
+
+  <!-- 卫星节点 5: 物理法则模拟 -->
+  <div class="sat-node" data-target-x="-380" data-target-y="300">
+    <div class="card-header">
+      <div class="card-icon"><i class="fa-solid fa-earth-americas"></i></div>
+      <div>
+        <div class="card-title">物理规律内化</div>
+        <div class="card-subtitle">WORLD MODELS (e.g. DiT)</div>
+      </div>
+    </div>
+    <div class="card-desc">
+      扩散模型与 Transformer 深度融合（DiT）。Attention 在海量时空块中隐式学习时间一致性与三维透视，在模型内部重构物理法则。
+    </div>
+    <div class="card-metric">
+      <span>突破现象</span><span class="metric-val">超长连贯视频生成</span>
+    </div>
+  </div>
+
+  <!-- 卫星节点 6: 显存极致压缩 -->
+  <div class="sat-node" data-target-x="380" data-target-y="300">
+    <div class="card-header">
+      <div class="card-icon"><i class="fa-solid fa-microchip"></i></div>
+      <div>
+        <div class="card-title">底层显存极致压缩</div>
+        <div class="card-subtitle">KV CACHE COMPRESSION / MLA</div>
+      </div>
+    </div>
+    <div class="card-desc">
+      针对长序列推理中的显存墙问题，对标准 Attention 实施“手术级重构”。引入多头潜在注意力，通过极低秩投影令显存开销断崖式下降。
+    </div>
+    <div class="card-metric">
+      <span>突破现象</span><span class="metric-val">推理成本断崖下跌</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+window.addEventListener('load', () => {
+  // 数学公式渲染
+  if(window.MathJax && MathJax.typesetPromise){
+    MathJax.typesetPromise([document.getElementById('formula')]).catch(()=>{});
+  }
+
+  const universe = document.getElementById('universe');
+  const hub = document.getElementById('hub');
+  const nodes = document.querySelectorAll('.sat-node');
+  const svgLayer = document.getElementById('svg-layer');
+  const connections = [];
+
+  // 生成连线
+  nodes.forEach((node) => {
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('class', 'connect-line');
+    svgLayer.appendChild(line);
+    connections.push({ node, line });
+  });
+
+  // 动态更新线段位置
+  function drawLines() {
+    const uniRect = universe.getBoundingClientRect();
+    const hubRect = hub.getBoundingClientRect();
+    
+    const hubX = hubRect.left + hubRect.width / 2 - uniRect.left;
+    const hubY = hubRect.top + hubRect.height / 2 - uniRect.top;
+
+    connections.forEach(conn => {
+      const nodeRect = conn.node.getBoundingClientRect();
+      const nodeX = nodeRect.left + nodeRect.width / 2 - uniRect.left;
+      const nodeY = nodeRect.top + nodeRect.height / 2 - uniRect.top;
+
+      conn.line.setAttribute('x1', hubX);
+      conn.line.setAttribute('y1', hubY);
+      conn.line.setAttribute('x2', nodeX);
+      conn.line.setAttribute('y2', nodeY);
+    });
+    requestAnimationFrame(drawLines);
+  }
+
+  // 延时触发动画
+  setTimeout(() => {
+    hub.classList.add('loaded');
+    requestAnimationFrame(drawLines);
+
+    nodes.forEach((node, i) => {
+      setTimeout(() => {
+        const tx = node.getAttribute('data-target-x');
+        const ty = node.getAttribute('data-target-y');
+        // 飞出并定格
+        node.style.transform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(1)`;
+        node.classList.add('loaded');
+      }, i * 180 + 300); // 错开飞出时间，增加视觉层次感
+    });
+  }, 300);
+
+  // 连线悬浮高亮效果
+  connections.forEach(conn => {
+    conn.node.addEventListener('mouseenter', () => {
+      conn.line.style.stroke = 'rgba(3, 105, 161, 0.4)';
+      conn.line.style.strokeWidth = '2';
+      conn.line.style.strokeDasharray = '0, 0';
+    });
+    conn.node.addEventListener('mouseleave', () => {
+      conn.line.style.stroke = 'rgba(3, 105, 161, 0.15)';
+      conn.line.style.strokeWidth = '1.5';
+      conn.line.style.strokeDasharray = '4, 4';
+    });
+  });
+});
+</script>
+</body>
+</html>

@@ -11,6 +11,9 @@
   },
   "dependencies": {
     "@huggingface/transformers": "^4.0.1",
+    "@lobehub/icons": "^5.5.4",
+    "@lobehub/icons-static-svg": "^1.87.0",
+    "@lobehub/ui": "^5.9.5",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
     "katex": "^0.16.44",

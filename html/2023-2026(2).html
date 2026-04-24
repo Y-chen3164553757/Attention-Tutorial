@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>阶段七：全球 AI 争霸与生态博弈 (2024-2026)</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+/* ══════════════════════════════════════
+   极简学术风与阵营对决系统
+══════════════════════════════════════ */
+:root {
+  --bg: #ffffff;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --cn-blue: #0369a1;
+  --cn-cyan: #06b6d4;
+  --us-purple: #7c3aed;
+  --us-rose: #e11d48;
+  --glass: rgba(255, 255, 255, 0.75);
+  --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --spring: cubic-bezier(0.2, 0.9, 0.3, 1.15);
+  --serif: 'Noto Serif SC', 'Lora', Georgia, serif;
+  --display: 'Lora', 'Georgia', serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  width: 100vw; height: 100vh; overflow: hidden;
+  background-color: var(--bg); color: var(--ink);
+  font-family: var(--serif);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 典雅背景网格与阵营光晕 */
+.amb-grid {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(15,23,42,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15,23,42,0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(circle at center, black 40%, transparent 90%);
+  -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 90%);
+}
+
+/* 左侧中国生态蓝色光晕 */
+.glow-left {
+  position: absolute; top: 50%; left: 0; transform: translateY(-50%);
+  width: 800px; height: 800px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at center, rgba(6, 182, 212, 0.05) 0%, transparent 60%);
+  z-index: 0;
+}
+
+/* 右侧美国生态紫红光晕 */
+.glow-right {
+  position: absolute; top: 50%; right: 0; transform: translateY(-50%);
+  width: 800px; height: 800px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at center, rgba(225, 29, 72, 0.04) 0%, transparent 60%);
+  z-index: 0;
+}
+
+/* 顶部标题区 */
+.header {
+  position: absolute; top: 50px; left: 0; width: 100%; text-align: center; z-index: 10;
+  opacity: 0; transform: translateY(-15px); animation: fadeDown 1s 0.2s var(--ease) forwards;
+}
+.eyebrow {
+  font-size: 11px; letter-spacing: 0.25em; color: var(--ink);
+  text-transform: uppercase; font-weight: 700; margin-bottom: 12px;
+  font-family: var(--display);
+}
+.display-title {
+  font-family: var(--display); font-size: 2.5rem; font-weight: 700; 
+  letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 10px;
+}
+.subtitle {
+  font-family: var(--serif); font-size: 0.95rem; color: var(--muted); 
+  max-width: 600px; margin: 0 auto; line-height: 1.6;
+}
+
+@keyframes fadeDown { to { opacity: 1; transform: none; } }
+
+/* ══════════════════════════════════════
+   主舞台：双峰对决布局
+══════════════════════════════════════ */
+.battlefield {
+  position: absolute; inset: 0; top: 160px; bottom: 40px;
+  display: flex; align-items: center; justify-content: center; z-index: 5;
+}
+
+/* 中央分割线 */
+.vs-divider {
+  position: relative; width: 100px; height: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  opacity: 0; animation: fadeDown 1s 0.6s var(--ease) forwards;
+}
+.vs-line {
+  width: 1px; flex-grow: 1;
+  background: linear-gradient(to bottom, transparent, rgba(15,23,42,0.1) 20%, rgba(15,23,42,0.1) 80%, transparent);
+}
+.vs-badge {
+  background: var(--glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--gbor); border-radius: 100px;
+  padding: 10px 0; width: 44px; text-align: center; margin: 15px 0;
+  font-family: var(--display); font-size: 1.2rem; font-weight: 700; color: var(--ink);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.03);
+}
+
+/* 两侧阵营容器 */
+.faction {
+  flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center;
+  padding: 0 40px; position: relative;
+}
+.faction-title {
+  font-family: var(--display); font-size: 1.4rem; font-weight: 700; margin-bottom: 40px;
+  opacity: 0; transform: translateY(-10px); animation: fadeDown 1s 0.4s var(--ease) forwards;
+  letter-spacing: 0.05em; display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.faction-subtitle {
+  font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase;
+}
+.faction.china .faction-title { color: var(--cn-blue); }
+.faction.china .faction-subtitle { color: var(--cn-cyan); }
+.faction.us .faction-title { color: var(--us-purple); }
+.faction.us .faction-subtitle { color: var(--us-rose); }
+
+/* 模型图标网格 (蜂窝状悬浮排列) */
+.model-grid {
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
+  gap: 24px; max-width: 500px; width: 100%;
+}
+
+/* 单个模型卡片 */
+.model-card {
+  background: var(--glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--gbor); border-radius: 16px;
+  padding: 18px 24px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 145px; height: 155px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.02);
+  transition: transform 0.4s var(--spring), box-shadow 0.4s, border-color 0.4s;
+  cursor: default;
+  opacity: 0; transform: translateY(20px) scale(0.9);
+}
+
+/* 错落的浮动动画 */
+.model-card { animation: float 6s ease-in-out infinite; }
+.model-card:nth-child(2n) { animation-delay: -2s; margin-top: 40px; }
+.model-card:nth-child(3n) { animation-delay: -4s; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.model-card.loaded {
+  opacity: 1; transform: translateY(0) scale(1);
+  /* loaded 后保留 float 动画，不覆盖 transform */
+}
+
+/* Hover 状态交互 */
+.faction.china .model-card:hover {
+  transform: translateY(-5px) scale(1.05) !important;
+  border-color: rgba(6, 182, 212, 0.3);
+  box-shadow: 0 16px 40px rgba(6, 182, 212, 0.1);
+  z-index: 10;
+}
+.faction.us .model-card:hover {
+  transform: translateY(-5px) scale(1.05) !important;
+  border-color: rgba(225, 29, 72, 0.2);
+  box-shadow: 0 16px 40px rgba(225, 29, 72, 0.08);
+  z-index: 10;
+}
+
+/* 图标与文字样式 */
+.icon-box {
+  width: 54px; height: 54px; border-radius: 14px; background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04); border: 1px solid rgba(15,23,42,0.04);
+  margin-bottom: 12px; padding: 6px;
+}
+.icon-box img {
+  width: 100%; height: 100%; object-fit: contain;
+}
+.model-name {
+  font-family: var(--display); font-size: 1.05rem; font-weight: 700; color: var(--ink);
+  margin-bottom: 4px; text-align: center;
+}
+.model-tag {
+  font-family: var(--mono); font-size: 0.65rem; font-weight: 600; 
+  padding: 2px 6px; border-radius: 4px; letter-spacing: 0.02em;
+}
+
+/* 中国阵营标签 */
+.faction.china .model-tag { background: rgba(6,182,212,0.1); color: var(--cn-cyan); }
+/* 美国阵营标签 */
+.faction.us .model-tag { background: rgba(225,29,72,0.08); color: var(--us-rose); }
+
+/* DeepSeek 特殊高亮 */
+.card-special {
+  border-color: rgba(6, 182, 212, 0.4);
+  background: linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(6,182,212,0.05) 100%);
+  box-shadow: 0 12px 32px rgba(6, 182, 212, 0.15);
+}
+
+</style>
+</head>
+<body>
+
+<div class="amb-grid"></div>
+<div class="glow-left"></div>
+<div class="glow-right"></div>
+
+<!-- 顶部文本区 -->
+<div class="header">
+  <div class="eyebrow">GLOBAL RIVALRY</div>
+  <h1 class="display-title">大模型生态的<span style="color: var(--cn-blue)">双峰对决</span></h1>
+  <p class="subtitle">
+    在算力与算法的交织下，世界 AI 演变为双寡头格局。一侧是凭借底层重构打破壁垒的中国生态，另一侧是坚守算力高墙的硅谷闭源霸权。
+  </p>
+</div>
+
+<!-- 对决舞台 -->
+<div class="battlefield">
+  
+  <!-- 左侧：中国阵营 -->
+  <div class="faction china">
+    <div class="faction-title">
+      中国开源生态
+      <div class="faction-subtitle">BOTTOM-UP INNOVATION</div>
+    </div>
+    
+    <div class="model-grid">
+      <!-- DeepSeek -->
+      <div class="model-card card-special">
+        <div class="icon-box"><img src="deepseek-color (1).png" alt="DeepSeek"></div>
+        <div class="model-name">DeepSeek</div>
+        <div class="model-tag">MLA / 极限突围</div>
+      </div>
+      <!-- Qwen -->
+      <div class="model-card">
+        <div class="icon-box"><img src="qwen-color.png" alt="Qwen"></div>
+        <div class="model-name">Qwen</div>
+        <div class="model-tag">开源霸主</div>
+      </div>
+      <!-- Kimi -->
+      <div class="model-card">
+        <div class="icon-box"><img src="kimi.png" alt="Kimi"></div>
+        <div class="model-name">Kimi</div>
+        <div class="model-tag">长文本领跑</div>
+      </div>
+      <!-- Zhipu -->
+      <div class="model-card">
+        <div class="icon-box"><img src="zhipu-color.png" alt="Zhipu"></div>
+        <div class="model-name">Zhipu GLM</div>
+        <div class="model-tag">全栈矩阵</div>
+      </div>
+      <!-- Doubao -->
+      <div class="model-card">
+        <div class="icon-box"><img src="doubao-color.png" alt="Doubao"></div>
+        <div class="model-name">Doubao</div>
+        <div class="model-tag">国民级应用</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 中央 VS -->
+  <div class="vs-divider">
+    <div class="vs-line"></div>
+    <div class="vs-badge">VS</div>
+    <div class="vs-line"></div>
+  </div>
+
+  <!-- 右侧：美国阵营 -->
+  <div class="faction us">
+    <div class="faction-title">
+      硅谷算力高墙
+      <div class="faction-subtitle">COMPUTE MONOPOLY</div>
+    </div>
+    
+    <div class="model-grid">
+      <!-- OpenAI -->
+      <div class="model-card">
+        <div class="icon-box"><img src="openai.png" alt="OpenAI"></div>
+        <div class="model-name">OpenAI</div>
+        <div class="model-tag">闭源领航者</div>
+      </div>
+      <!-- Claude -->
+      <div class="model-card">
+        <div class="icon-box"><img src="claude-color.png" alt="Claude"></div>
+        <div class="model-name">Claude</div>
+        <div class="model-tag">系统级对齐</div>
+      </div>
+      <!-- Gemini -->
+      <div class="model-card">
+        <div class="icon-box"><img src="gemini-color.png" alt="Gemini"></div>
+        <div class="model-name">Gemini</div>
+        <div class="model-tag">原生多模态</div>
+      </div>
+      <!-- Meta -->
+      <div class="model-card">
+        <div class="icon-box"><img src="meta-color.png" alt="Meta Llama"></div>
+        <div class="model-name">Llama</div>
+        <div class="model-tag">开源底座</div>
+      </div>
+      <!-- Grok -->
+      <div class="model-card">
+        <div class="icon-box" style="background: #000;"><img src="grok.png" alt="Grok" style="filter: invert(1);"></div>
+        <div class="model-name">Grok</div>
+        <div class="model-tag">实时数据流</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+window.addEventListener('load', () => {
+  const cards = document.querySelectorAll('.model-card');
+  
+  // 瀑布流式的依次浮现动画
+  cards.forEach((card, index) => {
+    // 根据在列表中的顺序，计算延迟时间
+    const delay = 600 + index * 100;
+    setTimeout(() => {
+      // 通过 requestAnimationFrame 触发过渡，避免与 float 动画冲突
+      card.style.transition = 'opacity 0.6s ease-out, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0) scale(1)';
+      
+      // 入场动画结束后，清除行内的 transition/transform，让 CSS 里的 float 动画接管
+      setTimeout(() => {
+        card.style.transition = 'transform 0.4s var(--spring), box-shadow 0.4s, border-color 0.4s';
+        card.style.transform = ''; 
+        card.classList.add('loaded');
+      }, 600);
+
+    }, delay);
+  });
+});
+</script>
+</body>
+</html>
