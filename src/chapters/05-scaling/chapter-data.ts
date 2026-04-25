@@ -255,19 +255,13 @@ export const scalingData: ScalingEvent[] = [
         ]
       },
       {
-        name: 'Claude', tag: '系统级对齐', icon: 'claude-color.png',
+        name: 'Claude', tag: 'Anthropic 全系旗舰', icon: 'claude-color.png',
         faction: 'us', special: false,
         versions: [
           { name: 'Claude 3.5 Sonnet',   date: '2024-06-20', highlight: true  },
           { name: 'Claude 3.7 Sonnet',  date: '2025-02-24', highlight: true  },
           { name: 'Claude 4',            date: '2025-05-22', highlight: true  },
           { name: 'Claude Sonnet 4.5',   date: '2025-09-29', highlight: false },
-        ]
-      },
-      {
-        name: 'Claude Opus', tag: '旗舰对齐', icon: 'claude-color.png',
-        faction: 'us', special: false,
-        versions: [
           { name: 'Claude Opus 4.5',    date: '2025-11-24', highlight: true  },
         ]
       },
