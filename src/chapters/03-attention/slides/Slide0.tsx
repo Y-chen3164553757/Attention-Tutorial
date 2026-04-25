@@ -1,6 +1,27 @@
+import { useState } from 'react';
 import type { Slide0Props } from '../types/attention.types';
 
-export default function Slide0({ step }: Slide0Props) {
+function DeepSeekLogo() {
+  const [errored, setErrored] = useState(false);
+  if (errored) {
+    return (
+      <svg width="120" height="36" viewBox="0 0 120 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="120" height="36" rx="6" fill="rgba(37,99,235,0.15)" />
+        <text x="60" y="23" textAnchor="middle" fill="#2563eb" fontFamily="system-ui, sans-serif" fontSize="14" fontWeight="700">DeepSeek</text>
+      </svg>
+    );
+  }
+  return (
+    <img
+      src="/AI_tubiao/deepseek-color.png"
+      alt="DeepSeek"
+      className="a-paper-deepseek-logo"
+      onError={() => setErrored(true)}
+    />
+  );
+}
+
+export default function Slide0({ step, showHints = true }: Slide0Props) {
   return (
     <div className={`a-slide a-active ${step > 0 ? 'a-moved' : ''}`} id='a-s0'>
       <div className={`a-s0-center ${step > 0 ? 'a-moved' : ''}`}>
@@ -9,17 +30,13 @@ export default function Slide0({ step }: Slide0Props) {
           而是带着目标，将目光聚焦于关键的"特征线索"，过滤无关背景。
         </div>
       </div>
-      {step === 0 && <div className='a-s0-hint'>按 [空格] 或 [→] 键步进推演</div>}
+      {step === 0 && showHints && <div className='a-s0-hint'>按 [空格] 或 [→] 键步进推演</div>}
 
       <div className={`a-s0-content ${step > 0 ? 'a-show' : ''}`}>
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <div className='a-paper-card'>
             <div className='a-paper-header'>
-              <img
-                src="https://maas-log-prod.cn-wlcb.ufileos.com/anthropic/67c3335e-4edb-482c-863a-e4138b8bb7df/67e7d5ff4cf32dba2ac0264c6081780c.png?UCloudPublicKey=TOKEN_e15ba47a-d098-4fbd-9afc-a0dcf0e4e621&Expires=1776247375&Signature=ev9LB4MbBQHpKVhyJwQZU2K0MOg="
-                alt="DeepSeek"
-                className='a-paper-deepseek-logo'
-              />
+              <DeepSeekLogo />
             </div>
             <div className='a-paper-body'>
               "2024年，深度求索发布了新一代大语言模型 DeepSeek-V3。为突破长上下文推理的内存瓶颈，

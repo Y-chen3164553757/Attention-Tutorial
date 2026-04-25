@@ -11,7 +11,7 @@ import Slide1 from './slides/Slide1';
 import Slide2 from './slides/Slide2';
 
 export default function AttentionChapter(props: ChapterComponentProps) {
-  const { page, step, advance, retreat, getWatermarkText } = useAttentionSteps(props);
+  const { page, step, advance, retreat, getWatermarkText, showHints } = useAttentionSteps(props);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<any[]>([]);
@@ -111,7 +111,7 @@ export default function AttentionChapter(props: ChapterComponentProps) {
       <div className="a-deck">
         <AnimatePresence mode='wait'>
           <motion.div key={page} initial={{opacity:0, scale:0.98, y: 30}} animate={{opacity:1, scale:1, y: 0}} exit={{opacity:0, scale:0.98, y: -30}} transition={{duration:0.8, ease: [0.4, 0, 0.2, 1]}} style={{width:'100%',height:'100%',position:'absolute'}}>
-            {page===0 && <Slide0 step={step}/>}
+            {page===0 && <Slide0 step={step} showHints={showHints}/>}
             {page===1 && <Slide1 step={step}/>}
             {page===2 && <Slide2 step={step} />}
           </motion.div>

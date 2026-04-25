@@ -8,6 +8,43 @@ import { scalingData } from './chapter-data';
 import './Chapter05.css';
 
 /* ══════════════════════════════════════════
+   可靠图标组件：本地优先 + 错误 SVG 回退
+══════════════════════════════════════════ */
+const ICON_FALLBACKS: Record<string, string> = {
+  'deepseek-color.png': 'DS',
+  'qwen-color.png': '通',
+  'kimi-color.png': 'K',
+  'zhipu-color.png': '智',
+  'doubao-color.png': '豆',
+  'openai.png': 'OA',
+  'claude-color.png': 'C',
+  'gemini-color.png': 'G',
+  'meta-color.png': 'M',
+  'grok.png': 'x',
+};
+
+const ModelIcon = ({ icon, name }: { icon: string; name: string }) => {
+  const [errored, setErrored] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const fallback = ICON_FALLBACKS[icon] || name.charAt(0).toUpperCase();
+  return (
+    <div className="ch5-s3-icon-box">
+      {errored ? (
+        <div className="ch5-s3-icon-fallback">{fallback}</div>
+      ) : (
+        <img
+          src={`/AI_tubiao/${icon}`}
+          alt={name}
+          style={{ opacity: loaded ? 1 : 0 }}
+          onError={() => setErrored(true)}
+          onLoad={() => setLoaded(true)}
+        />
+      )}
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════
    Stage 1 · 2018-2023 · 左右布局（保持原样）
 ══════════════════════════════════════════ */
 
@@ -320,8 +357,9 @@ const Stage2 = ({ year }: { year: string }) => {
           <span className="ch5-s2-title-grad">Attention</span> 的全维度衍生与底层重构
         </h1>
         <p className="ch5-s2-subtitle">
-          从 2023 年开始，Attention 机制彻底打破了文本序列的边界。<br />
-          它不仅向多模态与系统推理延伸，更在自身架构上实现了极其优雅的显存压缩与效率突围。
+          自 2017 年 Transformer 论文发布后，Attention 机制持续演进：<br />
+          多模态融合、超长上下文、稀疏计算、显存压缩等方向相继突破，<br />
+          驱动大模型能力边界的不断扩展。
         </p>
       </div>
 
@@ -350,12 +388,17 @@ const Stage2 = ({ year }: { year: string }) => {
         <div
           ref={hubRef}
           className={`ch5-s2-hub ${hubLoaded ? 'loaded' : ''}`}
-          style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
+          style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%) scale(0.6)' }}
         >
           <div className="ch5-s2-hub-ring" />
-          <div className="ch5-s2-hub-title">ATTENTION</div>
-          <div className="ch5-s2-hub-formula">
-            <Latex>{`$$ \\text{softmax}\\!\\left(\\frac{QK^{\\top}}{\\sqrt{d_k}}\\right)V $$`}</Latex>
+          <div className="ch5-s2-hub-ring-2" />
+          <div className="ch5-s2-hub-ring-outer" />
+          <div className="ch5-s2-hub-glow" />
+          <div className="ch5-s2-hub-inner">
+            <div className="ch5-s2-hub-title">Attention</div>
+            <div className="ch5-s2-hub-formula">
+              <Latex>{`$$ \\text{softmax}\\!\\left(\\frac{QK^{\\top}}{\\sqrt{d_k}}\\right)V $$`}</Latex>
+            </div>
           </div>
         </div>
 
@@ -410,12 +453,12 @@ const Stage3 = ({ year }: { year: string }) => {
 
   return (
     <div className="ch5-s3-root">
-      {/* 背景层：与 Stage 1/2 统一 */}
+      {/* 背景层：DeepSeek 深色风格：青+紫粒子背景 */}
       <div className="ch5-grid-bg" />
       <div className="ch5-ambient" />
       <div className="ch5-ambient-center" />
 
-      {/* 背景水印年份 */}
+      {/* 背景水印年份：2023-2026 */}
       <div className="ch5-watermark is-active">
         <div className="ch5-wm-tl">2023</div>
         <div className="ch5-wm-br">2026</div>
@@ -425,13 +468,10 @@ const Stage3 = ({ year }: { year: string }) => {
 
       {/* 顶部标题 */}
       <div className="ch5-s3-header">
-        <div className="ch5-s3-eyebrow">GLOBAL RIVALRY</div>
+        <div className="ch5-s3-eyebrow">GLOBAL RIVALRY · 2026.1 – 2026.5</div>
         <h1 className="ch5-s3-title">
-          大模型生态的<span className="ch5-s3-title-cn">双峰对决</span>
+          大模型生态<span className="ch5-s3-title-cn">双峰对决</span>
         </h1>
-        <p className="ch5-s3-subtitle">
-          在算力与算法的交织下，世界 AI 演变为双寡头格局。一侧是凭借底层重构打破壁垒的中国生态，另一侧是坚守算力高墙的硅谷闭源霸权。
-        </p>
       </div>
 
       {/* 对决舞台 */}
@@ -452,7 +492,7 @@ const Stage3 = ({ year }: { year: string }) => {
                 {/* 卡片头部：图标 + 品牌名 */}
                 <div className="ch5-s3-card-head">
                   <div className="ch5-s3-icon-box">
-                    <img src={`/AI_tubiao/${model.icon}`} alt={model.name} />
+                    <ModelIcon icon={model.icon} name={model.name} />
                   </div>
                   <div className="ch5-s3-card-identity">
                     <div className="ch5-s3-model-name">{model.name}</div>
@@ -498,7 +538,7 @@ const Stage3 = ({ year }: { year: string }) => {
                 {/* 卡片头部：图标 + 品牌名 */}
                 <div className="ch5-s3-card-head">
                   <div className="ch5-s3-icon-box">
-                    <img src={`/AI_tubiao/${model.icon}`} alt={model.name} />
+                    <ModelIcon icon={model.icon} name={model.name} />
                   </div>
                   <div className="ch5-s3-card-identity">
                     <div className="ch5-s3-model-name">{model.name}</div>
@@ -525,11 +565,588 @@ const Stage3 = ({ year }: { year: string }) => {
   );
 };
 
+/* ═══════════════════════════════════════════════════════
+   Stage 4 · 2024-2026 · DeepSeek 破壁时刻
+═══════════════════════════════════════════════════════ */
+
+const Stage4 = ({ year }: { year: string }) => {
+  const data = scalingData[3]; // Stage 4 data
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const particlesRef = useRef<any[]>([]);
+  const requestRef = useRef<number>(0);
+  const techCanvasRef = useRef<HTMLCanvasElement>(null);
+  const techAnimRef = useRef<number>(0);
+  const [hoveredNode, setHoveredNode] = useState<number | null>(null);
+
+  const stats = data.stats || [];
+  const compareRows = data.compareRows || [];
+  const milestones = data.milestones || [];
+  const techCards = data.techCards || [];
+
+  // Global particle canvas (cyan/purple, like HTML)
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    particlesRef.current = Array.from({ length: 80 }).map(() => ({
+      x: Math.random() * canvas!.width,
+      y: Math.random() * canvas!.height,
+      vx: (Math.random() - 0.5) * 0.25,
+      vy: (Math.random() - 0.5) * 0.25,
+      r: Math.random() * 1.5 + 0.5,
+      color: Math.random() > 0.5 ? 'rgba(0, 229, 255, 0.4)' : 'rgba(176, 38, 255, 0.3)',
+      z: Math.random() * 2,
+    }));
+
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+    let offsetX = 0, offsetY = 0;
+
+    const onMove = (e: MouseEvent) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    };
+    window.addEventListener('mousemove', onMove);
+
+    const render = () => {
+      ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
+
+      const targetX = (window.innerWidth / 2 - mouseX) * 0.05;
+      const targetY = (window.innerHeight / 2 - mouseY) * 0.05;
+      offsetX += (targetX - offsetX) * 0.1;
+      offsetY += (targetY - offsetY) * 0.1;
+
+      const ps = particlesRef.current;
+      for (let i = 0; i < ps.length; i++) {
+        const p1 = ps[i];
+        p1.x += p1.vx;
+        p1.y += p1.vy;
+        if (p1.x < 0 || p1.x > canvas!.width) p1.vx *= -1;
+        if (p1.y < 0 || p1.y > canvas!.height) p1.vy *= -1;
+
+        const px = p1.x + offsetX * p1.z;
+        const py = p1.y + offsetY * p1.z;
+
+        ctx!.beginPath();
+        ctx!.arc(px, py, p1.r, 0, Math.PI * 2);
+        ctx!.fillStyle = p1.color;
+        ctx!.fill();
+      }
+      requestRef.current = requestAnimationFrame(render);
+    };
+    render();
+
+    return () => {
+      window.removeEventListener('resize', resize);
+      window.removeEventListener('mousemove', onMove);
+      if (requestRef.current) cancelAnimationFrame(requestRef.current);
+    };
+  }, []);
+
+  // Tech engine canvas animation (central core with orbiting nodes)
+  useEffect(() => {
+    const canvas = techCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const resize = () => {
+      canvas.width = canvas.parentElement!.offsetWidth;
+      canvas.height = canvas.parentElement!.offsetHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    const nodePositions = [
+      { x: 0.15, y: 0.3 },  // top-left
+      { x: 0.15, y: 0.78 }, // bottom-left
+      { x: 0.85, y: 0.33 }, // top-right
+      { x: 0.85, y: 0.78 }, // bottom-right
+    ];
+
+    const satellites = Array.from({ length: 6 }).map((_, i) => ({
+      angle: (Math.PI * 2 / 6) * i,
+      speed: 0.015,
+      radius: 80,
+      size: 2.5,
+    }));
+
+    let time = 0;
+    let pulses: Array<{ sx: number; sy: number; tx: number; ty: number; progress: number; speed: number; color: string; width: number }> = [];
+
+    const spawnPulse = (forceNode?: number) => {
+      const idx = forceNode !== undefined ? forceNode : Math.floor(Math.random() * nodePositions.length);
+      const target = nodePositions[idx];
+      pulses.push({
+        sx: canvas!.width / 2,
+        sy: canvas!.height / 2,
+        tx: target.x * canvas!.width,
+        ty: target.y * canvas!.height,
+        progress: 0,
+        speed: 0.012 + Math.random() * 0.008,
+        color: target.x < 0.5 ? '#00E5FF' : '#B026FF',
+        width: 2,
+      });
+    };
+
+    const drawPolygon = (cx: number, cy: number, r: number, sides: number, angleOff: number) => {
+      ctx!.beginPath();
+      for (let i = 0; i < sides; i++) {
+        const a = angleOff + (Math.PI * 2 / sides) * i;
+        if (i === 0) ctx!.moveTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+        else ctx!.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+      }
+      ctx!.closePath();
+      ctx!.stroke();
+    };
+
+    const render = () => {
+      ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
+      time += 0.01;
+
+      const cx = canvas!.width / 2;
+      const cy = canvas!.height / 2 + 20;
+
+      ctx!.save();
+      ctx!.translate(cx, cy);
+
+      // Outer rotating hexagons
+      ctx!.strokeStyle = 'rgba(0, 229, 255, 0.15)';
+      ctx!.lineWidth = 1;
+      drawPolygon(0, 0, 110, 6, time * 0.2);
+      drawPolygon(0, 0, 95, 6, -time * 0.3);
+
+      // Dashed orbit ring
+      ctx!.rotate(time * 0.5);
+      ctx!.beginPath();
+      ctx!.arc(0, 0, 65, 0, Math.PI * 2);
+      ctx!.strokeStyle = 'rgba(176, 38, 255, 0.5)';
+      ctx!.setLineDash([8, 12]);
+      ctx!.lineWidth = 1.5;
+      ctx!.stroke();
+
+      // Inner dotted ring
+      ctx!.rotate(-time * 1.2);
+      ctx!.beginPath();
+      ctx!.arc(0, 0, 45, 0, Math.PI * 2);
+      ctx!.strokeStyle = 'rgba(0, 229, 255, 0.8)';
+      ctx!.setLineDash([4, 4, 16, 4]);
+      ctx!.lineWidth = 2.5;
+      ctx!.stroke();
+      ctx!.setLineDash([]);
+
+      // Orbiting satellites
+      satellites.forEach(sat => {
+        sat.angle += sat.speed;
+        const sx = Math.cos(sat.angle) * sat.radius;
+        const sy = Math.sin(sat.angle) * sat.radius;
+        ctx!.beginPath();
+        ctx!.arc(sx, sy, sat.size, 0, Math.PI * 2);
+        ctx!.fillStyle = '#FFF';
+        ctx!.shadowColor = '#00E5FF';
+        ctx!.shadowBlur = 8;
+        ctx!.fill();
+        ctx!.shadowBlur = 0;
+
+        ctx!.beginPath();
+        ctx!.moveTo(0, 0);
+        ctx!.lineTo(sx, sy);
+        ctx!.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx!.lineWidth = 0.5;
+        ctx!.stroke();
+      });
+
+      // Pulsing core
+      ctx!.rotate(time);
+      const pulse = (Math.sin(Date.now() * 0.008) + 1) / 2;
+      ctx!.beginPath();
+      ctx!.arc(0, 0, 20 + pulse * 6, 0, Math.PI * 2);
+      const grad = ctx!.createRadialGradient(0, 0, 0, 0, 0, 30);
+      grad.addColorStop(0, '#FFF');
+      grad.addColorStop(0.4, '#00E5FF');
+      grad.addColorStop(1, 'rgba(0,229,255,0)');
+      ctx!.fillStyle = grad;
+      ctx!.fill();
+
+      ctx!.restore();
+
+      // Connection lines to nodes
+      nodePositions.forEach((pos, idx) => {
+        ctx!.beginPath();
+        ctx!.moveTo(cx, cy);
+        ctx!.lineTo(pos.x * canvas!.width, pos.y * canvas!.height);
+        ctx!.strokeStyle = hoveredNode === idx ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.04)';
+        ctx!.lineWidth = hoveredNode === idx ? 1.5 : 1;
+        ctx!.stroke();
+      });
+
+      // Spawn data pulses
+      if (Math.random() < 0.06) spawnPulse();
+      if (hoveredNode !== null && Math.random() < 0.25) spawnPulse(hoveredNode);
+
+      // Draw pulses
+      for (let i = pulses.length - 1; i >= 0; i--) {
+        const p = pulses[i];
+        p.progress += p.speed;
+        const curX = p.sx + (p.tx - p.sx) * p.progress;
+        const curY = p.sy + (p.ty - p.sy) * p.progress;
+
+        const tailX = p.sx + (p.tx - p.sx) * Math.max(0, p.progress - 0.12);
+        const tailY = p.sy + (p.ty - p.sy) * Math.max(0, p.progress - 0.12);
+
+        ctx!.beginPath();
+        ctx!.moveTo(curX, curY);
+        ctx!.lineTo(tailX, tailY);
+        const pg = ctx!.createLinearGradient(curX, curY, tailX, tailY);
+        pg.addColorStop(0, p.color);
+        pg.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx!.strokeStyle = pg;
+        ctx!.lineWidth = p.width;
+        ctx!.stroke();
+
+        ctx!.beginPath();
+        ctx!.arc(curX, curY, p.width, 0, Math.PI * 2);
+        ctx!.fillStyle = '#FFF';
+        ctx!.shadowColor = p.color;
+        ctx!.shadowBlur = 8;
+        ctx!.fill();
+        ctx!.shadowBlur = 0;
+
+        if (p.progress >= 1) {
+          ctx!.beginPath();
+          ctx!.arc(p.tx, p.ty, 8, 0, Math.PI * 2);
+          ctx!.fillStyle = p.color;
+          ctx!.globalAlpha = 0.5;
+          ctx!.fill();
+          ctx!.globalAlpha = 1;
+          pulses.splice(i, 1);
+        }
+      }
+
+      techAnimRef.current = requestAnimationFrame(render);
+    };
+    render();
+
+    return () => {
+      window.removeEventListener('resize', resize);
+      if (techAnimRef.current) cancelAnimationFrame(techAnimRef.current);
+    };
+  }, [hoveredNode]);
+
+  return (
+    <div className="ch5-s4-root">
+      {/* 统一背景层 */}
+      <div className="ch5-grid-bg" />
+      <div className="ch5-ambient" />
+      <div className="ch5-ambient-center" />
+
+      {/* 背景水印年份 */}
+      <div className="ch5-watermark is-active">
+        <div className="ch5-wm-tl">2023</div>
+        <div className="ch5-wm-br">2026</div>
+      </div>
+
+      <canvas ref={canvasRef} className="ch5-canvas" />
+
+      {/* 主仪表盘 */}
+      <div className="ch5-s4-dashboard">
+        {/* 顶部 Header */}
+        <div className="ch5-s4-header">
+          <div>
+            <div className="ch5-s4-badge">Bottom-Up Innovation · 底层技术探索</div>
+            <div className="ch5-s4-eyebrow">{data.eyebrow}</div>
+            <div className="ch5-s4-ds-icon">
+              <div className="ch5-s4-ds-logo">
+                <ModelIcon icon="deepseek-color.png" name="DeepSeek" />
+              </div>
+              <div>
+                <div className="ch5-s4-ds-name">DeepSeek</div>
+                <div className="ch5-s4-ds-sub">中国智算方案 · 破壁时刻</div>
+              </div>
+            </div>
+            <p className="ch5-s4-desc">
+              通过底层架构创新优化算力效率，在保障模型性能的同时，显著降低预训练与推理成本。
+            </p>
+          </div>
+          <div className="ch5-s4-stats">
+            {stats.map((stat, i) => (
+              <div key={i} className="ch5-s4-stat-item">
+                <div className={`ch5-s4-stat-num ${stat.color}`}>{stat.value}</div>
+                <div className="ch5-s4-stat-label">{stat.label}</div>
+                <div className="ch5-s4-stat-note">{stat.note}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 左侧列 */}
+        <div className="ch5-s4-left">
+          {/* 技术路线对比 */}
+          <div className="ch5-s4-panel">
+            <h3>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#00E5FF">
+                <path d="M12 2L2 7v13c0 5.55 4.84 10.74 10 12 5.16-1.26 10-6.45 10-12V7L12 2z" />
+              </svg>
+              技术路线特征与应用倾向对比
+            </h3>
+            {compareRows.map((row, i) => (
+              <div key={i} className="ch5-s4-compare-row">
+                <div className="ch5-s4-china">
+                  {row.china}<br />
+                  <span className="ch5-s4-china-sub">{row.chinaSub}</span>
+                </div>
+                <div className="ch5-s4-vs">VS</div>
+                <div className="ch5-s4-west">
+                  {row.west}<br />
+                  <span className="ch5-s4-west-sub">{row.westSub}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* 技术演进里程碑 */}
+          <div className="ch5-s4-panel">
+            <h3>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00E5FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+              技术演进里程碑
+            </h3>
+            {milestones.map((m, i) => (
+              <div key={i} className={`ch5-s4-tl-item ${m.highlight ? 'is-hl' : ''}`}>
+                <div className="ch5-s4-tl-date">{m.date}</div>
+                <div className="ch5-s4-tl-title">{m.title}</div>
+                <div className="ch5-s4-tl-desc">{m.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 右侧：核心技术架构 */}
+        <div className="ch5-s4-tech-panel">
+          <div className="ch5-s4-tech-header">
+            <h2>核心技术架构矩阵</h2>
+            <p>优化大模型训练与推理流程，缓解显存与计算压力</p>
+          </div>
+
+          <div className="ch5-s4-tech-hud">
+            <div className="ch5-s4-hud-item">ENGINE <span className="ch5-s4-hud-val blink">ONLINE</span></div>
+            <div className="ch5-s4-hud-item">MODEL <span className="ch5-s4-hud-val">V3 / R1</span></div>
+            <div className="ch5-s4-hud-item">PARAMS <span className="ch5-s4-hud-val">671B</span></div>
+            <div className="ch5-s4-hud-item">ACTIVE <span className="ch5-s4-hud-val">37B</span></div>
+            <div className="ch5-s4-hud-item">KV 压缩 (vs MHA) <span className="ch5-s4-hud-val">-93%</span></div>
+          </div>
+
+          {/* 技术卡片 */}
+          <div className="ch5-s4-tech-nodes">
+            {techCards.map((card, i) => {
+              const posClass = ['ch5-s4-node-tl', 'ch5-s4-node-bl', 'ch5-s4-node-tr', 'ch5-s4-node-br'][i];
+              return (
+                <div
+                  key={i}
+                  className={`ch5-s4-tech-card ${posClass}`}
+                  onMouseEnter={() => setHoveredNode(i)}
+                  onMouseLeave={() => setHoveredNode(null)}
+                >
+                  <h4>{card.title}</h4>
+                  <p>{card.desc}</p>
+                  <div className="ch5-s4-tech-metric">
+                    <span>{card.metric}</span>
+                    <span className="ch5-s4-tech-metric-val">{card.metricVal}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Canvas 动画 */}
+          <canvas ref={techCanvasRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════
+   Stage 5 · 2026 · 完整模型发布序列（卡片瀑布流入场）
+═══════════════════════════════════════════════════════ */
+
+const ModelIconS5 = ({ icon, name }: { icon: string; name: string }) => {
+  const [errored, setErrored] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const fallbacks: Record<string, string> = {
+    'deepseek-color.png': 'DS', 'qwen-color.png': '通', 'kimi-color.png': 'K',
+    'zhipu-color.png': '智', 'doubao-color.png': '豆', 'openai.png': 'OA',
+    'claude-color.png': 'C', 'gemini-color.png': 'G', 'meta-color.png': 'M', 'grok.png': 'x',
+  };
+  const fallback = fallbacks[icon] || name.charAt(0).toUpperCase();
+  return errored ? (
+    <div className="ch5-s5-icon-fallback">{fallback}</div>
+  ) : (
+    <img src={`/AI_tubiao/${icon}`} alt={name} style={{ opacity: loaded ? 1 : 0 }}
+      onError={() => setErrored(true)} onLoad={() => setLoaded(true)} />
+  );
+};
+
+const TimelineCardItem = ({
+  card, index, total, delay,
+}: {
+  card: import('./chapter-data').TimelineCard;
+  index: number;
+  total: number;
+  delay?: number;
+}) => {
+  const isChina = card.faction === 'china';
+  return (
+    <motion.div
+      className={`ch5-s5-card ${isChina ? 'china' : 'us'}`}
+      initial={{ opacity: 0, scale: 0.75, y: 30 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{
+        delay: delay ?? index * 1.0,
+        duration: 0.5,
+        type: 'spring',
+        stiffness: 180,
+        damping: 20,
+      }}
+      style={{ '--card-color': card.color } as React.CSSProperties}
+    >
+      <div className="ch5-s5-card-header">
+        <div className="ch5-s5-icon-box">
+          <ModelIconS5 icon={card.icon} name={card.company} />
+        </div>
+        <div className="ch5-s5-company-info">
+          <div className="ch5-s5-company">{card.company}</div>
+          <div className="ch5-s5-company-en">{card.companyEn}</div>
+        </div>
+        <div className="ch5-s5-tag">{card.tag}</div>
+      </div>
+
+      <div className="ch5-s5-model-name">{card.model}</div>
+      <div className="ch5-s5-date">{card.dateShort}</div>
+      <div className="ch5-s5-desc">{card.desc}</div>
+
+      <div className="ch5-s5-faction-bar">
+        <span className="ch5-s5-faction-dot" />
+        <span>{isChina ? '中国阵营' : '美国阵营'}</span>
+      </div>
+    </motion.div>
+  );
+};
+
+const Stage5 = ({ year }: { year: string }) => {
+  const data = scalingData[4];
+  const cards = data.timelineCards || [];
+
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const particlesRef = useRef<any[]>([]);
+  const animRef = useRef<number>(0);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    resize();
+    window.addEventListener('resize', resize);
+
+    particlesRef.current = Array.from({ length: 60 }).map(() => ({
+      x: Math.random() * canvas!.width,
+      y: Math.random() * canvas!.height,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      r: Math.random() * 1.2 + 0.4,
+      color: Math.random() > 0.5 ? 'rgba(0,229,255,0.3)' : 'rgba(176,38,255,0.25)',
+    }));
+
+    let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+    let offsetX = 0, offsetY = 0;
+    const onMove = (e: MouseEvent) => { mouseX = e.clientX; mouseY = e.clientY; };
+    window.addEventListener('mousemove', onMove);
+
+    const render = () => {
+      ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
+      const targetX = (window.innerWidth / 2 - mouseX) * 0.04;
+      const targetY = (window.innerHeight / 2 - mouseY) * 0.04;
+      offsetX += (targetX - offsetX) * 0.08;
+      offsetY += (targetY - offsetY) * 0.08;
+      const ps = particlesRef.current;
+      for (let i = 0; i < ps.length; i++) {
+        const p1 = ps[i];
+        p1.x += p1.vx; p1.y += p1.vy;
+        if (p1.x < 0 || p1.x > canvas!.width) p1.vx *= -1;
+        if (p1.y < 0 || p1.y > canvas!.height) p1.vy *= -1;
+        ctx!.beginPath();
+        ctx!.arc(p1.x + offsetX * (p1.r * 2), p1.y + offsetY * (p1.r * 2), p1.r, 0, Math.PI * 2);
+        ctx!.fillStyle = p1.color;
+        ctx!.fill();
+      }
+      animRef.current = requestAnimationFrame(render);
+    };
+    render();
+    return () => {
+      window.removeEventListener('resize', resize);
+      window.removeEventListener('mousemove', onMove);
+      if (animRef.current) cancelAnimationFrame(animRef.current);
+    };
+  }, []);
+
+  return (
+    <div className="ch5-s5-root">
+      <div className="ch5-grid-bg" />
+      <div className="ch5-ambient" />
+      <div className="ch5-ambient-center" />
+      <div className="ch5-watermark is-active">
+        <div className="ch5-wm-tl">{year.split('–')[0].trim()}</div>
+        <div className="ch5-wm-br">{year.split('–')[1]?.trim() || year.split('–')[0].trim()}</div>
+      </div>
+      <canvas ref={canvasRef} className="ch5-canvas" />
+
+      <motion.div
+        className="ch5-s5-header"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+      >
+        <div className="ch5-s5-eyebrow">{data.eyebrow}</div>
+        <h1 className="ch5-s5-title">
+          <span className="ch5-s5-title-attn">Attention 的探索还在继续</span>
+        </h1>
+        <p className="ch5-s5-subtitle-rivalry">{data.subtitle}</p>
+      </motion.div>
+
+      <div className="ch5-s5-cards-grid">
+        {cards.map((card, i) => (
+          <TimelineCardItem key={card.date + card.model} card={card} index={i} total={cards.length} delay={2 + i * 1.0} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 /* ══════════════════════════════════════════
    主组件 · 多页面切换
 ══════════════════════════════════════════ */
-export function Chapter05({ showHints, onRequestChapterNav }: ChapterComponentProps) {
+export function Chapter05({ showHints, onRequestChapterNav, requestedPageIndex = 0 }: ChapterComponentProps) {
   const [currentPage, setCurrentPage] = useState(0);
+
+  useEffect(() => {
+    const nextPageIndex = Math.min(Math.max(requestedPageIndex, 0), scalingData.length - 1);
+    setCurrentPage(nextPageIndex);
+  }, [requestedPageIndex]);
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<any[]>([]);
   const requestRef = useRef<number>(0);
@@ -754,9 +1371,39 @@ export function Chapter05({ showHints, onRequestChapterNav }: ChapterComponentPr
   }
 
   // Stage 3 渲染
+  if (currentPage === 2) {
+    return (
+      <div className="ch5-s3-wrapper">
+        <Stage3 year={evt.year} />
+
+        {showHints && (
+          <button className="ch5-navbtn" onClick={onRequestChapterNav}>
+            章节目录
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // Stage 4 渲染
+  if (currentPage === 3) {
+    return (
+      <div className="ch5-s4-wrapper">
+        <Stage4 year={evt.year} />
+
+        {showHints && (
+          <button className="ch5-navbtn" onClick={onRequestChapterNav}>
+            章节目录
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // Stage 5 渲染：2026 模型发布完整时间轴
   return (
-    <div className="ch5-s3-wrapper">
-      <Stage3 year={evt.year} />
+    <div className="ch5-s5-wrapper">
+      <Stage5 year={evt.year} />
 
       {showHints && (
         <button className="ch5-navbtn" onClick={onRequestChapterNav}>

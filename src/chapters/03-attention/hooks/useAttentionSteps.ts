@@ -3,7 +3,7 @@ import type { ChapterComponentProps, UseAttentionStepsReturn } from '../types/at
 import { PAGE_COUNT, STEPS, S2_MATRIX_BASE } from '../types/attention.types';
 
 export function useAttentionSteps(props: ChapterComponentProps): UseAttentionStepsReturn {
-  const { requestedPageIndex = 0, onPageChange, onRequestChapterNav } = props;
+  const { requestedPageIndex = 0, onPageChange, onRequestChapterNav, showHints = true } = props;
   const [page, setPage] = useState(requestedPageIndex);
   const [step, setStep] = useState(0);
 
@@ -55,5 +55,5 @@ export function useAttentionSteps(props: ChapterComponentProps): UseAttentionSte
     return 'Attention Mechanism';
   }, [page, step]);
 
-  return { page, step, advance, retreat, getWatermarkText };
+  return { page, step, advance, retreat, getWatermarkText, showHints };
 }

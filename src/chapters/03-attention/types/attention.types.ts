@@ -6,6 +6,7 @@ import type { ChapterComponentProps } from '../../catalog';
 
 export interface Slide0Props {
   step: number;
+  showHints?: boolean;
 }
 
 export interface Slide1Props {
@@ -55,6 +56,7 @@ export interface UseAttentionStepsReturn {
   advance: () => void;
   retreat: () => void;
   getWatermarkText: () => string;
+  showHints: boolean;
 }
 
 // ============================================================
