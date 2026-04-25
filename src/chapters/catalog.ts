@@ -103,10 +103,10 @@ export const chapters: ChapterRecord[] = [
     id: '05',
     order: 5,
     title: '规模法则与涌现',
-    subtitle: '阶段五：范式重塑 2018 – 2025 | 阶段六：纪元开启 2017 – 2025',
+    subtitle: '阶段五：范式重塑 2018 – 2022 | 阶段六：纪元开启 2017 – 2025',
     range: '5:30 - 7:30',
     duration: '2:00',
-    summary: '从 GPT 的诞生到 ChatGPT 的横空出世，讲述纯解码器架构如何通过规模定律与 RLHF 对齐，完成从「智能涌现」到「听话好用」的跨越。同时展示 Attention 在 2023-2026 年向多模态、系统推理、显存压缩等全维度的衍生与底层重构。',
+    summary: '从 GPT 的诞生到 ChatGPT 的横空出世，讲述纯解码器架构如何通过规模定律与 RLHF 对齐，完成从「智能涌现」到「听话好用」的跨越。同时展示 Attention 在 2017-2026.4 年向多模态、系统推理、显存压缩等全维度的衍生与底层重构。',
     badge: '新增章节',
     implemented: true,
     pages: [
