@@ -43,7 +43,7 @@ export const chapters: ChapterRecord[] = [
     badge: '当前已实现',
     implemented: true,
     pages: [
-      { id: '01-cover', title: '万物皆 Token', note: '封面开题页', implemented: true },
+      { id: '01-cover', title: '解构AI发动机：Attention机制原理解析', note: '封面开题页', implemented: true },
       { id: '01-demo', title: 'AI 生成能力演示', note: '标题、动图与引导', implemented: true },
     ],
     component: KaitiChapter,

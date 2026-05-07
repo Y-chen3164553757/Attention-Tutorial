@@ -314,10 +314,21 @@ export default function KaitiChapter({ showHints, onRequestChapterNav, requested
             </div>
 
             <h1 className="kaiti-cover-title">
-              <span className="kaiti-cover-title-line">
-                <span className="kaiti-cover-title-grad">万物皆 Token</span>
+              <span className="kaiti-cover-title-line" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <span className="kaiti-cover-title-grad" style={{ fontSize: 'clamp(1.6rem, 3.8vw, 3.4rem)', fontWeight: 900, letterSpacing: '0.04em', filter: 'drop-shadow(0 12px 24px rgba(3, 105, 161, 0.25))' }}>
+                  解构AI发动机
+                </span>
+                
+                <span style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 0.8vw, 9px)', margin: '0 clamp(10px, 2vw, 24px)', transform: 'translateY(-2px)' }}>
+                  <span style={{ width: 'clamp(5px, 0.6vw, 9px)', height: 'clamp(5px, 0.6vw, 9px)', borderRadius: '50%', background: 'linear-gradient(180deg, #38bdf8, #0ea5e9)', boxShadow: '0 0 16px 3px rgba(14, 165, 233, 0.5)' }} />
+                  <span style={{ width: 'clamp(5px, 0.6vw, 9px)', height: 'clamp(5px, 0.6vw, 9px)', borderRadius: '50%', background: 'linear-gradient(180deg, #a78bfa, #8b5cf6)', boxShadow: '0 0 16px 3px rgba(139, 92, 246, 0.5)' }} />
+                </span>
+
+                <span className="kaiti-cover-title-grad" style={{ fontSize: 'clamp(1.6rem, 3.8vw, 3.4rem)', fontWeight: 700, letterSpacing: '0.01em', filter: 'drop-shadow(0 12px 24px rgba(124, 58, 237, 0.25))' }}>
+                  Attention机制原理解析
+                </span>
               </span>
-              <span className="kaiti-cover-title-line">注意力机制驱动的 AI 生成能力 — 开题答辩 · 2026</span>
+              <span className="kaiti-cover-title-line" style={{ marginTop: '1.4em' }}>注意力机制驱动的 AI 生成能力 — 开题答辩 · 2026</span>
             </h1>
 
             <div className="kaiti-cover-signal">TITLE SEQUENCE · ATTENTION FOCUSING</div>
